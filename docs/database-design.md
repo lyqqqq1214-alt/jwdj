@@ -4,7 +4,7 @@
 > **数据库名**：`aitaes_db`  
 > **字符集**：utf8mb4 / utf8mb4_unicode_ci  
 > **存储引擎**：InnoDB  
-> **版本**：v3.0 | 最后更新：2026-07-09
+> **版本**：v3.0 | 最后更新：2026-07-16
 
 ---
 
@@ -16,7 +16,7 @@
 | v2.0 | 2026-07-07 | 增加报告、仪表盘、导出相关设计 |
 | **v3.0** | **2026-07-09** | **系统重构：从评教转向教学分析评价** |
 
-> **v3.0 重大变更**：系统从"学生评教"重构为"教学分析评价"。4种用户角色（管理员/教师/助教/学生）全部建模。新增统一认证、知识点库、考核扣分追踪、学生画像、AI组卷考试、预警通知、题库错题本等核心表。旧评教表标记为遗留。
+> **v3.0 重大变更**：系统从"学生评教"重构为"教学分析评价"。4种用户角色（管理员/教师/助教/学生）全部建模。新增统一认证、知识点库、考核扣分追踪、学生画像、AI组卷考试、预警通知、题库错题本等核心表。移除旧评教相关表，简化为27张核心表。
 
 ---
 
@@ -95,9 +95,6 @@
 │  │  t_assistant_permission (助教权限)            │                 │
 │  │  (可查看班级/可导入/可批阅/可看画像)          │                 │
 │  └──────────────────────────────────────────────┘                 │
-│                                                                    │
-│  [DEPRECATED] t_evaluation_indicator, t_evaluation_score          │
-│  (保留向后兼容，不再作为系统核心)                                   │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -242,6 +239,7 @@
 | `id` | BIGINT | PK, AUTO_INCREMENT | 主键 |
 | `course_no` | VARCHAR(32) | NOT NULL, **UNIQUE** | 课程编号 |
 | `course_name` | VARCHAR(256) | NOT NULL | 课程名称 |
+| `class_name` | VARCHAR(256) | — | 班级名称（默认为课程名） |
 | `teacher_id` | BIGINT | **FK** → t_teacher.id, SET NULL | 授课教师 |
 | `credit` | DECIMAL(4,1) | DEFAULT 0.0 | 学分 |
 | `course_type` | VARCHAR(32) | — | 必修 / 选修 / 公选 |
@@ -830,26 +828,7 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 
 ---
 
-#### 表 27：`t_report` — 分析报告表
-
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| `id` | BIGINT | PK, AUTO_INCREMENT | 主键 |
-| `report_name` | VARCHAR(256) | NOT NULL | 报告名称 |
-| `report_type` | VARCHAR(32) | — | COURSE / CLASS / STUDENT / EXAM / SEMESTER |
-| `semester` | VARCHAR(32) | — | 学期 |
-| `course_id` | BIGINT | **FK** → t_course.id, SET NULL | 关联课程 |
-| `teacher_id` | BIGINT | **FK** → t_teacher.id, SET NULL | 关联教师 |
-| `student_id` | BIGINT | — | 关联学生（STUDENT类型时） |
-| `summary` | VARCHAR(2048) | — | 报告摘要 |
-| `report_data` | JSON | — | 完整报告数据 |
-| `ai_analysis` | TEXT | — | AI分析结果 |
-| `generate_time` | DATETIME | DEFAULT CURRENT_TIMESTAMP | 生成时间 |
-| `deleted` | TINYINT | DEFAULT 0 | 逻辑删除 |
-
----
-
-#### 表 28：`t_ai_analysis_result` — AI分析结果表
+#### 表 27：`t_ai_analysis_result` — AI分析结果表
 
 多态关联，可指向学生/课程/报告/考核/考试。
 
@@ -866,17 +845,6 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 | `deleted` | TINYINT | DEFAULT 0 | 逻辑删除 |
 
 **索引**：`idx_target`(target_type, target_id), `idx_analysis_type`, `idx_analysis_time`
-
----
-
-### 3.11 [DEPRECATED] 评教遗留表
-
-保留以下两表确保向后兼容，新功能代码不再引用。
-
-| 表 | 原用途 | 状态 |
-|----|--------|------|
-| `t_evaluation_indicator` | 评教指标体系（教学态度/内容/方法/效果） | 保留，不再使用 |
-| `t_evaluation_score` | 学生对教师的评教打分 | 保留，不再使用 |
 
 ---
 
@@ -918,8 +886,6 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 | 32 | `fk_nr_notification` | t_notification_recipient.notification_id | t_notification.id | CASCADE |
 | 33 | `fk_nr_recipient` | t_notification_recipient.recipient_id | t_user.id | CASCADE |
 | 34 | `fk_log_source` | t_data_import_log.source_id | t_data_source.id | SET NULL |
-| 35 | `fk_report_course` | t_report.course_id | t_course.id | SET NULL |
-| 36 | `fk_report_teacher` | t_report.teacher_id | t_teacher.id | SET NULL |
 
 ---
 
@@ -981,7 +947,7 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 
 ## 六、索引设计
 
-**总计：28 张表，约 80+ 个索引**
+**总计：27 张表，约 80+ 个索引**
 
 | 表 | 索引名 | 字段 | 类型 |
 |----|--------|------|------|
@@ -1023,7 +989,6 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 | t_operation_log | `idx_log_type` / `idx_user_id` / `idx_time` / `idx_type_time` | - | NORMAL |
 | t_data_source | `idx_source_type` / `idx_status` | - | NORMAL |
 | t_data_import_log | `idx_source_id` / `idx_user_id` / `idx_import_type` / `idx_status` / `idx_time` | - | NORMAL |
-| t_report | `idx_report_type` / `idx_course_id` / `idx_teacher_id` / `idx_student_id` / `idx_semester` | - | NORMAL |
 | t_ai_analysis_result | `idx_target`(target_type, target_id) / `idx_analysis_type` / `idx_time` | - | NORMAL |
 
 ---
