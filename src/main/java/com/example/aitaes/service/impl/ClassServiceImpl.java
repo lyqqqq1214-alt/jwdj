@@ -237,8 +237,9 @@ public class ClassServiceImpl implements ClassService {
 
         List<StudentVO> results = new ArrayList<>();
         GenericExcelListener<com.example.aitaes.dto.excel.StudentExcelDTO> listener =
-                new GenericExcelListener<>(500, batch -> {
-                    for (com.example.aitaes.dto.excel.StudentExcelDTO dto : batch) {
+                new GenericExcelListener<>(500, (batch, collector) -> {
+                    for (GenericExcelListener.ExcelRow<com.example.aitaes.dto.excel.StudentExcelDTO> row : batch) {
+                        com.example.aitaes.dto.excel.StudentExcelDTO dto = row.data();
                         try {
                             // 查找或创建学生
                             Student student = studentMapper.selectOne(
@@ -269,7 +270,9 @@ public class ClassServiceImpl implements ClassService {
                                 courseStudentMapper.insert(cs);
                             }
                             results.add(toStudentVO(student, null));
+                            collector.success();
                         } catch (Exception e) {
+                            collector.fail(row.rowNo(), "导入学生失败: " + e.getMessage());
                             log.warn("导入学生失败: studentNo={}, error={}", dto.getStudentNo(), e.getMessage());
                         }
                     }

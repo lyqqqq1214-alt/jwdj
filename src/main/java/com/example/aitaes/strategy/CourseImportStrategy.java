@@ -6,9 +6,10 @@ import com.example.aitaes.dto.ImportResultDTO;
 import com.example.aitaes.dto.excel.CourseExcelDTO;
 import com.example.aitaes.entity.Course;
 import com.example.aitaes.entity.Teacher;
-import com.example.aitaes.enums.ImportStatus;
 import com.example.aitaes.enums.ImportType;
 import com.example.aitaes.listener.GenericExcelListener;
+import com.example.aitaes.listener.GenericExcelListener.ExcelRow;
+import com.example.aitaes.listener.RowResultCollector;
 import com.example.aitaes.mapper.CourseMapper;
 import com.example.aitaes.mapper.TeacherMapper;
 import lombok.RequiredArgsConstructor;
@@ -41,19 +42,19 @@ public class CourseImportStrategy implements ImportStrategy {
     }
 
     @Override
-    public ImportResultDTO execute(InputStream inputStream, String originalFilename) {
+    public ImportResultDTO execute(InputStream inputStream, ImportContext ctx) {
         GenericExcelListener<CourseExcelDTO> listener =
                 new GenericExcelListener<>(500, this::saveBatch);
         EasyExcel.read(inputStream, CourseExcelDTO.class, listener)
-                .excelType(getExcelType(originalFilename))
+                .excelType(getExcelType(ctx.getOriginalFilename()))
                 .sheet().doRead();
-        return buildResult(listener);
+        return listener.buildResult();
     }
 
-    private void saveBatch(List<CourseExcelDTO> dtoList) {
+    private void saveBatch(List<ExcelRow<CourseExcelDTO>> batch, RowResultCollector collector) {
         // 1. 预查重复课程编号
-        List<String> courseNos = dtoList.stream()
-                .map(CourseExcelDTO::getCourseNo)
+        List<String> courseNos = batch.stream()
+                .map(row -> row.data().getCourseNo())
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
@@ -69,8 +70,8 @@ public class CourseImportStrategy implements ImportStrategy {
         }
 
         // 2. 解析 teacherNo → teacherId
-        List<String> teacherNos = dtoList.stream()
-                .map(CourseExcelDTO::getTeacherNo)
+        List<String> teacherNos = batch.stream()
+                .map(row -> row.data().getTeacherNo())
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
@@ -83,34 +84,37 @@ public class CourseImportStrategy implements ImportStrategy {
             ).stream().collect(Collectors.toMap(Teacher::getTeacherNo, Teacher::getId));
         }
 
-        // 3. 过滤 + 转换（跳过无效行和无法解析教师的课程）
-        Map<String, Long> finalTeacherNoToId = teacherNoToId;
-        List<Course> courses = dtoList.stream()
-                .filter(dto -> dto.getCourseNo() != null && !dto.getCourseNo().isBlank())
-                .filter(dto -> dto.getCourseName() != null && !dto.getCourseName().isBlank())
-                .filter(dto -> !existingNos.contains(dto.getCourseNo()))
-                .filter(dto -> {
-                    // 有教师工号但解析失败 → 跳过
-                    if (dto.getTeacherNo() == null || dto.getTeacherNo().isBlank()) return true;
-                    if (!finalTeacherNoToId.containsKey(dto.getTeacherNo())) {
-                        log.warn("课程 {} 的教师 {} 不存在，跳过该行", dto.getCourseNo(), dto.getTeacherNo());
-                        return false;
-                    }
-                    return true;
-                })
-                .map(dto -> toEntity(dto, finalTeacherNoToId))
-                .toList();
-
-        // 4. 逐行插入（单行失败不影响其他行）
-        if (!courses.isEmpty()) {
-            for (Course course : courses) {
-                try {
-                    courseMapper.insert(course);
-                } catch (Exception e) {
-                    log.warn("插入课程失败: courseNo={}, 原因: {}", course.getCourseNo(), e.getMessage());
-                }
+        // 3. 逐行校验并插入（单行失败不影响其他行）
+        for (ExcelRow<CourseExcelDTO> row : batch) {
+            CourseExcelDTO dto = row.data();
+            if (dto.getCourseNo() == null || dto.getCourseNo().isBlank()) {
+                collector.skip(row.rowNo(), "课程编号为空，跳过");
+                continue;
             }
-            log.debug("批量插入课程数据 {} 条", courses.size());
+            if (dto.getCourseName() == null || dto.getCourseName().isBlank()) {
+                collector.fail(row.rowNo(), "课程名称为空: " + dto.getCourseNo());
+                continue;
+            }
+            if (existingNos.contains(dto.getCourseNo())) {
+                collector.skip(row.rowNo(), "课程编号已存在，跳过: " + dto.getCourseNo());
+                continue;
+            }
+            // 有教师工号但解析失败 → 该行失败
+            if (dto.getTeacherNo() != null && !dto.getTeacherNo().isBlank()
+                    && !teacherNoToId.containsKey(dto.getTeacherNo())) {
+                collector.fail(row.rowNo(), String.format("课程 %s 的教师 %s 不存在",
+                        dto.getCourseNo(), dto.getTeacherNo()));
+                continue;
+            }
+
+            try {
+                courseMapper.insert(toEntity(dto, teacherNoToId));
+                existingNos.add(dto.getCourseNo()); // 避免同批次重复插入
+                collector.success();
+            } catch (Exception e) {
+                collector.fail(row.rowNo(), "插入课程失败: " + e.getMessage());
+                log.warn("插入课程失败: courseNo={}, 原因: {}", dto.getCourseNo(), e.getMessage());
+            }
         }
     }
 
@@ -122,24 +126,5 @@ public class CourseImportStrategy implements ImportStrategy {
             course.setTeacherId(teacherNoToId.get(dto.getTeacherNo()));
         }
         return course;
-    }
-
-    private ImportResultDTO buildResult(GenericExcelListener<?> listener) {
-        ImportResultDTO result = new ImportResultDTO();
-        result.setTotalRows(listener.getTotalRows());
-        result.setSuccessRows(listener.getSuccessCount());
-        result.setFailRows(listener.getFailCount());
-
-        if (listener.getFailCount() == 0) {
-            result.setStatus(ImportStatus.SUCCESS.getCode());
-        } else if (listener.getSuccessCount() == 0) {
-            result.setStatus(ImportStatus.FAILED.getCode());
-        } else {
-            result.setStatus(ImportStatus.PARTIAL.getCode());
-        }
-
-        List<String> allErrors = listener.getErrorMessages();
-        result.setErrors(allErrors.size() > 100 ? allErrors.subList(0, 100) : allErrors);
-        return result;
     }
 }

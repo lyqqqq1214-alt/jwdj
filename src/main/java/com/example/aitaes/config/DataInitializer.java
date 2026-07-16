@@ -7,6 +7,7 @@ import com.example.aitaes.util.PasswordUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -18,9 +19,13 @@ import java.util.Random;
 
 /**
  * 数据初始化器 — 应用启动时自动初始化种子用户数据和测试数据
+ * <p>
+ * 仅在非 test profile 下运行：JUnit 集成测试用 @Sql 自建 schema/数据，
+ * 若在测试上下文启动时执行本类会因 H2 空库（表尚未创建）而导致上下文加载失败。
  */
 @Slf4j
 @Component
+@Profile("!test")
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 

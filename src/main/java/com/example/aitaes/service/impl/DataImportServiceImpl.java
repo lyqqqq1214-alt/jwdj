@@ -12,6 +12,7 @@ import com.example.aitaes.entity.DataImportLog;
 import com.example.aitaes.enums.ImportType;
 import com.example.aitaes.mapper.DataImportLogMapper;
 import com.example.aitaes.service.DataImportService;
+import com.example.aitaes.strategy.ImportContext;
 import com.example.aitaes.strategy.ImportStrategy;
 import com.example.aitaes.strategy.ImportStrategyFactory;
 import lombok.RequiredArgsConstructor;
@@ -61,32 +62,37 @@ public class DataImportServiceImpl implements DataImportService {
     );
 
     @Override
-    public ImportResultDTO importFile(MultipartFile file, String importType, Long sourceId) {
+    public ImportResultDTO importFile(MultipartFile file, String importType, ImportContext context) {
         // 1. 文件校验
         validateFile(file);
 
         // 2. 解析导入类型
         ImportType type = ImportType.fromCode(importType.toUpperCase());
 
-        // 3. 获取策略
+        // 3. 获取策略，补全导入上下文
         ImportStrategy strategy = strategyFactory.getStrategy(type);
+        if (context == null) {
+            context = new ImportContext();
+        }
+        context.setImportType(type);
+        context.setOriginalFilename(file.getOriginalFilename());
 
         // 4. 执行导入
         ImportResultDTO result;
         try (InputStream inputStream = file.getInputStream()) {
-            log.info("开始导入 {}: 文件={}, 类型={}", type.getDescription(),
-                    file.getOriginalFilename(), type.getCode());
-            result = strategy.execute(inputStream, file.getOriginalFilename());
-            log.info("导入完成 {}: 总{}行, 成功{}行, 失败{}行",
+            log.info("开始导入 {}: 文件={}, 类型={}, courseId={}", type.getDescription(),
+                    file.getOriginalFilename(), type.getCode(), context.getCourseId());
+            result = strategy.execute(inputStream, context);
+            log.info("导入完成 {}: 总{}行, 成功{}行, 失败{}行, 跳过{}行",
                     type.getDescription(), result.getTotalRows(),
-                    result.getSuccessRows(), result.getFailRows());
+                    result.getSuccessRows(), result.getFailRows(), result.getSkippedRows());
         } catch (IOException e) {
             log.error("文件读取失败: {}", e.getMessage());
             throw new BusinessException("文件读取失败: " + e.getMessage());
         }
 
         // 5. 记录导入日志
-        saveImportLog(file.getOriginalFilename(), type.getCode(), sourceId, result);
+        saveImportLog(file.getOriginalFilename(), type.getCode(), context.getSourceId(), result);
 
         return result;
     }

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * 继承 {@link AbstractAssessmentImportStrategy}，assessment_type = QUIZ。
  * Excel 格式与作业成绩相同。
  * <p>
- * 文件名格式：{课程编号}_QUIZ_{考核名称}.xlsx
+ * 课程与考核名称优先来自页面参数，回退文件名格式：{课程编号}_QUIZ_{考核名称}.xlsx
  * 如：CS-NET-001_QUIZ_第1次测验.xlsx
  */
 @Slf4j
@@ -23,9 +23,10 @@ public class QuizImportStrategy extends AbstractAssessmentImportStrategy {
                                RecordKpDeductionMapper deductionMapper,
                                StudentMapper studentMapper,
                                CourseMapper courseMapper,
-                               StudentKpMasteryMapper masteryMapper) {
+                               StudentKpMasteryMapper masteryMapper,
+                               CourseResolver courseResolver) {
         super(assessmentMapper, recordMapper, deductionMapper,
-                studentMapper, courseMapper, masteryMapper);
+                studentMapper, courseMapper, masteryMapper, courseResolver);
     }
 
     @Override

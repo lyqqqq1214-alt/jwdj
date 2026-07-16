@@ -6,7 +6,6 @@ import com.alibaba.excel.read.listener.ReadListener;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.aitaes.dto.ImportResultDTO;
 import com.example.aitaes.entity.*;
-import com.example.aitaes.enums.ImportStatus;
 import com.example.aitaes.mapper.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,13 +25,17 @@ import java.util.*;
  * <p>
  * 子类只需实现 {@link #getSupportedType()} 返回对应的 ImportType。
  * <p>
- * Excel 模板格式（多Sheet，每个Sheet一个班级）：
+ * Excel 模板格式（列顺序任意，按表头列名定位）：
  * <pre>
- * 序号 | 学号 | 姓名 | 第1题得分 | 扣分知识点 | 第2题得分 | 扣分知识点 | ... | 总成绩 | 最薄弱知识点
+ * 序号 | 学号 | 姓名 | 第1题得分 | 扣分主要知识点 | ... | 第N题得分 | 扣分主要知识点 | 总成绩 | 最薄弱知识点
  * </pre>
- * 题目数量由表头动态检测。
+ * 题目数量由表头动态检测；无题目列时仅导入总成绩。
  * <p>
- * 文件名格式：{课程编号}_{类型}_{名称}.xlsx，如 CS-NET-001_HOMEWORK_第1次作业.xlsx
+ * 课程与考核信息优先来自 {@link ImportContext}（前端页面选择/填写），
+ * 回退兼容旧文件名约定：{课程编号}_{类型}_{名称}.xlsx，如 CS-NET-001_HOMEWORK_第1次作业.xlsx。
+ * <p>
+ * 所有可变状态封装在方法内局部的 {@link AssessmentSession} 中，
+ * 单例 Bean 无跨请求脏状态，支持并发导入。
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -47,59 +50,150 @@ public abstract class AbstractAssessmentImportStrategy implements ImportStrategy
     protected final StudentMapper studentMapper;
     protected final CourseMapper courseMapper;
     protected final StudentKpMasteryMapper masteryMapper;
+    protected final CourseResolver courseResolver;
 
-    /** 导入上下文 */
-    protected Long courseId;
-    protected String assessmentName;
-    protected String assessmentType;
-    protected String semester;
-    protected List<String> errors = new ArrayList<>();
-    protected int totalRows;
-    protected int successRows;
-    protected int failRows;
+    /** 单次导入的上下文与统计（局部创建，避免单例 Bean 跨请求脏状态） */
+    protected static class AssessmentSession {
+        Long courseId;
+        String semester;
+        String assessmentType;
+        String assessmentName;
+        final List<String> errors = new ArrayList<>();
+        final List<String> warnings = new ArrayList<>();
+        int totalRows;
+        int successRows;
+        int failRows;
+        int skippedRows;
+    }
+
+    /** 表头列位置（按列名定位，对列顺序鲁棒） */
+    protected static class ColumnLayout {
+        int studentNoCol = -1;
+        int nameCol = -1;
+        int totalScoreCol = -1;
+        int weakestKpCol = -1;
+        /** 每题一项：[题号, 得分列, 扣分知识点列(-1 表示无)] */
+        final List<int[]> questions = new ArrayList<>();
+    }
+
+    /** 携带真实 Excel 行号的原始行数据 */
+    protected record RawRow(int rowNo, Map<Integer, String> data) {
+    }
 
     @Override
-    public ImportResultDTO execute(InputStream inputStream, String originalFilename) {
-        errors.clear();
-        totalRows = 0;
-        successRows = 0;
-        failRows = 0;
+    public ImportResultDTO execute(InputStream inputStream, ImportContext ctx) {
+        AssessmentSession session = new AssessmentSession();
 
-        // 解析文件名获取考核信息
-        parseFileName(originalFilename);
+        // 1. 确定课程（页面参数优先，文件名约定回退）
+        CourseResolver.ResolvedCourse resolved = courseResolver.resolve(ctx);
+        if (resolved == null) {
+            return ImportResultDTO.failed(CourseResolver.COURSE_NOT_FOUND_MSG);
+        }
+        session.courseId = resolved.courseId();
+        session.semester = resolved.semester();
 
-        // 读取所有Sheet的数据
-        List<Map<Integer, String>> allRows = new ArrayList<>();
+        // 2. 确定考核名称与类型（页面参数优先，文件名约定回退）
+        if (ctx.getAssessmentName() != null && !ctx.getAssessmentName().isBlank()) {
+            session.assessmentName = ctx.getAssessmentName().trim();
+        }
+        resolveAssessmentInfo(ctx, session);
+        if (session.assessmentName == null || session.assessmentName.isBlank()) {
+            return ImportResultDTO.failed(
+                    "无法确定考核名称：请在页面填写考核名称（或使用文件名格式 {课程编号}_类型_考核名称.xlsx）");
+        }
+        if (session.assessmentType == null) {
+            return ImportResultDTO.failed("无法确定考核类型：期中/期末成绩导入请在页面选择期中或期末");
+        }
+
+        // 3. 读取表头与所有数据行
         List<String> headerRow = new ArrayList<>();
+        List<RawRow> allRows = new ArrayList<>();
+        readRows(inputStream, ctx.getOriginalFilename(), headerRow, allRows);
 
+        // 4. 按表头列名定位各列
+        ColumnLayout layout = resolveColumns(headerRow);
+        if (layout.studentNoCol < 0) {
+            return ImportResultDTO.failed("表头缺少\"学号\"列，请下载并使用官方导入模板");
+        }
+        log.info("表头定位: 学号列={}, 总成绩列={}, 题目数={}",
+                layout.studentNoCol, layout.totalScoreCol, layout.questions.size());
+
+        // 5. 过滤学生数据行（学号列非空；汇总行/空行自然被跳过）
+        List<RawRow> studentRows = allRows.stream()
+                .filter(row -> !cell(row.data(), layout.studentNoCol).isBlank())
+                .toList();
+        if (studentRows.isEmpty()) {
+            // 未解析到数据行 → 统一 FAILED（不创建空考核记录）
+            return ImportResultDTO.of(0, 0, 0, 0, session.errors, session.warnings);
+        }
+
+        // 6. 查找或创建考核
+        Assessment assessment = findOrCreateAssessment(session, layout.questions.size());
+
+        // 7. 逐行处理学生数据
+        for (RawRow row : studentRows) {
+            session.totalRows++;
+            try {
+                processStudentRow(row, layout, assessment, session);
+            } catch (Exception e) {
+                session.failRows++;
+                session.errors.add(String.format("第%d行处理失败: %s", row.rowNo(), e.getMessage()));
+                log.warn("处理学生行失败: 第{}行", row.rowNo(), e);
+            }
+        }
+
+        // 8. 导入完成后重新计算知识点掌握度
+        if (session.successRows > 0) {
+            recalculateKpMastery(assessment.getId(), session.courseId);
+        }
+
+        return ImportResultDTO.of(session.totalRows, session.successRows, session.failRows,
+                session.skippedRows, session.errors, session.warnings);
+    }
+
+    /**
+     * 确定考核类型与名称（页面参数缺省时回退文件名约定）。
+     * 基类实现：HOMEWORK/QUIZ 类型由策略自身决定；名称回退文件名第三段。
+     * EXAM_SCORE 子类重写以处理 MIDTERM/FINAL。
+     */
+    protected void resolveAssessmentInfo(ImportContext ctx, AssessmentSession session) {
+        session.assessmentType = getSupportedType().getCode();
+        if (session.assessmentName == null) {
+            String[] parts = splitFilename(ctx.getOriginalFilename());
+            if (parts != null && parts.length >= 3 && SUPPORTED_TYPES.contains(parts[1].toUpperCase())) {
+                session.assessmentName = parts[2];
+                log.info("从文件名解析考核名称: {}", session.assessmentName);
+            }
+        }
+    }
+
+    /** 去掉扩展名后按下划线切分文件名 */
+    protected static String[] splitFilename(String filename) {
+        if (filename == null) {
+            return null;
+        }
+        return filename.replaceAll("(?i)\\.(xlsx|xls|csv)$", "").split("_");
+    }
+
+    /**
+     * 读取首个 Sheet：第一行作为表头，其余行连同真实行号收集
+     */
+    private void readRows(InputStream inputStream, String filename,
+                          List<String> headerRow, List<RawRow> allRows) {
         EasyExcel.read(inputStream, new ReadListener<Map<Integer, String>>() {
             private boolean isHeader = true;
 
             @Override
             public void invoke(Map<Integer, String> data, AnalysisContext context) {
                 if (isHeader) {
-                    headerRow.clear();
-                    for (int i = 0; i < data.size(); i++) {
-                        headerRow.add(data.getOrDefault(i, ""));
+                    int maxCol = data.keySet().stream().mapToInt(Integer::intValue).max().orElse(-1);
+                    for (int i = 0; i <= maxCol; i++) {
+                        headerRow.add(Objects.toString(data.get(i), ""));
                     }
                     isHeader = false;
                     return;
                 }
-
-                // 跳过空行和知识点汇总行
-                String firstCell = data.getOrDefault(0, "");
-                if (firstCell == null || firstCell.isBlank()) {
-                    return;
-                }
-
-                // 跳过非学生数据行（序号不能解析为数字的行）
-                try {
-                    Integer.parseInt(firstCell.trim());
-                } catch (NumberFormatException e) {
-                    return;
-                }
-
-                allRows.add(data);
+                allRows.add(new RawRow(context.readRowHolder().getRowIndex() + 1, data));
             }
 
             @Override
@@ -108,123 +202,116 @@ public abstract class AbstractAssessmentImportStrategy implements ImportStrategy
             }
             // headRowNumber(0)：所有行（含表头）都进 invoke()，由上面的 isHeader 逻辑识别表头，
             // 否则 EasyExcel 默认吞掉首行导致第一个学生行被误当表头丢弃
-        }).excelType(getExcelType(originalFilename)).headRowNumber(0).sheet().doRead();
-
-        // 解析题目数
-        int questionCount = detectQuestionCount(headerRow);
-        log.info("检测到题目数: {}", questionCount);
-
-        // 查找或创建考核记录
-        Assessment assessment = findOrCreateAssessment(questionCount);
-
-        // 逐行处理学生数据
-        for (Map<Integer, String> row : allRows) {
-            try {
-                processStudentRow(row, assessment, questionCount);
-                successRows++;
-            } catch (Exception e) {
-                failRows++;
-                errors.add(String.format("第%d行处理失败: %s", totalRows + 1, e.getMessage()));
-                log.warn("处理学生行失败", e);
-            }
-            totalRows++;
-        }
-
-        // 导入完成后重新计算知识点掌握度
-        recalculateKpMastery(assessment.getId());
-
-        return buildResult();
+        }).excelType(getExcelType(filename)).headRowNumber(0).sheet().doRead();
     }
 
     /**
-     * 从文件名解析课程和考核信息
-     * 格式：{课程编号}_{类型}_{考核名称}.xlsx
+     * 按表头列名定位各列位置（对列顺序鲁棒，兼容新旧模板格式）
      */
-    protected void parseFileName(String filename) {
-        if (filename == null) return;
-        String name = filename.replaceAll("(?i)\\.(xlsx|xls|csv)$", "");
-        String[] parts = name.split("_");
-        if (parts.length >= 3 && SUPPORTED_TYPES.contains(parts[1].toUpperCase())) {
-            // 查找课程
-            Course course = courseMapper.selectOne(
-                    new LambdaQueryWrapper<Course>().eq(Course::getCourseNo, parts[0]));
-            if (course != null) {
-                this.courseId = course.getId();
-                this.semester = course.getSemester();
-            }
-            this.assessmentType = parts[1].toUpperCase();
-            this.assessmentName = parts[2];
-            log.info("解析文件名: courseNo={}, type={}, name={}", parts[0], assessmentType, assessmentName);
-        }
-    }
-
-    /**
-     * 从表头中检测题目数量（匹配"第X题得分"模式）
-     */
-    protected int detectQuestionCount(List<String> header) {
-        int maxQ = 0;
-        for (String col : header) {
-            if (col != null && col.matches("第\\d+题得分")) {
+    protected ColumnLayout resolveColumns(List<String> header) {
+        ColumnLayout layout = new ColumnLayout();
+        for (int i = 0; i < header.size(); i++) {
+            String col = header.get(i) == null ? "" : header.get(i).trim();
+            if ("学号".equals(col) && layout.studentNoCol < 0) {
+                layout.studentNoCol = i;
+            } else if ("姓名".equals(col) && layout.nameCol < 0) {
+                layout.nameCol = i;
+            } else if (("总成绩".equals(col) || "总分".equals(col)) && layout.totalScoreCol < 0) {
+                layout.totalScoreCol = i;
+            } else if ("最薄弱知识点".equals(col) && layout.weakestKpCol < 0) {
+                layout.weakestKpCol = i;
+            } else if (col.matches("第\\d+题得分")) {
                 int qno = Integer.parseInt(col.replaceAll("[^0-9]", ""));
-                maxQ = Math.max(maxQ, qno);
+                // 扣分知识点列 = 得分列右侧紧邻的"扣分(主要)知识点"列
+                int deductionCol = -1;
+                if (i + 1 < header.size()) {
+                    String next = header.get(i + 1) == null ? "" : header.get(i + 1).trim();
+                    if (isDeductionHeader(next)) {
+                        deductionCol = i + 1;
+                    }
+                }
+                layout.questions.add(new int[]{qno, i, deductionCol});
             }
         }
-        return maxQ > 0 ? maxQ : 5;
+        return layout;
+    }
+
+    private static boolean isDeductionHeader(String col) {
+        return col.contains("扣分") && col.contains("知识点");
+    }
+
+    /** 安全取单元格文本（null → 空串，自动 trim） */
+    protected static String cell(Map<Integer, String> data, int col) {
+        if (col < 0) {
+            return "";
+        }
+        String value = data.get(col);
+        return value == null ? "" : value.trim();
     }
 
     /**
-     * 查找或创建考核
+     * 查找或创建考核（按 课程 + 考核名称 + 考核类型 去重）
      */
-    protected Assessment findOrCreateAssessment(int questionCount) {
-        if (courseId == null || assessmentName == null) {
-            throw new IllegalStateException(
-                    "无法确定课程或考核名称，请检查文件名格式: COURSENO_TYPE_NAME.xlsx");
-        }
-
+    protected Assessment findOrCreateAssessment(AssessmentSession session, int questionCount) {
         Assessment existing = assessmentMapper.selectOne(
                 new LambdaQueryWrapper<Assessment>()
-                        .eq(Assessment::getCourseId, courseId)
-                        .eq(Assessment::getAssessmentName, assessmentName));
+                        .eq(Assessment::getCourseId, session.courseId)
+                        .eq(Assessment::getAssessmentName, session.assessmentName)
+                        .eq(Assessment::getAssessmentType, session.assessmentType));
 
         if (existing != null) {
             return existing;
         }
 
         Assessment assessment = new Assessment();
-        assessment.setCourseId(courseId);
-        assessment.setAssessmentName(assessmentName);
-        assessment.setAssessmentType(assessmentType != null ? assessmentType : "HOMEWORK");
+        assessment.setCourseId(session.courseId);
+        assessment.setAssessmentName(session.assessmentName);
+        assessment.setAssessmentType(session.assessmentType);
         assessment.setTotalScore(new BigDecimal("100.00"));
         assessment.setQuestionCount(questionCount);
-        assessment.setSemester(semester);
+        assessment.setSemester(session.semester);
         assessment.setAssessmentDate(LocalDate.now());
         assessmentMapper.insert(assessment);
         return assessment;
     }
 
     /**
-     * 处理单个学生行
+     * 处理单个学生行（成功/跳过在此计数，异常由调用方计为失败）
      */
-    protected void processStudentRow(Map<Integer, String> row, Assessment assessment, int questionCount) {
-        String studentNo = row.getOrDefault(1, "").trim();
-        String studentName = row.getOrDefault(2, "").trim();
-
-        if (studentNo.isEmpty()) return;
+    protected void processStudentRow(RawRow rawRow, ColumnLayout layout,
+                                     Assessment assessment, AssessmentSession session) {
+        Map<Integer, String> row = rawRow.data();
+        String studentNo = cell(row, layout.studentNoCol);
 
         // 查找学生
         Student student = studentMapper.selectOne(
                 new LambdaQueryWrapper<Student>().eq(Student::getStudentNo, studentNo));
         if (student == null) {
-            throw new RuntimeException("学生不存在: " + studentNo);
+            throw new RuntimeException("学生不存在: " + studentNo + "（请先导入学生名单）");
         }
 
-        // 总成绩在第 N*2+3 列（序号0 + 学号1 + 姓名2 + N题×(得分+知识点) = 3+2N）
-        int totalScoreCol = 3 + questionCount * 2;
-        String totalScoreStr = row.getOrDefault(totalScoreCol, "0").trim();
-        BigDecimal totalScore = parseScore(totalScoreStr);
+        // 重复导入检查（uk_record: assessment_id + student_id）
+        AssessmentRecord existing = recordMapper.selectOne(
+                new LambdaQueryWrapper<AssessmentRecord>()
+                        .eq(AssessmentRecord::getAssessmentId, assessment.getId())
+                        .eq(AssessmentRecord::getStudentId, student.getId()));
+        if (existing != null) {
+            session.skippedRows++;
+            session.warnings.add(String.format("第%d行: 学生 %s 在该考核已有成绩记录，跳过", rawRow.rowNo(), studentNo));
+            return;
+        }
 
-        // 最薄弱知识点在总成绩后一列
-        String weakestKp = row.getOrDefault(totalScoreCol + 1, "").trim();
+        // 总成绩：优先取"总成绩"列；无该列时按各题得分求和
+        BigDecimal totalScore;
+        if (layout.totalScoreCol >= 0) {
+            totalScore = parseScore(cell(row, layout.totalScoreCol));
+        } else {
+            totalScore = layout.questions.stream()
+                    .map(q -> parseScore(cell(row, q[1])))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+
+        String weakestKp = cell(row, layout.weakestKpCol);
 
         // 创建考核记录
         AssessmentRecord record = new AssessmentRecord();
@@ -236,37 +323,36 @@ public abstract class AbstractAssessmentImportStrategy implements ImportStrategy
         recordMapper.insert(record);
 
         // 逐题创建扣分知识点明细
-        for (int q = 1; q <= questionCount; q++) {
-            int scoreCol = 3 + (q - 1) * 2;
-            int deductionCol = scoreCol + 1;
+        for (int[] question : layout.questions) {
+            int questionNo = question[0];
+            String scoreStr = cell(row, question[1]);
+            String deductionKp = cell(row, question[2]);
 
-            String scoreStr = row.getOrDefault(scoreCol, "");
-            String deductionKp = row.getOrDefault(deductionCol, "");
-
-            if (scoreStr == null || scoreStr.trim().isEmpty()) {
+            if (scoreStr.isEmpty()) {
                 continue;
             }
 
-            BigDecimal questionScore = parseScore(scoreStr.trim());
+            BigDecimal questionScore = parseScore(scoreStr);
 
             // 有扣分知识点或得分低于满分时记录
-            if (questionScore.compareTo(new BigDecimal("20")) < 0
-                    || (deductionKp != null && !deductionKp.trim().isEmpty())) {
+            if (questionScore.compareTo(new BigDecimal("20")) < 0 || !deductionKp.isEmpty()) {
                 RecordKpDeduction deduction = new RecordKpDeduction();
                 deduction.setRecordId(record.getId());
-                deduction.setQuestionNo(q);
+                deduction.setQuestionNo(questionNo);
                 deduction.setQuestionScore(questionScore);
                 deduction.setMaxScore(new BigDecimal("20"));
-                deduction.setDeductionKp(deductionKp != null ? deductionKp.trim() : "");
+                deduction.setDeductionKp(deductionKp);
                 deductionMapper.insert(deduction);
             }
         }
+
+        session.successRows++;
     }
 
     /**
      * 重算学生知识点掌握度
      */
-    protected void recalculateKpMastery(Long assessmentId) {
+    protected void recalculateKpMastery(Long assessmentId, Long courseId) {
         List<AssessmentRecord> records = recordMapper.selectList(
                 new LambdaQueryWrapper<AssessmentRecord>()
                         .eq(AssessmentRecord::getAssessmentId, assessmentId));
@@ -346,23 +432,5 @@ public abstract class AbstractAssessmentImportStrategy implements ImportStrategy
         } catch (NumberFormatException e) {
             return BigDecimal.ZERO;
         }
-    }
-
-    protected ImportResultDTO buildResult() {
-        ImportResultDTO result = new ImportResultDTO();
-        result.setTotalRows(totalRows);
-        result.setSuccessRows(successRows);
-        result.setFailRows(failRows);
-
-        if (failRows == 0) {
-            result.setStatus(ImportStatus.SUCCESS.getCode());
-        } else if (successRows == 0) {
-            result.setStatus(ImportStatus.FAILED.getCode());
-        } else {
-            result.setStatus(ImportStatus.PARTIAL.getCode());
-        }
-
-        result.setErrors(errors.size() > 100 ? errors.subList(0, 100) : errors);
-        return result;
     }
 }

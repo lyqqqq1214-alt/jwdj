@@ -7,9 +7,10 @@ import com.example.aitaes.dto.excel.StudentExcelDTO;
 import com.example.aitaes.entity.Student;
 import com.example.aitaes.entity.SystemConfig;
 import com.example.aitaes.entity.User;
-import com.example.aitaes.enums.ImportStatus;
 import com.example.aitaes.enums.ImportType;
 import com.example.aitaes.listener.GenericExcelListener;
+import com.example.aitaes.listener.GenericExcelListener.ExcelRow;
+import com.example.aitaes.listener.RowResultCollector;
 import com.example.aitaes.mapper.StudentMapper;
 import com.example.aitaes.mapper.SystemConfigMapper;
 import com.example.aitaes.mapper.UserMapper;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
  * <p>
  * 对于新学生（学号在 t_student 中不存在），自动创建 t_user 认证账号，
  * 使用系统配置的默认密码（BCrypt 加密），角色设为 STUDENT，标记首次登录。
+ * 已存在的学号跳过并计入警告（不再静默计为成功）。
  */
 @Slf4j
 @Component
@@ -41,29 +43,29 @@ public class StudentImportStrategy implements ImportStrategy {
     private final UserMapper userMapper;
     private final SystemConfigMapper systemConfigMapper;
 
-    /** 缓存默认密码，避免每条记录都查数据库 */
-    private String cachedDefaultPassword;
-    private boolean passwordLoaded;
-
     @Override
     public ImportType getSupportedType() {
         return ImportType.STUDENT;
     }
 
     @Override
-    public ImportResultDTO execute(InputStream inputStream, String originalFilename) {
-        GenericExcelListener<StudentExcelDTO> listener =
-                new GenericExcelListener<>(500, this::saveBatch);
+    public ImportResultDTO execute(InputStream inputStream, ImportContext ctx) {
+        // 每次导入读取一次默认密码（局部变量，避免单例缓存导致配置变更需重启）
+        String defaultPassword = loadDefaultPassword();
+
+        GenericExcelListener<StudentExcelDTO> listener = new GenericExcelListener<>(
+                500, (batch, collector) -> saveBatch(batch, defaultPassword, collector));
         EasyExcel.read(inputStream, StudentExcelDTO.class, listener)
-                .excelType(getExcelType(originalFilename))
+                .excelType(getExcelType(ctx.getOriginalFilename()))
                 .sheet().doRead();
-        return buildResult(listener);
+        return listener.buildResult();
     }
 
-    private void saveBatch(List<StudentExcelDTO> dtoList) {
+    private void saveBatch(List<ExcelRow<StudentExcelDTO>> batch, String defaultPassword,
+                           RowResultCollector collector) {
         // 1. 预查数据库中已有学号
-        List<String> studentNos = dtoList.stream()
-                .map(StudentExcelDTO::getStudentNo)
+        List<String> studentNos = batch.stream()
+                .map(row -> row.data().getStudentNo())
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
@@ -79,12 +81,18 @@ public class StudentImportStrategy implements ImportStrategy {
         }
 
         // 2. 对每个新学生：创建 t_user → t_student
-        String defaultPassword = getDefaultPassword();
         int createdCount = 0;
 
-        for (StudentExcelDTO dto : dtoList) {
-            if (dto.getStudentNo() == null || dto.getStudentNo().isBlank()) continue;
-            if (existingNos.contains(dto.getStudentNo())) continue;
+        for (ExcelRow<StudentExcelDTO> row : batch) {
+            StudentExcelDTO dto = row.data();
+            if (dto.getStudentNo() == null || dto.getStudentNo().isBlank()) {
+                collector.skip(row.rowNo(), "学号为空，跳过");
+                continue;
+            }
+            if (existingNos.contains(dto.getStudentNo())) {
+                collector.skip(row.rowNo(), "学号已存在，跳过: " + dto.getStudentNo());
+                continue;
+            }
 
             try {
                 // 2a. 创建 t_user 认证账号
@@ -104,8 +112,11 @@ public class StudentImportStrategy implements ImportStrategy {
                 student.setCreateTime(LocalDateTime.now());
                 studentMapper.insert(student);
 
+                existingNos.add(dto.getStudentNo()); // 避免同批次重复创建
                 createdCount++;
+                collector.success();
             } catch (Exception e) {
+                collector.fail(row.rowNo(), "创建学生账号失败: " + e.getMessage());
                 log.warn("创建学生账号失败: studentNo={}, 原因: {}", dto.getStudentNo(), e.getMessage());
             }
         }
@@ -116,45 +127,20 @@ public class StudentImportStrategy implements ImportStrategy {
     }
 
     /**
-     * 从系统配置读取默认初始密码，带缓存
+     * 从系统配置读取默认初始密码
      */
-    private String getDefaultPassword() {
-        if (!passwordLoaded) {
-            try {
-                SystemConfig config = systemConfigMapper.selectOne(
-                        new LambdaQueryWrapper<SystemConfig>()
-                                .eq(SystemConfig::getConfigKey, "default.password"));
-                if (config != null && config.getConfigValue() != null
-                        && !config.getConfigValue().isBlank()) {
-                    cachedDefaultPassword = config.getConfigValue();
-                }
-            } catch (Exception e) {
-                log.warn("读取默认密码配置失败，使用 fallback: 123456");
+    private String loadDefaultPassword() {
+        try {
+            SystemConfig config = systemConfigMapper.selectOne(
+                    new LambdaQueryWrapper<SystemConfig>()
+                            .eq(SystemConfig::getConfigKey, "default.password"));
+            if (config != null && config.getConfigValue() != null
+                    && !config.getConfigValue().isBlank()) {
+                return config.getConfigValue();
             }
-            if (cachedDefaultPassword == null || cachedDefaultPassword.isBlank()) {
-                cachedDefaultPassword = "123456";
-            }
-            passwordLoaded = true;
+        } catch (Exception e) {
+            log.warn("读取默认密码配置失败，使用 fallback: 123456");
         }
-        return cachedDefaultPassword;
-    }
-
-    private ImportResultDTO buildResult(GenericExcelListener<?> listener) {
-        ImportResultDTO result = new ImportResultDTO();
-        result.setTotalRows(listener.getTotalRows());
-        result.setSuccessRows(listener.getSuccessCount());
-        result.setFailRows(listener.getFailCount());
-
-        if (listener.getFailCount() == 0) {
-            result.setStatus(ImportStatus.SUCCESS.getCode());
-        } else if (listener.getSuccessCount() == 0) {
-            result.setStatus(ImportStatus.FAILED.getCode());
-        } else {
-            result.setStatus(ImportStatus.PARTIAL.getCode());
-        }
-
-        List<String> allErrors = listener.getErrorMessages();
-        result.setErrors(allErrors.size() > 100 ? allErrors.subList(0, 100) : allErrors);
-        return result;
+        return "123456";
     }
 }

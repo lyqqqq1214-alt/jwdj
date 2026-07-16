@@ -76,7 +76,14 @@ class ClassServiceImplTest {
         void shouldReturnClassesWithStudentCount() {
             when(teacherMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(teacher);
             when(courseMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(course));
-            when(courseStudentMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(30L);
+            // 实现为批量查询选课记录后按 courseId 分组计数（避免 N+1），mock 30 条选课记录
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(
+                    java.util.stream.LongStream.rangeClosed(1, 30).mapToObj(i -> {
+                        CourseStudent cs = new CourseStudent();
+                        cs.setCourseId(1L);
+                        cs.setStudentId(i);
+                        return cs;
+                    }).toList());
 
             List<ClassVO> result = classService.listMyClasses(1L);
 

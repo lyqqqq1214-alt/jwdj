@@ -101,7 +101,12 @@ Content-Type: multipart/form-data
 |------|------|------|------|
 | `file` | `File` | ✅ | 上传文件，支持 `.xlsx` / `.xls` / `.csv` |
 | `importType` | `String` | ✅ | 导入类型，见下方枚举 |
+| `courseId` | `Long` | ❌* | 归属课程 ID（成绩/考勤/实验/选课名单导入必填，优先于文件名解析） |
+| `assessmentName` | `String` | ❌* | 考核名称（`HOMEWORK`/`QUIZ`/`EXAM_SCORE` 必填，如"第1次作业"） |
+| `assessmentType` | `String` | ❌* | 考核类型，仅 `EXAM_SCORE`：`MIDTERM`（期中）/ `FINAL`（期末） |
 | `sourceId` | `Long` | ❌ | 关联的数据源 ID，用于追踪数据来源 |
+
+> *标注 ❌\* 的参数：前端页面必传；直接调 API 时可省略并回退到文件名约定解析（见下）。
 
 **importType 枚举**
 
@@ -120,7 +125,7 @@ Content-Type: multipart/form-data
 | `EXAM_SCORE` | 考核表 + 成绩记录 + 扣分明细（期中/期末） | 考核名称 + 学号 |
 | `KNOWLEDGE_POINT` | 知识点库表 | 课程编号 + 知识点名称 |
 
-**文件名约定**：所有导入类型的文件名格式为 `{课程编号}_{类型}_{描述}.xlsx`，系统从文件名自动解析课程关联。例如 `CS-NET-001_HOMEWORK_第1次作业.xlsx`。
+**课程归属**：成绩/考勤/实验/选课名单导入优先使用 `courseId` 参数；未传时回退文件名约定 `{课程编号}_{类型}_{描述}.xlsx`（如 `CS-NET-001_HOMEWORK_第1次作业.xlsx`）自动解析课程。两者均无法确定课程时返回 `status=FAILED`。完整表格格式规范见 [import-templates.md](import-templates.md)。
 
 **Excel 列模板**
 
@@ -143,62 +148,81 @@ Content-Type: multipart/form-data
 ```json
 {
   "code": 200,
-  "message": "导入成功: 共100行",
+  "message": "导入成功: 成功100行, 跳过0行",
   "data": {
     "totalRows": 100,
     "successRows": 100,
     "failRows": 0,
+    "skippedRows": 0,
     "status": "SUCCESS",
-    "errors": []
+    "errors": [],
+    "warnings": []
   }
 }
 ```
 
-**响应 — 部分成功** `200`（code=206）
+**响应 — 部分成功** `200`（code=200，结果由 `data.status` 表达）
 
 ```json
 {
-  "code": 206,
-  "message": "部分导入成功: 成功80行, 失败20行",
+  "code": 200,
+  "message": "部分导入成功: 成功80行, 失败15行, 跳过5行",
   "data": {
     "totalRows": 100,
     "successRows": 80,
-    "failRows": 20,
+    "failRows": 15,
+    "skippedRows": 5,
     "status": "PARTIAL",
     "errors": [
-      "第3行: 工号已存在，已跳过",
-      "第15行第2列: 数据格式错误 - 无法转换为数字"
+      "第15行: 学生不存在: S2024099（请先导入学生名单）",
+      "第16行: 第2列数据格式错误 - 无法转换为数字"
+    ],
+    "warnings": [
+      "第3行: 学号已存在，跳过: S2024001"
     ]
   }
 }
 ```
 
-**响应 — 全部失败** `200`（code=500）
+**响应 — 全部失败** `200`（code=200，`data.status=FAILED`）
 
 ```json
 {
-  "code": 500,
-  "message": "导入全部失败",
-  "data": null
+  "code": 200,
+  "message": "导入失败",
+  "data": {
+    "totalRows": 0,
+    "successRows": 0,
+    "failRows": 0,
+    "skippedRows": 0,
+    "status": "FAILED",
+    "errors": ["无法确定归属课程：请在页面选择课程后重新上传（或将文件命名为 {课程编号}_类型_名称.xlsx）"],
+    "warnings": []
+  }
 }
 ```
+
+> 注意：无论导入结果如何，HTTP 状态与业务码均为 200，导入结果通过 `data.status` / `failRows` / `errors` 判断（v3.1 起不再使用 206/500 业务码，避免前端拦截器丢失错误明细）。
 
 **ImportResultDTO 字段**
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `totalRows` | `int` | 数据总行数 |
-| `successRows` | `int` | 成功导入行数 |
+| `totalRows` | `int` | 数据总行数（成功 + 失败 + 跳过） |
+| `successRows` | `int` | 成功导入行数（与数据库实际写入一致） |
 | `failRows` | `int` | 失败行数 |
-| `status` | `String` | `SUCCESS` / `PARTIAL` / `FAILED` |
-| `errors` | `List<String>` | 错误详情，最多返回前 100 条 |
+| `skippedRows` | `int` | 跳过行数（重复数据等非致命情况） |
+| `status` | `String` | `SUCCESS` / `PARTIAL` / `FAILED`（0 数据行视为 `FAILED`） |
+| `errors` | `List<String>` | 错误详情（含 Excel 行号），最多返回前 100 条 |
+| `warnings` | `List<String>` | 警告详情（跳过原因），最多返回前 100 条 |
 
 **业务规则**
 
-- 每 500 行一个批次，批次独立提交事务，某批失败不影响其他批次
-- 基于唯一键自动去重：重复行静默跳过，计入 `successRows`
-- `errors` 最多返回 100 条，超出部分截断
-- 导入成功后自动写入 `t_data_import_log` 日志表
+- 每 500 行一个批次，批次独立提交，某批失败不影响其他批次
+- 行级诚实计数：课程/学生不存在、格式错误、插入失败均计入 `failRows` 并返回原因
+- 基于唯一键自动去重：重复行跳过并计入 `skippedRows` 与 `warnings`（不计入成功）
+- `errors` / `warnings` 各最多返回 100 条，超出部分截断
+- 导入结束后自动写入 `t_data_import_log` 日志表（含失败结果）
 
 ---
 

@@ -4,6 +4,7 @@ import com.example.aitaes.common.BusinessException;
 import com.example.aitaes.dto.ImportResultDTO;
 import com.example.aitaes.entity.DataImportLog;
 import com.example.aitaes.mapper.DataImportLogMapper;
+import com.example.aitaes.strategy.ImportContext;
 import com.example.aitaes.strategy.ImportStrategy;
 import com.example.aitaes.strategy.ImportStrategyFactory;
 import org.junit.jupiter.api.DisplayName;
@@ -128,7 +129,7 @@ class DataImportServiceImplTest {
                 mockResult.setSuccessRows(2);
                 mockResult.setFailRows(0);
                 mockResult.setStatus("SUCCESS");
-                when(mockStrategy.execute(any(InputStream.class), anyString())).thenReturn(mockResult);
+                when(mockStrategy.execute(any(InputStream.class), any(ImportContext.class))).thenReturn(mockResult);
 
                 MultipartFile file = validFile("data" + ext);
                 ImportResultDTO result = service.importFile(file, "TEACHER", null);
@@ -167,7 +168,7 @@ class DataImportServiceImplTest {
             mockResult.setSuccessRows(1);
             mockResult.setFailRows(0);
             mockResult.setStatus("SUCCESS");
-            when(mockStrategy.execute(any(InputStream.class), anyString())).thenReturn(mockResult);
+            when(mockStrategy.execute(any(InputStream.class), any(ImportContext.class))).thenReturn(mockResult);
 
             MultipartFile file = validFile("test.xlsx");
             // 小写也能识别
@@ -194,13 +195,15 @@ class DataImportServiceImplTest {
             mockResult.setStatus("PARTIAL");
             mockResult.setErrors(java.util.List.of("第5行: 学号格式错误"));
 
-            when(mockStrategy.execute(any(InputStream.class), eq("test.xlsx")))
+            when(mockStrategy.execute(any(InputStream.class),
+                    argThat((ImportContext ctx) -> ctx != null && "test.xlsx".equals(ctx.getOriginalFilename()))))
                     .thenReturn(mockResult);
 
             MultipartFile file = validFile("test.xlsx");
 
-            // When
-            ImportResultDTO result = service.importFile(file, "TEACHER", 1L);
+            // When（courseId/sourceId 透传到 ImportContext）
+            ImportContext context = ImportContext.builder().sourceId(1L).courseId(10L).build();
+            ImportResultDTO result = service.importFile(file, "TEACHER", context);
 
             // Then
             assertNotNull(result);
@@ -208,9 +211,12 @@ class DataImportServiceImplTest {
             assertEquals(9, result.getSuccessRows());
             assertEquals(1, result.getFailRows());
             assertEquals("PARTIAL", result.getStatus());
+            assertEquals(10L, context.getCourseId(), "courseId 应保留在上下文中");
 
-            // 验证策略被调用
-            verify(mockStrategy).execute(any(InputStream.class), eq("test.xlsx"));
+            // 验证策略被调用且拿到补全后的上下文
+            verify(mockStrategy).execute(any(InputStream.class),
+                    argThat((ImportContext ctx) -> "test.xlsx".equals(ctx.getOriginalFilename())
+                            && ctx.getCourseId() == 10L));
             // 验证日志被记录
             verify(logMapper, atLeastOnce()).insert(any(DataImportLog.class));
         }
@@ -219,7 +225,7 @@ class DataImportServiceImplTest {
         @DisplayName("DI-06: 策略抛异常 → 日志记录失败状态")
         void shouldLogFailure_WhenStrategyThrows() throws Exception {
             when(strategyFactory.getStrategy(any())).thenReturn(mockStrategy);
-            when(mockStrategy.execute(any(InputStream.class), anyString()))
+            when(mockStrategy.execute(any(InputStream.class), any(ImportContext.class)))
                     .thenThrow(new RuntimeException("模拟 Excel 解析异常"));
 
             MultipartFile file = validFile("test.xlsx");
@@ -243,7 +249,7 @@ class DataImportServiceImplTest {
             mockResult.setFailRows(0);
             mockResult.setStatus("SUCCESS");
 
-            when(mockStrategy.execute(any(InputStream.class), anyString()))
+            when(mockStrategy.execute(any(InputStream.class), any(ImportContext.class)))
                     .thenReturn(mockResult);
             doThrow(new RuntimeException("DB连接失败")).when(logMapper).insert(any(DataImportLog.class));
 

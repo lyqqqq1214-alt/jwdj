@@ -109,6 +109,7 @@ CREATE TABLE t_course (
     id                    BIGINT AUTO_INCREMENT PRIMARY KEY,
     course_no             VARCHAR(32)  NOT NULL UNIQUE,
     course_name           VARCHAR(256) NOT NULL,
+    class_name            VARCHAR(256) DEFAULT NULL,
     teacher_id            BIGINT       DEFAULT NULL,
     credit                DECIMAL(4,1) DEFAULT 0.0,
     course_type           VARCHAR(32)  DEFAULT NULL,

@@ -38,6 +38,16 @@ public class PortraitServiceImpl implements PortraitService {
 
     @Override
     public StudentProfileVO getProfile(Long studentId, Long courseId) {
+        return buildProfile(studentId, courseId);
+    }
+
+    /**
+     * 构建画像数据（不含 AI 评价）。
+     * AI 评价由专用接口 generateAiEvaluation 生成 —— 它需要画像数据构建 prompt，
+     * 若在此处内联调用会形成 getProfile ⇄ generateAiEvaluation 无限互递归（栈溢出），
+     * 且画像查询会被 Ollama 同步调用拖慢。
+     */
+    private StudentProfileVO buildProfile(Long studentId, Long courseId) {
         Student student = studentMapper.selectById(studentId);
         if (student == null) {
             throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "学生不存在");
@@ -119,7 +129,6 @@ public class PortraitServiceImpl implements PortraitService {
         // AI 评价（从数据库读取已保存的评价）
         builder.aiEvaluation(cs != null ? cs.getAiEvaluation() : null);
         builder.aiSuggestions(cs != null ? cs.getAiSuggestions() : null);
-
         return builder.build();
     }
 
@@ -287,7 +296,8 @@ public class PortraitServiceImpl implements PortraitService {
 
     @Override
     public String generateAiEvaluation(Long studentId, Long courseId) {
-        StudentProfileVO profile = getProfile(studentId, courseId);
+        // 先获取画像数据用于构建 prompt（不含 AI 评价字段，避免递归）
+        StudentProfileVO profile = buildProfile(studentId, courseId);
 
         StringBuilder prompt = new StringBuilder();
         prompt.append("你是一位教学专家，请根据以下学生数据生成一段约200字的学情综合评价：\n\n");
