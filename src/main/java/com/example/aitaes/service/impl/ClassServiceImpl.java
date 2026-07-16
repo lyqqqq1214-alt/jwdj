@@ -33,6 +33,7 @@ public class ClassServiceImpl implements ClassService {
     private final StudentMapper studentMapper;
     private final UserMapper userMapper;
     private final TeacherMapper teacherMapper;
+    private final TeachingAssistantMapper teachingAssistantMapper;
     private final SystemConfigMapper systemConfigMapper;
 
     // ===== 班级管理 =====
@@ -40,8 +41,34 @@ public class ClassServiceImpl implements ClassService {
     /**
      * 将 t_user.id 解析为 t_teacher.id
      * Controller 层传递的是 userId（t_user.id），Service 需要的是 teacherId（t_teacher.id）
+     * 支持 TEACHER 和 ASSISTANT 两种角色
      */
     private Long resolveTeacherId(Long userId) {
+        // 先尝试通过 user 表判断角色
+        User user = userMapper.selectById(userId);
+        if (user != null) {
+            if ("TEACHER".equals(user.getRole())) {
+                Teacher teacher = teacherMapper.selectOne(
+                        new LambdaQueryWrapper<Teacher>()
+                                .eq(Teacher::getUserId, userId));
+                if (teacher == null) {
+                    throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "教师不存在");
+                }
+                return teacher.getId();
+            } else if ("ASSISTANT".equals(user.getRole())) {
+                TeachingAssistant ta = teachingAssistantMapper.selectOne(
+                        new LambdaQueryWrapper<TeachingAssistant>()
+                                .eq(TeachingAssistant::getUserId, userId));
+                if (ta == null) {
+                    throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "助教不存在");
+                }
+                return ta.getTeacherId();
+            } else {
+                throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "角色不支持");
+            }
+        }
+
+        // fallback：兼容旧逻辑，直接查 teacher 表
         Teacher teacher = teacherMapper.selectOne(
                 new LambdaQueryWrapper<Teacher>()
                         .eq(Teacher::getUserId, userId));

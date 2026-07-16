@@ -8,9 +8,10 @@ import java.time.Duration;
 @Data
 @ConfigurationProperties(prefix = "aitaes.ai.ollama")
 public class OllamaProperties {
-    private String baseUrl = "http://localhost:11434";
-    private String model = "qwen2.5:7b";
-    private Duration connectTimeout = Duration.ofSeconds(5);
+    private String baseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
+    private String apiKey = "";
+    private String model = "qwen-plus-latest";
+    private Duration connectTimeout = Duration.ofSeconds(10);
     private Duration readTimeout = Duration.ofSeconds(120);
     private int maxAttempts = 3;
     private Duration retryDelay = Duration.ofSeconds(1);

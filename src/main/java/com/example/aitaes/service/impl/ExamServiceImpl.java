@@ -39,20 +39,48 @@ public class ExamServiceImpl implements ExamService {
     private final StudentMapper studentMapper;
     private final CourseMapper courseMapper;
     private final TeacherMapper teacherMapper;
+    private final TeachingAssistantMapper teachingAssistantMapper;
+    private final UserMapper userMapper;
+
+    // ===== 私有方法 =====
+
+    private Long resolveTeacherId(Long userId) {
+        User user = userMapper.selectById(userId);
+        if (user != null) {
+            if ("TEACHER".equals(user.getRole())) {
+                Teacher teacher = teacherMapper.selectOne(
+                        new LambdaQueryWrapper<Teacher>().eq(Teacher::getUserId, userId));
+                if (teacher == null) {
+                    throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "教师不存在");
+                }
+                return teacher.getId();
+            } else if ("ASSISTANT".equals(user.getRole())) {
+                TeachingAssistant ta = teachingAssistantMapper.selectOne(
+                        new LambdaQueryWrapper<TeachingAssistant>().eq(TeachingAssistant::getUserId, userId));
+                if (ta == null) {
+                    throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "助教不存在");
+                }
+                return ta.getTeacherId();
+            } else {
+                throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "角色不支持");
+            }
+        }
+
+        // fallback：兼容旧逻辑，直接查 teacher 表
+        Teacher teacher = teacherMapper.selectOne(
+                new LambdaQueryWrapper<Teacher>().eq(Teacher::getUserId, userId));
+        if (teacher == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "教师不存在");
+        }
+        return teacher.getId();
+    }
 
     // ===== 试卷管理 =====
 
     @Override
     @Transactional
     public ExamPaper createPaper(Long userId, ExamPaperCreateDTO dto) {
-        // 将 t_user.id 解析为 t_teacher.id
-        Teacher teacher = teacherMapper.selectOne(
-                new LambdaQueryWrapper<Teacher>()
-                        .eq(Teacher::getUserId, userId));
-        if (teacher == null) {
-            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "教师不存在");
-        }
-        Long teacherId = teacher.getId();
+        Long teacherId = resolveTeacherId(userId);
 
         ExamPaper paper = new ExamPaper();
         paper.setCourseId(dto.getCourseId());
@@ -91,14 +119,12 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     public IPage<ExamPaper> listPapers(int pageNum, int pageSize, Long courseId, Long userId) {
-        // 将 t_user.id 解析为 t_teacher.id
         Long teacherId = null;
         if (userId != null) {
-            Teacher teacher = teacherMapper.selectOne(
-                    new LambdaQueryWrapper<Teacher>()
-                            .eq(Teacher::getUserId, userId));
-            if (teacher != null) {
-                teacherId = teacher.getId();
+            try {
+                teacherId = resolveTeacherId(userId);
+            } catch (BusinessException e) {
+                teacherId = null;
             }
         }
 
