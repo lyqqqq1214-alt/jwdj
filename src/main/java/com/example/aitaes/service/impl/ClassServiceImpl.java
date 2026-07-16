@@ -54,33 +54,28 @@ public class ClassServiceImpl implements ClassService {
     @Override
     public List<ClassVO> listMyClasses(Long userId) {
         Long teacherId = resolveTeacherId(userId);
+
         List<Course> courses = courseMapper.selectList(
                 new LambdaQueryWrapper<Course>()
                         .eq(Course::getTeacherId, teacherId)
                         .orderByDesc(Course::getCreateTime));
 
+        // 批量查询学生人数，避免 N+1 问题
+        List<Long> courseIds = courses.stream().map(Course::getId).collect(Collectors.toList());
+        Map<Long, Long> countMap = courseIds.isEmpty() ? Collections.emptyMap()
+                : courseStudentMapper.selectList(
+                        new LambdaQueryWrapper<CourseStudent>().in(CourseStudent::getCourseId, courseIds))
+                        .stream().collect(Collectors.groupingBy(CourseStudent::getCourseId, Collectors.counting()));
+
         return courses.stream().map(course -> {
-            Long studentCount = courseStudentMapper.selectCount(
-                    new LambdaQueryWrapper<CourseStudent>()
-                            .eq(CourseStudent::getCourseId, course.getId()));
-            return ClassVO.builder()
-                    .id(course.getId())
-                    .courseNo(course.getCourseNo())
-                    .courseName(course.getCourseName())
-                    .className(course.getClassName() != null ? course.getClassName() : course.getCourseName())
-                    .semester(course.getSemester())
-                    .credit(course.getCredit())
-                    .courseType(course.getCourseType())
-                    .studentCount(studentCount.intValue())
-                    .createTime(course.getCreateTime())
-                    .build();
+            long studentCount = countMap.getOrDefault(course.getId(), 0L);
+            return toClassVO(course, (int) studentCount);
         }).collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public ClassVO create(Long userId, ClassCreateDTO dto) {
-        // 验证教师存在（userId → teacherId）
         Long teacherId = resolveTeacherId(userId);
 
         // 生成课程编号
@@ -102,8 +97,8 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public ClassVO update(Long classId, Long teacherId, ClassCreateDTO dto) {
-        Course course = getMyCourse(classId, teacherId);
+    public ClassVO update(Long classId, Long userId, ClassCreateDTO dto) {
+        Course course = getMyCourse(classId, userId);
         course.setCourseName(dto.getCourseName());
         if (dto.getClassName() != null) course.setClassName(dto.getClassName());
         if (dto.getCredit() != null) course.setCredit(dto.getCredit());
@@ -120,8 +115,8 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     @Transactional
-    public void delete(Long classId, Long teacherId) {
-        getMyCourse(classId, teacherId);
+    public void delete(Long classId, Long userId) {
+        getMyCourse(classId, userId);
         courseMapper.deleteById(classId);
         // 同时删除关联关系
         courseStudentMapper.delete(new LambdaQueryWrapper<CourseStudent>()
@@ -163,8 +158,8 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     @Transactional
-    public StudentVO addStudent(Long classId, Long teacherId, StudentAddDTO dto) {
-        getMyCourse(classId, teacherId);
+    public StudentVO addStudent(Long classId, Long userId, StudentAddDTO dto) {
+        getMyCourse(classId, userId);
 
         // 查找或创建学生
         Student student = studentMapper.selectOne(
@@ -197,8 +192,8 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     @Transactional
-    public void removeStudent(Long classId, Long studentId, Long teacherId) {
-        getMyCourse(classId, teacherId);
+    public void removeStudent(Long classId, Long studentId, Long userId) {
+        getMyCourse(classId, userId);
         courseStudentMapper.delete(
                 new LambdaQueryWrapper<CourseStudent>()
                         .eq(CourseStudent::getCourseId, classId)
@@ -208,9 +203,9 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     @Transactional
-    public List<StudentVO> batchImportStudents(Long classId, Long teacherId,
+    public List<StudentVO> batchImportStudents(Long classId, Long userId,
                                                 java.io.InputStream inputStream, String filename) {
-        getMyCourse(classId, teacherId);
+        getMyCourse(classId, userId);
         Course course = courseMapper.selectById(classId);
 
         List<StudentVO> results = new ArrayList<>();

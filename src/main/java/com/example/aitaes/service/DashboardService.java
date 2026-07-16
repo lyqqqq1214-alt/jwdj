@@ -27,5 +27,5 @@ public interface DashboardService {
     /**
      * 教师可选班级列表（用于班级切换器 UC27）
      */
-    List<ClassVO> getMyCourses(Long teacherId);
+    List<ClassVO> getMyCourses(Long userId);
 }

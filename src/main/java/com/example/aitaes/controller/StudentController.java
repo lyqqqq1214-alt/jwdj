@@ -8,6 +8,7 @@ import com.example.aitaes.entity.AssessmentRecord;
 import com.example.aitaes.entity.Attendance;
 import com.example.aitaes.entity.StudentWrongQuestion;
 import com.example.aitaes.mapper.*;
+import com.example.aitaes.service.PortraitService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ public class StudentController {
     private final StudentWrongQuestionMapper wrongQuestionMapper;
     private final StudentMapper studentMapper;
     private final CourseMapper courseMapper;
+    private final PortraitService portraitService;
 
     /**
      * 个人学习中心概览 (UC19)
@@ -89,13 +91,9 @@ public class StudentController {
      * 个人画像 (UC20)
      */
     @GetMapping("/portrait")
-    public Result<Map<String, Object>> portrait(@RequestAttribute("userId") Long userId,
-                                                 @RequestParam Long courseId) {
-        Map<String, Object> data = new HashMap<>();
-        // 复用 PortraitService 的数据聚合逻辑，这里简化
-        data.put("studentId", userId);
-        data.put("courseId", courseId);
-        return Result.success(data);
+    public Result<StudentProfileVO> portrait(@RequestAttribute("userId") Long userId,
+                                              @RequestParam Long courseId) {
+        return Result.success(portraitService.getProfile(userId, courseId));
     }
 
     /**

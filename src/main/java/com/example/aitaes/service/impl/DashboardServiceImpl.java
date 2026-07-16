@@ -30,8 +30,8 @@ public class DashboardServiceImpl implements DashboardService {
     private final AttendanceMapper attendanceMapper;
     private final StudentKpMasteryMapper studentKpMasteryMapper;
     private final WarningRecordMapper warningRecordMapper;
-    private final StudentMapper studentMapper;
     private final CourseMapper courseMapper;
+    private final StudentMapper studentMapper;
     private final TeacherMapper teacherMapper;
 
     @Override
@@ -155,11 +155,10 @@ public class DashboardServiceImpl implements DashboardService {
         if (teacher == null) {
             throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "教师不存在");
         }
-        Long teacherId = teacher.getId();
 
         List<Course> courses = courseMapper.selectList(
                 new LambdaQueryWrapper<Course>()
-                        .eq(Course::getTeacherId, teacherId)
+                        .eq(Course::getTeacherId, teacher.getId())
                         .orderByDesc(Course::getCreateTime));
         return courses.stream().map(c -> {
             Long count = courseStudentMapper.selectCount(

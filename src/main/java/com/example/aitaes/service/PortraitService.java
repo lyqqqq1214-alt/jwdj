@@ -21,9 +21,7 @@ public interface PortraitService {
     void toggleFocus(Long studentId, Long courseId, boolean focus);
 
     /**
-     * AI 综合评价（预留接口，AI 同学实现）
+     * AI 综合评价
      */
-    default String generateAiEvaluation(Long studentId, Long courseId) {
-        return null;
-    }
+    String generateAiEvaluation(Long studentId, Long courseId);
 }

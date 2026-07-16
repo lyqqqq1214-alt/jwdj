@@ -42,4 +42,14 @@ public class PortraitController {
         portraitService.toggleFocus(studentId, courseId, focus);
         return Result.success(focus ? "已标记为重点关注" : "已取消重点关注", null);
     }
+
+    /**
+     * 生成AI学情综合评价
+     */
+    @PostMapping("/student/{studentId}/ai-evaluation")
+    public Result<String> generateAiEvaluation(@PathVariable Long studentId,
+                                                @RequestParam Long courseId) {
+        return Result.success("AI评价生成成功",
+                portraitService.generateAiEvaluation(studentId, courseId));
+    }
 }

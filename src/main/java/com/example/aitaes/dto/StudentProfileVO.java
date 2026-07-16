@@ -36,6 +36,10 @@ public class StudentProfileVO {
     /** 考勤记录列表 */
     private List<AttendanceItem> attendanceList;
     private BigDecimal attendanceRate;
+    /** 考勤统计 */
+    private Long absentCount;
+    private Long lateCount;
+    private Long leaveCount;
 
     /** 作业情况列表 */
     private List<HomeworkItem> homeworkList;

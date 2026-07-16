@@ -15,22 +15,22 @@ public interface ClassService {
     /**
      * 获取当前教师所带班级列表
      */
-    List<ClassVO> listMyClasses(Long teacherId);
+    List<ClassVO> listMyClasses(Long userId);
 
     /**
      * 新增班级（创建课程）
      */
-    ClassVO create(Long teacherId, ClassCreateDTO dto);
+    ClassVO create(Long userId, ClassCreateDTO dto);
 
     /**
      * 编辑班级信息
      */
-    ClassVO update(Long classId, Long teacherId, ClassCreateDTO dto);
+    ClassVO update(Long classId, Long userId, ClassCreateDTO dto);
 
     /**
      * 删除班级
      */
-    void delete(Long classId, Long teacherId);
+    void delete(Long classId, Long userId);
 
     /**
      * 获取班级学生名单
@@ -40,15 +40,15 @@ public interface ClassService {
     /**
      * 手动添加学生
      */
-    StudentVO addStudent(Long classId, Long teacherId, StudentAddDTO dto);
+    StudentVO addStudent(Long classId, Long userId, StudentAddDTO dto);
 
     /**
      * 移除学生（仅移除关联，不删除账号）
      */
-    void removeStudent(Long classId, Long studentId, Long teacherId);
+    void removeStudent(Long classId, Long studentId, Long userId);
 
     /**
      * 批量导入学生名单
      */
-    List<StudentVO> batchImportStudents(Long classId, Long teacherId, java.io.InputStream inputStream, String filename);
+    List<StudentVO> batchImportStudents(Long classId, Long userId, java.io.InputStream inputStream, String filename);
 }
