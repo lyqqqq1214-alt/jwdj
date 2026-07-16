@@ -1,19 +1,32 @@
 import api from './api';
 
 export interface DashboardOverview {
-  avgScore: string;
-  attendanceRate: string;
-  homeworkRate: string;
   studentCount?: number;
+  averageScore?: number;
+  attendanceRate?: number;
+  homeworkRate?: number;
+  warningCount?: number;
+}
+
+export interface ChartItem {
+  name: string;
+  value: number;
+  color?: string;
+}
+
+export interface HomeworkStat {
+  homeworkName: string;
+  onTimeCount: number;
+  lateCount: number;
+  absentCount: number;
 }
 
 export interface DashboardCharts {
-  scoreDist: { range: string; count: number }[];
-  scoreTrend: { exam: string; score: number; type: string }[];
-  attendanceStats: { status: string; count: number }[];
-  homeworkSubmitStats: { homework: string; onTime: number; late: number; notSubmit: number }[];
-  attendanceTrend: { week: string; rate: number }[];
-  knowledgeData: { subject: string; value: number }[];
+  scoreDistribution: ChartItem[];
+  scoreTrend: ChartItem[];
+  attendanceStats: ChartItem[];
+  homeworkStats: HomeworkStat[];
+  knowledgeRadar: ChartItem[];
 }
 
 export interface WarningStudent {
@@ -34,6 +47,9 @@ export interface ClassVO {
   studentCount?: number;
   credit?: number;
   courseType?: string;
+  avgScore?: number;
+  attendanceRate?: number;
+  homeworkRate?: number;
 }
 
 export async function getDashboardFull(courseId: number) {

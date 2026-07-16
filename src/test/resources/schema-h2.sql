@@ -131,6 +131,8 @@ CREATE TABLE t_course_student (
     class_name    VARCHAR(64)  DEFAULT NULL,
     semester      VARCHAR(32)  DEFAULT NULL,
     is_focus      TINYINT      DEFAULT 0,
+    ai_evaluation CLOB         DEFAULT NULL,
+    ai_evaluation_time TIMESTAMP DEFAULT NULL,
     create_time   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     deleted       TINYINT      DEFAULT 0,
     UNIQUE (course_id, student_id),

@@ -58,7 +58,18 @@ export interface StudentProfile {
   experimentList?: ExperimentItem[];
   knowledgeRadar?: ChartItem[];
   classAvgRadar?: ChartItem[];
+  totalScore?: number;
+  homeworkRate?: number;
+  classRank?: number;
+  classTotal?: number;
   aiEvaluation?: string;
+  aiSuggestions?: string;
+}
+
+export interface LearningSuggestion {
+  type: 'strong' | 'weak' | 'improve';
+  title: string;
+  content: string;
 }
 
 // 教师/助教端：获取学生画像
@@ -78,8 +89,20 @@ export async function generateAiEvaluation(studentId: number, courseId: number) 
   return res.data as string;
 }
 
+// 教师/助教端：生成AI学习建议
+export async function generateAiSuggestions(studentId: number, courseId: number) {
+  const res = await api.post(`/portrait/student/${studentId}/ai-suggestions`, null, { params: { courseId } });
+  return res.data as string;
+}
+
 // 学生端：获取个人画像
 export async function getMyPortrait(courseId: number) {
   const res = await api.get('/student/portrait', { params: { courseId } });
   return res.data as StudentProfile;
+}
+
+// 学生端：生成AI学习建议
+export async function generateMyAiSuggestions(courseId: number) {
+  const res = await api.post('/student/ai-suggestions', null, { params: { courseId } });
+  return res.data as string;
 }

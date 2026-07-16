@@ -51,8 +51,21 @@ public class StudentProfileVO {
     private List<ChartItem> knowledgeRadar;
     private List<ChartItem> classAvgRadar;
 
+    /** 总评成绩（加权计算） */
+    private BigDecimal totalScore;
+
+    /** 作业提交率（百分比） */
+    private BigDecimal homeworkRate;
+
+    /** 班级排名（第X名/总人数） */
+    private Integer classRank;
+    private Integer classTotal;
+
     /** AI 综合评价（预留，AI 同学实现） */
     private String aiEvaluation;
+
+    /** AI 学习建议（JSON 数组字符串） */
+    private String aiSuggestions;
 
     // ===== 内嵌类 =====
 

@@ -9,7 +9,7 @@ import {
   FileSearch, Wifi, WifiOff, Server, BarChart3, PieChart as PieChartIcon, History,
   Shield, Database, AlertTriangle, ArrowUpRight, ArrowDownRight,
   Building2, GitCompare, Send, Code, GripVertical,
-  Minimize2, Maximize2, Paperclip
+  Minimize2, Maximize2, Paperclip, RefreshCw, Sparkles
 } from "lucide-react";
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -20,7 +20,7 @@ import { login, saveUser, getCurrentUser, clearUser, mapRole, logout } from "../
 import { getDashboardFull, getMyCourses, DashboardOverview, DashboardCharts, WarningStudent, ClassVO } from "../services/dashboardService";
 import { getTeacherList, createTeacher, updateTeacher, deleteTeacher, updateTeacherStatus, resetTeacherPassword, TeacherVO } from "../services/teacherService";
 import { getStudentOverview, getStudentTrends, getStudentWrongQuestions, StudentOverview } from "../services/studentService";
-import { getStudentProfile, toggleFocusStudent, generateAiEvaluation, getMyPortrait, StudentProfile as StudentProfileData } from "../services/portraitService";
+import { getStudentProfile, toggleFocusStudent, generateAiEvaluation, generateAiSuggestions, getMyPortrait, generateMyAiSuggestions, StudentProfile as StudentProfileData, LearningSuggestion } from "../services/portraitService";
 import { getMyClasses, getClassStudents, createClass, addStudentToClass, removeStudentFromClass, ClassVO as ClsVO, StudentVO } from "../services/classService";
 import { getPendingExams, getExamPapers, createExamPaper, deleteExamPaper, publishExamPaper, closeExamPaper, getExamResults, submitExam, ExamPaper } from "../services/examService";
 import { sendNotification, getMyNotifications, Notification as NotifItem } from "../services/notificationService";
@@ -3514,7 +3514,7 @@ function AdminConfig() {
 }
 
 // ─── Teacher: Dashboard (教学驾驶舱) ──────────────────────────────────────────
-function TeacherDashboard({ onNav }: { onNav: (p: Page) => void }) {
+function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: { onNav: (p: Page) => void; setSelectedStudentId: (id: number | null) => void; setSelectedCourseId: (id: number | null) => void }) {
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"single" | "merged" | "compare">("single");
   const [selectedCompareClasses, setSelectedCompareClasses] = useState<number[]>([1, 2]);
@@ -3573,6 +3573,12 @@ function TeacherDashboard({ onNav }: { onNav: (p: Page) => void }) {
   }, [selectedClass]);
 
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
+
+  const toggleWarningSelection = (uid: string) => {
+    setSelectedWarnings(prev =>
+      prev.includes(uid) ? prev.filter(w => w !== uid) : [...prev, uid]
+    );
+  };
 
   const classInfo = dashboardCourses.find(c => c.id === selectedClass);
   const currentCharts = dashboardCharts;
@@ -3659,15 +3665,15 @@ function TeacherDashboard({ onNav }: { onNav: (p: Page) => void }) {
                       <p className="text-xs text-muted-foreground">人数</p>
                     </div>
                     <div className="text-center">
-                      <p className="font-mono font-bold text-green-600">{currentOverview?.avgScore || "—"}</p>
+                      <p className="font-mono font-bold text-green-600">{c.avgScore != null && c.avgScore > 0 ? Number(c.avgScore).toFixed(1) : "—"}</p>
                       <p className="text-xs text-muted-foreground">平均分</p>
                     </div>
                     <div className="text-center">
-                      <p className="font-mono font-bold text-blue-600">{currentOverview?.attendanceRate || "—"}</p>
+                      <p className="font-mono font-bold text-blue-600">{c.attendanceRate != null && c.attendanceRate > 0 ? Number(c.attendanceRate).toFixed(1) + "%" : "—"}</p>
                       <p className="text-xs text-muted-foreground">出勤率</p>
                     </div>
                     <div className="text-center">
-                      <p className="font-mono font-bold text-emerald-600">{currentOverview?.homeworkRate || "—"}</p>
+                      <p className="font-mono font-bold text-emerald-600">{c.homeworkRate != null && c.homeworkRate > 0 ? Number(c.homeworkRate).toFixed(1) + "%" : "—"}</p>
                       <p className="text-xs text-muted-foreground">作业率</p>
                     </div>
                   </div>
@@ -3773,10 +3779,10 @@ function TeacherDashboard({ onNav }: { onNav: (p: Page) => void }) {
               {!hiddenModules.includes("stats") && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   {[
-                    { label: "班级人数", value: classInfo?.studentCount || "98", icon: Users, color: "blue" },
-                    { label: "平均成绩", value: currentOverview?.avgScore || "76.5", icon: TrendingUp, color: "green" },
-                    { label: "出勤率", value: currentOverview?.attendanceRate || "93.8%", icon: Activity, color: "blue" },
-                    { label: "作业提交率", value: currentOverview?.homeworkRate || "90%", icon: CheckCircle, color: "green" },
+                    { label: "班级人数", value: currentOverview?.studentCount ?? classInfo?.studentCount ?? 0, icon: Users, color: "blue" },
+                    { label: "平均成绩", value: currentOverview?.averageScore != null ? Number(currentOverview.averageScore).toFixed(1) : "—", icon: TrendingUp, color: "green" },
+                    { label: "出勤率", value: currentOverview?.attendanceRate != null ? Number(currentOverview.attendanceRate).toFixed(1) + "%" : "—", icon: Activity, color: "blue" },
+                    { label: "作业提交率", value: currentOverview?.homeworkRate != null ? Number(currentOverview.homeworkRate).toFixed(1) + "%" : "—", icon: CheckCircle, color: "green" },
                     { label: "预警人数", value: warningCount.toString(), icon: AlertCircle, color: "red", highlight: warningCount > 0 },
                   ].map(item => (
                     <div key={item.label} className={`bg-card rounded-lg border border-border p-4 transition-all duration-200 hover:shadow-md ${item.highlight ? "border-red-200 bg-red-50/50" : ""}`}>
@@ -3798,12 +3804,12 @@ function TeacherDashboard({ onNav }: { onNav: (p: Page) => void }) {
                   <div className="bg-card rounded-lg border border-border p-5">
                     <h3 className="font-medium text-sm mb-4">班级成绩分布图</h3>
                     <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={currentCharts?.scoreDist || scoreDistData}>
+                      <BarChart data={currentCharts?.scoreDistribution || []}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                        <XAxis dataKey="range" tick={{ fontSize: 11 }} />
+                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                         <YAxis tick={{ fontSize: 11 }} />
                         <Tooltip formatter={(v: any) => `${v}人`} />
-                        <Bar dataKey="count" fill="#1A56DB" radius={[2, 2, 0, 0]} name="人数" />
+                        <Bar dataKey="value" fill="#1A56DB" radius={[2, 2, 0, 0]} name="人数" />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -3812,17 +3818,14 @@ function TeacherDashboard({ onNav }: { onNav: (p: Page) => void }) {
                   <div className="bg-card rounded-lg border border-border p-5">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-medium text-sm">成绩趋势图</h3>
-                      <span className="text-xs text-muted-foreground">
-                        {assessmentType === "homework" ? "作业" : assessmentType === "test" ? "测试" : assessmentType === "experiment" ? "实验" : "全部"}
-                      </span>
                     </div>
                     <ResponsiveContainer width="100%" height={220}>
-                      <LineChart data={(currentCharts?.scoreTrend || scoreTrend).filter(d => !assessmentType || d.type === assessmentType)}>
+                      <LineChart data={currentCharts?.scoreTrend || []}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                        <XAxis dataKey="exam" tick={{ fontSize: 10 }} />
-                        <YAxis domain={[60, 100]} tick={{ fontSize: 11 }} />
+                        <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                        <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
                         <Tooltip formatter={(v: any) => `${v}分`} />
-                        <Line type="monotone" dataKey="score" stroke="#1A56DB" strokeWidth={2} dot={{ r: 4 }} name="班级平均分" />
+                        <Line type="monotone" dataKey="value" stroke="#1A56DB" strokeWidth={2} dot={{ r: 4 }} name="班级平均分" />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -3835,12 +3838,12 @@ function TeacherDashboard({ onNav }: { onNav: (p: Page) => void }) {
                     <h3 className="font-medium text-sm mb-4">考勤统计</h3>
                     <ResponsiveContainer width="100%" height={200}>
                       <PieChart>
-                        <Pie data={currentCharts?.attendanceStats || attendanceStats} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="count">
-                          {(currentCharts?.attendanceStats || attendanceStats).map((entry, i) => (
-                            <Cell key={`cell-${i}`} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                        <Pie data={currentCharts?.attendanceStats || []} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" nameKey="name">
+                          {(currentCharts?.attendanceStats || []).map((entry, i) => (
+                            <Cell key={`cell-${i}`} fill={entry.color || PIE_COLORS[i % PIE_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(v: any) => `${v}人`} />
+                        <Tooltip formatter={(v: any) => `${v}次`} />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
@@ -3850,15 +3853,15 @@ function TeacherDashboard({ onNav }: { onNav: (p: Page) => void }) {
                   <div className="bg-card rounded-lg border border-border p-5">
                     <h3 className="font-medium text-sm mb-4">作业提交统计</h3>
                     <ResponsiveContainer width="100%" height={200}>
-                      <BarChart data={currentCharts?.homeworkSubmitStats || homeworkSubmitStats} stackOffset="expand">
+                      <BarChart data={currentCharts?.homeworkStats || []}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                        <XAxis dataKey="homework" tick={{ fontSize: 11 }} />
-                        <YAxis tick={{ formatter: (v: any) => `${v}%` }} />
+                        <XAxis dataKey="homeworkName" tick={{ fontSize: 10 }} />
+                        <YAxis tick={{ fontSize: 11 }} />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="onTime" stackId="a" fill="#10B981" name="按时" />
-                        <Bar dataKey="late" stackId="a" fill="#F59E0B" name="迟交" />
-                        <Bar dataKey="notSubmit" stackId="a" fill="#EF4444" name="未交" />
+                        <Bar dataKey="onTimeCount" fill="#10B981" name="按时" />
+                        <Bar dataKey="lateCount" fill="#F59E0B" name="迟交" />
+                        <Bar dataKey="absentCount" fill="#EF4444" name="未交" />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -3915,7 +3918,7 @@ function TeacherDashboard({ onNav }: { onNav: (p: Page) => void }) {
                             </td>
                             <td className="px-4 py-2.5 font-mono text-xs">{w.uid}</td>
                             <td className="px-4 py-2.5">
-                              <span className="text-primary cursor-pointer hover:underline font-medium" onClick={() => onNav("teacher-profile")}>{w.name}</span>
+                              <span className="text-primary cursor-pointer hover:underline font-medium" onClick={() => { setSelectedStudentId(w.studentId); setSelectedCourseId(selectedClass); onNav("teacher-profile"); }}>{w.studentName || w.name}</span>
                             </td>
                             <td className="px-4 py-2.5">
                               <Tag color={w.type === "成绩下滑" ? "red" : w.type === "缺勤过多" ? "orange" : "yellow"}>
@@ -3934,7 +3937,7 @@ function TeacherDashboard({ onNav }: { onNav: (p: Page) => void }) {
                             </td>
                             <td className="px-4 py-2.5">
                               <div className="flex items-center gap-2">
-                                <button onClick={() => onNav("teacher-profile")} className="flex items-center gap-1 text-primary hover:underline text-xs">
+                                <button onClick={() => { setSelectedStudentId(w.studentId); setSelectedCourseId(selectedClass); onNav("teacher-profile"); }} className="flex items-center gap-1 text-primary hover:underline text-xs">
                                   <Eye size={12} />查看详情
                                 </button>
                                 <button onClick={() => showToastMsg(`已标记 ${w.name} 的预警为已处理`)} className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 px-2 py-1 rounded text-xs">
@@ -3988,19 +3991,13 @@ function TeacherDashboard({ onNav }: { onNav: (p: Page) => void }) {
                       <div className="bg-card rounded-lg border border-border p-4">
                         <h4 className="text-xs font-medium text-muted-foreground mb-3">知识点掌握度分布</h4>
                         <ResponsiveContainer width="100%" height={180}>
-                          <BarChart data={[
-                            { name: "TCP/IP", value: 85 },
-                            { name: "HTTP协议", value: 78 },
-                            { name: "路由算法", value: 65 },
-                            { name: "网络安全", value: 72 },
-                            { name: "拥塞控制", value: 60 },
-                          ]}>
-                            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                          <BarChart data={currentCharts?.knowledgeRadar || []}>
+                            <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                             <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
                             <Tooltip formatter={(v: any) => `${v}%`} />
                             <Bar dataKey="value" fill="#1A56DB" radius={[4, 4, 0, 0]}>
-                              {[85, 78, 65, 72, 60].map((v, i) => (
-                                <Cell key={`cell-${i}`} fill={v >= 80 ? "#10B981" : v >= 70 ? "#1A56DB" : v >= 60 ? "#F59E0B" : "#EF4444"} />
+                              {(currentCharts?.knowledgeRadar || []).map((item, i) => (
+                                <Cell key={`cell-${i}`} fill={item.value >= 80 ? "#10B981" : item.value >= 70 ? "#1A56DB" : item.value >= 60 ? "#F59E0B" : "#EF4444"} />
                               ))}
                             </Bar>
                           </BarChart>
@@ -4328,7 +4325,7 @@ function TA_Dashboard({ onNav }: { onNav: (p: Page) => void }) {
 }
 
 // ─── Teacher: Class Management (班级管理) ──────────────────────────────────────
-function TeacherClassManagement({ onNav, setSelectedStudentId }: { onNav: (p: Page) => void; setSelectedStudentId: (id: string) => void }) {
+function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourseId }: { onNav: (p: Page) => void; setSelectedStudentId: (id: number | null) => void; setSelectedCourseId: (id: number | null) => void }) {
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [showAddClassModal, setShowAddClassModal] = useState(false);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
@@ -4340,25 +4337,31 @@ function TeacherClassManagement({ onNav, setSelectedStudentId }: { onNav: (p: Pa
   const [taPerms, setTaPerms] = useState({ canImport: false, canGrade: false, canViewProfile: false });
   const [classList, setClassList] = useState<ClsVO[]>([]);
   const [studentList, setStudentList] = useState<StudentVO[]>([]);
+  const [loadingClasses, setLoadingClasses] = useState(false);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Fetch classes on mount
   useEffect(() => {
+    setLoadingClasses(true);
+    setLoadError(null);
     getMyClasses().then(data => {
-      setClassList(data);
-    }).catch(() => {
-      setClassList(teacherClasses.map(c => ({ id: c.id, name: c.name, courseName: c.course, semester: c.semester, studentCount: c.studentCount })));
-    });
+      setClassList(data || []);
+    }).catch((err) => {
+      setClassList([]);
+      setLoadError(err.message || "加载失败");
+    }).finally(() => setLoadingClasses(false));
   }, []);
 
   // Fetch students when class is selected
   useEffect(() => {
     if (!selectedClassId) return;
+    setLoadingStudents(true);
     getClassStudents(selectedClassId).then(data => {
-      setStudentList(data);
+      setStudentList(data || []);
     }).catch(() => {
-      const mock = classStudents[selectedClassId] || [];
-      setStudentList(mock.map(s => ({ id: 0, studentNo: s.uid, name: s.name } as StudentVO)));
-    });
+      setStudentList([]);
+    }).finally(() => setLoadingStudents(false));
   }, [selectedClassId]);
 
   const students = studentList;
@@ -4425,32 +4428,50 @@ function TeacherClassManagement({ onNav, setSelectedStudentId }: { onNav: (p: Pa
               <Plus size={14} />新增班级
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {classList.map(c => (
-              <div key={c.id} onClick={() => setSelectedClassId(c.id)} className="bg-card rounded-lg border border-border p-5 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="font-semibold">{c.className}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{c.courseName}</p>
+          {loadingClasses ? (
+            <div className="bg-card rounded-lg border border-border p-12 text-center">
+              <div className="w-8 h-8 border-3 border-muted border-t-primary rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">加载中...</p>
+            </div>
+          ) : loadError ? (
+            <div className="bg-card rounded-lg border border-red-200 p-12 text-center">
+              <AlertCircle size={32} className="mx-auto mb-3 text-red-400" />
+              <p className="text-sm text-red-600 font-medium">加载失败</p>
+              <p className="text-xs text-muted-foreground mt-1">{loadError}</p>
+            </div>
+          ) : classList.length === 0 ? (
+            <div className="bg-card rounded-lg border border-border p-12 text-center">
+              <Users size={32} className="mx-auto mb-3 text-muted-foreground opacity-50" />
+              <p className="text-sm text-muted-foreground">暂无班级，点击右上角新增班级</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {classList.map(c => (
+                <div key={c.id} onClick={() => setSelectedClassId(c.id)} className="bg-card rounded-lg border border-border p-5 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="font-semibold">{c.className}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{c.courseName}</p>
+                    </div>
+                    <Users size={18} className="text-muted-foreground" />
                   </div>
-                  <Users size={18} className="text-muted-foreground" />
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="bg-muted rounded p-2">
+                      <p className="text-xs text-muted-foreground">学生人数</p>
+                      <p className="font-mono font-semibold">{c.studentCount ?? 0}</p>
+                    </div>
+                    <div className="bg-muted rounded p-2">
+                      <p className="text-xs text-muted-foreground">学期</p>
+                      <p className="text-xs">{c.semester || "—"}</p>
+                    </div>
+                  </div>
+                  <button className="mt-3 w-full py-2 text-sm border border-primary text-primary rounded-md hover:bg-accent transition-colors">
+                    查看学生名单
+                  </button>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="bg-muted rounded p-2">
-                    <p className="text-xs text-muted-foreground">学生人数</p>
-                    <p className="font-mono font-semibold">{c.studentCount}</p>
-                  </div>
-                  <div className="bg-muted rounded p-2">
-                    <p className="text-xs text-muted-foreground">学期</p>
-                    <p className="text-xs">{c.semester}</p>
-                  </div>
-                </div>
-                <button className="mt-3 w-full py-2 text-sm border border-primary text-primary rounded-md hover:bg-accent transition-colors">
-                  查看学生名单
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </>
       ) : (
         <>
@@ -4467,74 +4488,54 @@ function TeacherClassManagement({ onNav, setSelectedStudentId }: { onNav: (p: Pa
               <button onClick={() => setShowAddStudentModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700">
                 <Plus size={14} />添加学生
               </button>
-              <button onClick={() => setShowTAConfigModal(true)} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-700">
-                <GraduationCap size={14} />分配助教
-              </button>
               <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
                 <Upload size={14} />导入名单
               </button>
             </div>
           </div>
 
-          {classTAs.length > 0 && (
-            <div className="bg-card rounded-lg border border-border p-4">
-              <h3 className="font-medium text-sm mb-3">已分配助教</h3>
-              <div className="flex flex-wrap gap-3">
-                {classTAs.map(ta => {
-                  const perms = taPermissions[ta.staffId];
-                  return (
-                    <div key={ta.staffId} className="bg-muted rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <p className="font-medium text-sm">{ta.name}</p>
-                        <button onClick={() => removeTAFromClass(ta.staffId)} className="text-red-500 hover:underline text-xs">移除</button>
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {perms.canImport && <Tag color="green">导入数据</Tag>}
-                        {perms.canGrade && <Tag color="blue">考试批阅</Tag>}
-                        {perms.canViewProfile && <Tag color="purple">学生画像</Tag>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           <div className="bg-card rounded-lg border border-border overflow-hidden">
             <div className="px-4 py-3 border-b border-border">
-              <h3 className="font-medium text-sm">{classList.find(c => c.id === selectedClassId)?.name} · {classList.find(c => c.id === selectedClassId)?.courseName}</h3>
+              <h3 className="font-medium text-sm">{classList.find(c => c.id === selectedClassId)?.className} · {classList.find(c => c.id === selectedClassId)?.courseName}</h3>
               <p className="text-xs text-muted-foreground mt-0.5">共 {students.length} 名学生</p>
             </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  {["学号", "姓名", "性别", "已导入数据", "操作"].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{h}</th>
+            {loadingStudents ? (
+              <div className="py-16 text-center">
+                <div className="w-7 h-7 border-3 border-muted border-t-primary rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">加载中...</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    {["学号", "姓名", "性别", "已导入数据", "操作"].map(h => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStudents.map(s => (
+                    <tr key={s.studentNo} className="border-b border-border last:border-0 hover:bg-accent/30">
+                      <td className="px-4 py-3 font-mono text-xs">{s.studentNo}</td>
+                      <td className="px-4 py-3">{s.name}</td>
+                      <td className="px-4 py-3"><Tag color="gray">{s.gender || "—"}</Tag></td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-muted-foreground">{s.college || "—"} · {s.major || "—"}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button onClick={() => { setSelectedStudentId(s.studentId); setSelectedCourseId(selectedClassId); onNav("teacher-profile"); }} className="text-primary hover:underline text-xs mr-3">学生画像</button>
+                        <button className="text-red-500 hover:underline text-xs">移除</button>
+                      </td>
+                    </tr>
                   ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStudents.map(s => (
-                  <tr key={s.studentNo} className="border-b border-border last:border-0 hover:bg-accent/30">
-                    <td className="px-4 py-3 font-mono text-xs">{s.studentNo}</td>
-                    <td className="px-4 py-3">{s.name}</td>
-                    <td className="px-4 py-3"><Tag color="gray">{s.gender || "—"}</Tag></td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-muted-foreground">{s.college || "—"} · {s.major || "—"}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <button onClick={() => { setSelectedStudentId(s.studentNo); onNav("teacher-profile"); }} className="text-primary hover:underline text-xs mr-3">学生画像</button>
-                      <button className="text-red-500 hover:underline text-xs">移除</button>
-                    </td>
-                  </tr>
-                ))}
-                {filteredStudents.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">暂无学生</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  {filteredStudents.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">暂无学生</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </>
       )}
@@ -4978,16 +4979,17 @@ function TA_DataImport() {
 }
 
 // ─── Teacher: Student Profile (学生画像) ──────────────────────────────────────
-function TeacherStudentProfile({ onNav, initialStudentId }: { onNav: (p: Page) => void; initialStudentId?: string }) {
+function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { onNav: (p: Page) => void; initialStudentId?: number | null; initialCourseId?: number | null }) {
   const [activeTab, setActiveTab] = useState("score");
-  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
-  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(initialStudentId || null);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(initialCourseId || null);
   const [isFocused, setIsFocused] = useState(false);
   const [privacyMode, setPrivacyMode] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [showSuggestionEdit, setShowSuggestionEdit] = useState(false);
   const [loading, setLoading] = useState(false);
   const [generatingAi, setGeneratingAi] = useState(false);
+  const [generatingSuggestions, setGeneratingSuggestions] = useState(false);
 
   // API data
   const [profile, setProfile] = useState<StudentProfileData | null>(null);
@@ -5044,12 +5046,28 @@ function TeacherStudentProfile({ onNav, initialStudentId }: { onNav: (p: Page) =
     finally { setGeneratingAi(false); }
   };
 
-  const [learningSuggestions, setLearningSuggestions] = useState([
-    { type: "strong", title: "高等数学基础扎实", content: "微积分和线性代数成绩优秀，建议保持学习节奏，可尝试更深入的数学分析内容。" },
-    { type: "weak", title: "计算机网络需加强", content: "TCP/IP协议和网络层知识掌握较弱，建议多做练习题，重点复习路由和传输层。" },
-    { type: "improve", title: "作业提交及时性", content: "近两次作业迟交，建议合理安排时间，提前规划作业进度。" },
-    { type: "strong", title: "实验动手能力强", content: "实验报告质量高，代码实现规范，建议继续保持。" },
-  ]);
+  const handleGenerateSuggestions = async () => {
+    if (!selectedStudentId || !selectedCourseId) return;
+    setGeneratingSuggestions(true);
+    try {
+      const text = await generateAiSuggestions(selectedStudentId, selectedCourseId);
+      setProfile(prev => prev ? { ...prev, aiSuggestions: text } : null);
+      showToastMsg("AI学习建议已生成");
+    } catch { showToastMsg("AI学习建议生成失败"); }
+    finally { setGeneratingSuggestions(false); }
+  };
+
+  const learningSuggestions: LearningSuggestion[] = profile?.aiSuggestions
+    ? (() => {
+        try {
+          const parsed = JSON.parse(profile.aiSuggestions);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch { return []; }
+      })()
+    : [];
+
+  const [editingSuggestions, setEditingSuggestions] = useState<LearningSuggestion[]>([]);
+  const [savingSuggestions, setSavingSuggestions] = useState(false);
 
   const tabs = [
     { key: "score", label: "成绩概览" },
@@ -5066,17 +5084,16 @@ function TeacherStudentProfile({ onNav, initialStudentId }: { onNav: (p: Page) =
     uid: profile.studentNo,
     className: profile.className || "",
     stats: {
-      totalScore: profile.scoreTrendList?.[0]?.overallScores?.length
-        ? Math.round(profile.scoreTrendList[0].overallScores.reduce((a: number, b: number) => a + b, 0) / profile.scoreTrendList[0].overallScores.length)
-        : 0,
+      totalScore: profile.totalScore ? Math.round(profile.totalScore) : 0,
       maxScore: profile.scoreTrendList?.[0]?.overallScores?.length
         ? Math.max(...profile.scoreTrendList[0].overallScores.map(Number))
         : 0,
       minScore: profile.scoreTrendList?.[0]?.overallScores?.length
         ? Math.min(...profile.scoreTrendList[0].overallScores.map(Number))
         : 0,
-      avgScore: 0,
-      rank: 0,
+      avgScore: profile.totalScore ? Math.round(profile.totalScore) : 0,
+      rank: profile.classRank || 0,
+      classTotal: profile.classTotal || 0,
     },
     scoreTrend: profile.scoreTrendList?.[0]
       ? profile.scoreTrendList[0].semesters.map((sem, i) => ({
@@ -5211,10 +5228,10 @@ function TeacherStudentProfile({ onNav, initialStudentId }: { onNav: (p: Page) =
             <div className="space-y-4">
               <div className="grid grid-cols-4 gap-3">
                 {[
-                  { label: "总分", value: profileData.stats.totalScore, subtext: privacyMode ? "隐私保护" : `班级排名 ${profileData.stats.rank}` },
+                  { label: "总分", value: profileData.stats.totalScore, subtext: privacyMode ? "隐私保护" : `班级排名 ${profileData.stats.rank}/${profileData.stats.classTotal}` },
                   { label: "最高分", value: profileData.stats.maxScore, subtext: "历次考试" },
                   { label: "最低分", value: profileData.stats.minScore, subtext: "历次考试" },
-                  { label: "平均分", value: profileData.stats.avgScore, subtext: "六次考试" },
+                  { label: "平均分", value: profileData.stats.avgScore, subtext: profile.scoreTrendList?.[0]?.overallScores?.length ? `${profile.scoreTrendList[0].overallScores.length}次考试` : "暂无数据" },
                 ].map(item => (
                   <div key={item.label} className="bg-card rounded-lg border border-border p-4 text-center">
                     <p className="font-mono text-xl font-bold text-primary">{item.value}</p>
@@ -5396,13 +5413,56 @@ function TeacherStudentProfile({ onNav, initialStudentId }: { onNav: (p: Page) =
               </div>
 
               <div className="bg-card rounded-lg border border-border p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Brain size={16} className="text-primary" />
-                  <h4 className="font-medium text-sm">AI综合评价报告</h4>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Brain size={16} className="text-primary" />
+                    <h4 className="font-medium text-sm">AI综合评价报告</h4>
+                  </div>
+                  <button
+                    onClick={handleGenerateAi}
+                    disabled={generatingAi}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {generatingAi ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        生成中...
+                      </>
+                    ) : profileData.aiEvaluation ? (
+                      <>
+                        <RefreshCw size={14} />
+                        更新评价
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={14} />
+                        生成AI评价
+                      </>
+                    )}
+                  </button>
                 </div>
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-                  <p className="text-sm text-blue-800 leading-relaxed">{profileData.aiEvaluation}</p>
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200 min-h-[120px]">
+                  {generatingAi ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-blue-600">
+                      <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-3" />
+                      <p className="text-sm">AI正在分析学生数据，生成评价中...</p>
+                    </div>
+                  ) : profileData.aiEvaluation ? (
+                    <p className="text-sm text-blue-800 leading-relaxed whitespace-pre-wrap">{profileData.aiEvaluation}</p>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 text-blue-400">
+                      <Brain size={32} className="mb-2 opacity-50" />
+                      <p className="text-sm">点击上方按钮生成AI综合评价</p>
+                    </div>
+                  )}
                 </div>
+                {profileData.aiEvaluation && !generatingAi && (
+                  <div className="mt-3 flex justify-end">
+                    <span className="text-xs text-muted-foreground">
+                      上次生成时间：{new Date().toLocaleString('zh-CN')}
+                    </span>
+                  </div>
+                )}
                 <div className="mt-4 flex gap-2">
                   <button onClick={handleExportReport} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">导出评价</button>
                   <button className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700">发送通知</button>
@@ -5412,7 +5472,10 @@ function TeacherStudentProfile({ onNav, initialStudentId }: { onNav: (p: Page) =
               <div className="bg-card rounded-lg border border-border p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-medium text-sm">AI学习建议</h4>
-                  <button onClick={() => setShowSuggestionEdit(true)} className="flex items-center gap-1.5 text-xs text-primary hover:underline">
+                  <button onClick={() => {
+                    setEditingSuggestions([...learningSuggestions]);
+                    setShowSuggestionEdit(true);
+                  }} className="flex items-center gap-1.5 text-xs text-primary hover:underline">
                     <Edit2 size={12} />编辑建议
                   </button>
                 </div>
@@ -5438,8 +5501,21 @@ function TeacherStudentProfile({ onNav, initialStudentId }: { onNav: (p: Page) =
                   ))}
                 </div>
                 <div className="mt-4 pt-4 border-t border-border">
-                  <button onClick={() => setShowSuggestionEdit(true)} className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white text-sm rounded-md hover:bg-blue-700">
-                    <Brain size={14} />重新生成建议
+                  <button
+                    onClick={handleGenerateSuggestions}
+                    disabled={generatingSuggestions}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                    {generatingSuggestions ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        生成中...
+                      </>
+                    ) : (
+                      <>
+                        <Brain size={14} />
+                        {learningSuggestions.length > 0 ? "更新建议" : "生成学习建议"}
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -5500,36 +5576,36 @@ function TeacherStudentProfile({ onNav, initialStudentId }: { onNav: (p: Page) =
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               <div className="space-y-4">
-                {learningSuggestions.map((s, i) => (
+                {editingSuggestions.map((s, i) => (
                   <div key={i} className="border border-border rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <select value={s.type} onChange={(e) => {
-                        const newSuggestions = [...learningSuggestions];
-                        newSuggestions[i].type = e.target.value;
-                        setLearningSuggestions(newSuggestions);
+                        const newSuggestions = [...editingSuggestions];
+                        (newSuggestions[i] as any).type = e.target.value;
+                        setEditingSuggestions(newSuggestions);
                       }} className="px-2 py-1 text-xs border border-border rounded-md">
                         <option value="strong">优点</option>
                         <option value="weak">薄弱</option>
                         <option value="improve">改进</option>
                       </select>
                       <button onClick={() => {
-                        setLearningSuggestions(learningSuggestions.filter((_, idx) => idx !== i));
+                        setEditingSuggestions(editingSuggestions.filter((_, idx) => idx !== i));
                       }} className="text-xs text-red-500 hover:text-red-700">删除</button>
                     </div>
                     <input type="text" value={s.title} onChange={(e) => {
-                      const newSuggestions = [...learningSuggestions];
+                      const newSuggestions = [...editingSuggestions];
                       newSuggestions[i].title = e.target.value;
-                      setLearningSuggestions(newSuggestions);
+                      setEditingSuggestions(newSuggestions);
                     }} className="w-full px-3 py-2 border border-border rounded-md text-sm mb-2" />
                     <textarea value={s.content} onChange={(e) => {
-                      const newSuggestions = [...learningSuggestions];
+                      const newSuggestions = [...editingSuggestions];
                       newSuggestions[i].content = e.target.value;
-                      setLearningSuggestions(newSuggestions);
+                      setEditingSuggestions(newSuggestions);
                     }} className="w-full px-3 py-2 border border-border rounded-md text-sm h-20 resize-none" />
                   </div>
                 ))}
                 <button onClick={() => {
-                  setLearningSuggestions([...learningSuggestions, {
+                  setEditingSuggestions([...editingSuggestions, {
                     type: "improve" as const,
                     title: "新建议",
                     content: "输入建议内容...",
@@ -5541,10 +5617,22 @@ function TeacherStudentProfile({ onNav, initialStudentId }: { onNav: (p: Page) =
             </div>
             <div className="p-4 border-t border-border flex gap-3">
               <button onClick={() => setShowSuggestionEdit(false)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
-              <button onClick={() => {
-                setShowSuggestionEdit(false);
-                showToastMsg("学习建议已更新");
-              }} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700">保存修改</button>
+              <button
+                onClick={async () => {
+                  if (!selectedStudentId || !selectedCourseId) return;
+                  setSavingSuggestions(true);
+                  try {
+                    const jsonStr = JSON.stringify(editingSuggestions);
+                    setProfile(prev => prev ? { ...prev, aiSuggestions: jsonStr } : null);
+                    setShowSuggestionEdit(false);
+                    showToastMsg("学习建议已更新");
+                  } catch { showToastMsg("保存失败"); }
+                  finally { setSavingSuggestions(false); }
+                }}
+                disabled={savingSuggestions}
+                className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50">
+                {savingSuggestions ? "保存中..." : "保存修改"}
+              </button>
             </div>
           </div>
         </div>
@@ -5559,6 +5647,8 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [generatingAi, setGeneratingAi] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<StudentProfileData | null>(null);
   const [courses, setCourses] = useState<ClsVO[]>([]);
@@ -5598,7 +5688,18 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
 
   const profileData = profile ? {
     name: profile.name, uid: profile.studentNo, className: profile.className || "",
-    stats: { totalScore: 0, maxScore: 0, minScore: 0, avgScore: 0, rank: 0 },
+    stats: {
+      totalScore: profile.totalScore ? Math.round(profile.totalScore) : 0,
+      maxScore: profile.scoreTrendList?.[0]?.overallScores?.length
+        ? Math.max(...profile.scoreTrendList[0].overallScores.map(Number))
+        : 0,
+      minScore: profile.scoreTrendList?.[0]?.overallScores?.length
+        ? Math.min(...profile.scoreTrendList[0].overallScores.map(Number))
+        : 0,
+      avgScore: profile.totalScore ? Math.round(profile.totalScore) : 0,
+      rank: profile.classRank || 0,
+      classTotal: profile.classTotal || 0,
+    },
     scoreTrend: profile.scoreTrendList?.[0]?.semesters.map((sem, i) => ({
       exam: sem, score: Number(profile.scoreTrendList![0].overallScores[i] || 0), classAvg: 75,
     })) || [],
@@ -5613,8 +5714,27 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
     acc[r.status] = (acc[r.status] || 0) + 1; return acc;
   }, {} as Record<string, number>) || {};
 
+  const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
+
+  const handleGenerateAi = async () => {
+    if (!selectedStudentId || !selectedCourseId) return;
+    setGeneratingAi(true);
+    try {
+      const text = await generateAiEvaluation(selectedStudentId, selectedCourseId);
+      setProfile(prev => prev ? { ...prev, aiEvaluation: text } : null);
+      showToastMsg("AI评价已生成");
+    } catch { showToastMsg("AI评价生成失败"); }
+    finally { setGeneratingAi(false); }
+  };
+
   return (
     <div className="space-y-5">
+      {toast && (
+        <div className="fixed top-20 right-6 z-50 px-4 py-3 bg-primary text-white text-sm rounded-lg shadow-lg">
+          <div className="flex items-center gap-2"><CheckCircle size={14} />{toast}</div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold">学生画像</h2>
@@ -5659,10 +5779,10 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
             <div className="space-y-4">
               <div className="grid grid-cols-4 gap-3">
                 {[
-                  { label: "总分", value: profileData.stats.totalScore, subtext: `班级排名 ${profileData.stats.rank}` },
+                  { label: "总分", value: profileData.stats.totalScore, subtext: `班级排名 ${profileData.stats.rank}/${profileData.stats.classTotal}` },
                   { label: "最高分", value: profileData.stats.maxScore, subtext: "历次考试" },
                   { label: "最低分", value: profileData.stats.minScore, subtext: "历次考试" },
-                  { label: "平均分", value: profileData.stats.avgScore, subtext: "六次考试" },
+                  { label: "平均分", value: profileData.stats.avgScore, subtext: profile.scoreTrendList?.[0]?.overallScores?.length ? `${profile.scoreTrendList[0].overallScores.length}次考试` : "暂无数据" },
                 ].map(item => (
                   <div key={item.label} className="bg-card rounded-lg border border-border p-4 text-center">
                     <p className="font-mono text-xl font-bold text-primary">{item.value}</p>
@@ -5783,13 +5903,75 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
           )}
 
           {activeTab === "ai" && (
-            <div className="bg-card rounded-lg border border-border p-6">
-              <h4 className="font-medium text-sm mb-4">AI综合评价</h4>
-              <div className="bg-blue-50 rounded-lg p-4">
-                <p className="text-sm text-blue-800 leading-relaxed">{profileData.aiEvaluation}</p>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: "综合评分", value: Math.round((Number(profileData.stats.avgScore) || 0) * 1.1), color: "bg-blue-50 text-blue-700", icon: <Award size={16} /> },
+                  { label: "学习态度", value: profileData.homeworkRecords.length > 0 ? Math.round((profileData.homeworkRecords.filter(h => h.status === "按时").length / profileData.homeworkRecords.length) * 100) : 0, color: "bg-green-50 text-green-700", icon: <Target size={16} /> },
+                  { label: "知识掌握", value: profileData.knowledgeData.length > 0 ? Math.round(profileData.knowledgeData.reduce((sum, k) => sum + k.value, 0) / profileData.knowledgeData.length) : 0, color: "bg-purple-50 text-purple-700", icon: <BookOpen size={16} /> },
+                  { label: "进步空间", value: 100 - Math.round(Number(profileData.stats.avgScore) || 0), color: "bg-orange-50 text-orange-700", icon: <TrendingUp size={16} /> },
+                ].map((stat, i) => (
+                  <div key={i} className={`${stat.color} rounded-lg p-3`}>
+                    <div className="flex items-center gap-2 mb-1">{stat.icon}<span className="text-xs font-medium">{stat.label}</span></div>
+                    <p className="text-xl font-bold">{stat.value}<span className="text-sm font-normal">分</span></p>
+                  </div>
+                ))}
               </div>
-              <div className="mt-4 flex gap-2">
-                <button className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">导出评价</button>
+
+              <div className="bg-card rounded-lg border border-border p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Brain size={16} className="text-primary" />
+                    <h4 className="font-medium text-sm">AI综合评价报告</h4>
+                  </div>
+                  <button
+                    onClick={handleGenerateAi}
+                    disabled={generatingAi}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {generatingAi ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        生成中...
+                      </>
+                    ) : profileData.aiEvaluation ? (
+                      <>
+                        <RefreshCw size={14} />
+                        更新评价
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={14} />
+                        生成AI评价
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200 min-h-[120px]">
+                  {generatingAi ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-blue-600">
+                      <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-3" />
+                      <p className="text-sm">AI正在分析学生数据，生成评价中...</p>
+                    </div>
+                  ) : profileData.aiEvaluation ? (
+                    <p className="text-sm text-blue-800 leading-relaxed whitespace-pre-wrap">{profileData.aiEvaluation}</p>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 text-blue-400">
+                      <Brain size={32} className="mb-2 opacity-50" />
+                      <p className="text-sm">点击上方按钮生成AI综合评价</p>
+                    </div>
+                  )}
+                </div>
+                {profileData.aiEvaluation && !generatingAi && (
+                  <div className="mt-3 flex justify-end">
+                    <span className="text-xs text-muted-foreground">
+                      上次生成时间：{new Date().toLocaleString('zh-CN')}
+                    </span>
+                  </div>
+                )}
+                <div className="mt-4 flex gap-2">
+                  <button className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">导出评价</button>
+                </div>
               </div>
             </div>
           )}
@@ -8509,6 +8691,12 @@ function StudentDashboard({ onNav }: { onNav: (p: Page) => void }) {
 
 // ─── Student: Profile ─────────────────────────────────────────────────────────
 function StudentProfile() {
+  const [toast, setToast] = useState<string | null>(null);
+  const showToastMsg = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
+
   const gradeLabel = (score: number | null) => {
     if (!score) return { label: "待录入", color: "gray" };
     if (score >= 90) return { label: "优秀", color: "green" };
@@ -8523,6 +8711,7 @@ function StudentProfile() {
   const [selectedCourseId, setSelectedCourseId] = useState(initialCourseId);
   const [profile, setProfile] = useState<StudentProfileData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [generatingSuggestions, setGeneratingSuggestions] = useState(false);
 
   const selectedCourse = studentCourses.find(c => c.id === selectedCourseId) || studentCourses[0];
 
@@ -8538,6 +8727,25 @@ function StudentProfile() {
     localStorage.setItem("selectedCourseId", courseId.toString());
   };
 
+  const handleGenerateSuggestions = async () => {
+    setGeneratingSuggestions(true);
+    try {
+      const text = await generateMyAiSuggestions(selectedCourseId);
+      setProfile(prev => prev ? { ...prev, aiSuggestions: text } : null);
+      showToastMsg("AI学习建议已生成");
+    } catch { showToastMsg("AI学习建议生成失败"); }
+    finally { setGeneratingSuggestions(false); }
+  };
+
+  const learningSuggestions: LearningSuggestion[] = profile?.aiSuggestions
+    ? (() => {
+        try {
+          const parsed = JSON.parse(profile.aiSuggestions);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch { return []; }
+      })()
+    : [];
+
   const profileName = profile?.name || "我";
   const profileStudentNo = profile?.studentNo || "";
   const profileCollege = profile?.college || "";
@@ -8549,6 +8757,11 @@ function StudentProfile() {
 
   return (
     <div className="space-y-6">
+      {toast && (
+        <div className="fixed top-20 right-6 z-50 px-4 py-3 bg-primary text-white text-sm rounded-lg shadow-lg">
+          <div className="flex items-center gap-2"><CheckCircle size={14} />{toast}</div>
+        </div>
+      )}
       <div className="bg-gradient-to-r from-primary to-blue-500 rounded-lg p-6 text-white">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-6">
@@ -8581,23 +8794,23 @@ function StudentProfile() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-card rounded-lg border border-border p-4">
           <p className="text-xs text-muted-foreground">当前成绩</p>
-          <p className="font-mono text-2xl font-bold text-primary mt-1">{selectedCourse.total ?? "—"}</p>
-          <Tag color={gradeLabel(selectedCourse.total).color as any} className="mt-2">{gradeLabel(selectedCourse.total).label}</Tag>
+          <p className="font-mono text-2xl font-bold text-primary mt-1">{profile?.totalScore != null ? profile.totalScore.toFixed(1) : "—"}</p>
+          <Tag color={gradeLabel(profile?.totalScore ?? 0).color as any} className="mt-2">{gradeLabel(profile?.totalScore ?? 0).label}</Tag>
         </div>
         <div className="bg-card rounded-lg border border-border p-4">
           <p className="text-xs text-muted-foreground">出勤率</p>
-          <p className="font-mono text-2xl font-bold text-emerald-600 mt-1">{selectedCourse.attendance}%</p>
-          <p className="text-xs text-muted-foreground mt-2">全勤</p>
+          <p className="font-mono text-2xl font-bold text-emerald-600 mt-1">{profile?.attendanceRate != null ? profile.attendanceRate.toFixed(1) + "%" : "—"}</p>
+          <p className="text-xs text-muted-foreground mt-2">{profile?.absentCount === 0 ? "全勤" : `缺勤${profile?.absentCount}次`}</p>
         </div>
         <div className="bg-card rounded-lg border border-border p-4">
           <p className="text-xs text-muted-foreground">作业提交率</p>
-          <p className="font-mono text-2xl font-bold text-blue-600 mt-1">{selectedCourse.submissionRate}%</p>
+          <p className="font-mono text-2xl font-bold text-blue-600 mt-1">{profile?.homeworkRate != null ? profile.homeworkRate.toFixed(1) + "%" : "—"}</p>
           <p className="text-xs text-muted-foreground mt-2">按时提交</p>
         </div>
         <div className="bg-card rounded-lg border border-border p-4">
           <p className="text-xs text-muted-foreground">班级排名</p>
-          <p className="font-mono text-2xl font-bold text-purple-600 mt-1">{selectedCourse.rank}</p>
-          <p className="text-xs text-muted-foreground mt-2">共45人</p>
+          <p className="font-mono text-2xl font-bold text-purple-600 mt-1">{profile?.classRank && profile?.classTotal ? `${profile.classRank}/${profile.classTotal}` : "—"}</p>
+          <p className="text-xs text-muted-foreground mt-2">共{profile?.classTotal ?? 0}人</p>
         </div>
       </div>
 
@@ -8695,19 +8908,45 @@ function StudentProfile() {
         <div className="bg-card rounded-lg border border-border p-5">
           <h3 className="font-medium text-sm mb-4">AI个性化学习建议</h3>
           <div className="space-y-3">
-            {knowledgeData.filter(k => k.value < 70).map((k, i) => (
-              <div key={i} className="border border-border rounded-lg p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <h4 className="font-medium text-sm">加强{k.subject}的理解与应用</h4>
-                  <Tag color="red">掌握度 {k.value}%</Tag>
+            {learningSuggestions.length > 0 ? (
+              learningSuggestions.map((s, i) => (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${
+                    s.type === "strong" ? "bg-green-100 text-green-700" : 
+                    s.type === "weak" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
+                  }`}>
+                    {s.type === "strong" ? "优" : s.type === "weak" ? "弱" : "改"}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{s.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.content}</p>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">你在{k.subject}方面的掌握度较低，建议重点复习相关知识点，多做练习题巩固。</p>
-                <Tag color="gray">{k.subject}</Tag>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+                <Brain size={32} className="mb-2 opacity-50" />
+                <p className="text-sm">点击下方按钮生成AI学习建议</p>
               </div>
-            ))}
-            {knowledgeData.every(k => k.value >= 70) && (
-              <p className="text-center text-sm text-muted-foreground py-6">当前课程知识点掌握良好，继续保持！🎉</p>
             )}
+          </div>
+          <div className="mt-4 pt-4 border-t border-border">
+            <button
+              onClick={handleGenerateSuggestions}
+              disabled={generatingSuggestions}
+              className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              {generatingSuggestions ? (
+                <>
+                  <RefreshCw size={14} className="animate-spin" />
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <Brain size={14} />
+                  {learningSuggestions.length > 0 ? "更新建议" : "生成学习建议"}
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -8759,15 +8998,18 @@ function StudentScoreTrend() {
   const selectedCourse = studentCourses.find(c => c.id === selectedCourseId) || studentCourses[0];
 
   useEffect(() => {
+    setLoadingTrends(true);
     getStudentTrends(selectedCourseId).then(data => {
       if (data && data.length > 0) {
-        setApiTrends(data.map((item, i) => ({
+        setApiTrends(data.map(item => ({
           exam: item.name,
-          score: typeof item.value === 'number' ? item.value : 0,
-          classAvg: 75,
+          score: typeof item.score === 'number' ? item.score : 0,
+          classAvg: typeof item.classAvg === 'number' ? item.classAvg : 0,
         })));
+      } else {
+        setApiTrends([]);
       }
-    }).catch(() => {}).finally(() => setLoadingTrends(false));
+    }).catch(() => setApiTrends([])).finally(() => setLoadingTrends(false));
   }, [selectedCourseId]);
 
   const handleCourseChange = (courseId: number) => {
@@ -8775,7 +9017,7 @@ function StudentScoreTrend() {
     localStorage.setItem("selectedCourseId", courseId.toString());
   };
 
-  const courseScoreTrend = apiTrends.length > 0 ? apiTrends : (courseScoreTrends[selectedCourseId] || []);
+  const courseScoreTrend = apiTrends;
 
   const stats = courseScoreTrend.length > 0 ? {
     max: Math.max(...courseScoreTrend.map(s => s.score)),
@@ -9905,7 +10147,8 @@ export default function App() {
   const [selectedCourse, setSelectedCourse] = useState(1);
   const [selectedQuizQuestions, setSelectedQuizQuestions] = useState<number[]>([]);
   const [filterSourceType, setFilterSourceType] = useState<string | null>(null);
-  const [selectedStudentId, setSelectedStudentId] = useState<string>("2024001");
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [user, setUser] = useState<any>(null);
 
   // 检查是否已登录
@@ -9915,7 +10158,7 @@ export default function App() {
       const frontendRole = mapRole(savedUser.role);
       setRole(frontendRole);
       setUser(savedUser);
-      setPage(frontendRole === "admin" ? "admin-dashboard" : frontendRole === "teacher" || frontendRole === "teaching-assistant" ? "teacher-dashboard" : "student-dashboard");
+      setPage(frontendRole === "admin" ? "admin-dashboard" : frontendRole === "teacher" ? "teacher-dashboard" : frontendRole === "teaching-assistant" ? "ta-dashboard" : "student-dashboard");
     }
   }, []);
 
@@ -9958,20 +10201,20 @@ export default function App() {
         {page === "admin-audit" && <AdminAuditLogs />}
         {page === "admin-config" && <AdminConfig />}
         {/* Teacher pages */}
-        {page === "teacher-dashboard" && <TeacherDashboard onNav={setPage} />}
-        {page === "teacher-class" && <TeacherClassManagement onNav={setPage} setSelectedStudentId={setSelectedStudentId} />}
+        {page === "teacher-dashboard" && <TeacherDashboard onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} />}
+        {page === "teacher-class" && <TeacherClassManagement onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} />}
         {page === "teacher-import" && <TeacherDataImport />}
-        {page === "teacher-profile" && <TeacherStudentProfile onNav={setPage} initialStudentId={selectedStudentId} />}
+        {page === "teacher-profile" && <TeacherStudentProfile onNav={setPage} initialStudentId={selectedStudentId} initialCourseId={selectedCourseId} />}
         {page === "teacher-ai-quiz" && <TeacherAIQuiz onNav={setPage} />}
         {page === "teacher-bank" && <TeacherQuestionBank onNav={setPage} setSelectedQuizQuestions={setSelectedQuizQuestions} filterSourceType={filterSourceType} setFilterSourceType={setFilterSourceType} />}
         {page === "teacher-exam" && <TeacherExamManagement selectedQuizQuestions={selectedQuizQuestions} setSelectedQuizQuestions={setSelectedQuizQuestions} />}
         {page === "teacher-notification" && <TeacherNotification />}
         {page === "teacher-logs" && <TeacherOperationLogs />}
-        {/* Teaching Assistant pages */}
-        {page === "ta-dashboard" && <TA_Dashboard />}
-        {page === "ta-import" && <TA_DataImport />}
-        {page === "ta-profile" && <TA_StudentProfile />}
-        {page === "ta-grading" && <TA_Grading />}
+        {/* Teaching Assistant pages (复用教师端组件，后端已做权限控制) */}
+        {page === "ta-dashboard" && <TeacherDashboard onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} />}
+        {page === "ta-import" && <TeacherDataImport />}
+        {page === "ta-profile" && <TeacherStudentProfile onNav={setPage} initialStudentId={selectedStudentId} initialCourseId={selectedCourseId} />}
+        {page === "ta-grading" && <TeacherExamManagement selectedQuizQuestions={selectedQuizQuestions} setSelectedQuizQuestions={setSelectedQuizQuestions} />}
         {/* Student pages */}
         {page === "student-dashboard" && <StudentDashboard onNav={setPage} />}
         {page === "student-profile" && <StudentProfile />}

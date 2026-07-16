@@ -26,4 +26,7 @@ public class ClassVO {
     private String courseType;
     private Integer studentCount;
     private LocalDateTime createTime;
+    private BigDecimal avgScore;
+    private BigDecimal attendanceRate;
+    private BigDecimal homeworkRate;
 }

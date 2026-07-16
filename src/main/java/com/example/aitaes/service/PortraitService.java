@@ -24,4 +24,9 @@ public interface PortraitService {
      * AI 综合评价
      */
     String generateAiEvaluation(Long studentId, Long courseId);
+
+    /**
+     * AI 学习建议
+     */
+    String generateAiSuggestions(Long studentId, Long courseId);
 }

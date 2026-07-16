@@ -32,6 +32,18 @@ public class CourseStudent {
     /** 教师重点关注标记 */
     private Integer isFocus;
 
+    /** AI综合评价 */
+    private String aiEvaluation;
+
+    /** AI评价生成时间 */
+    private LocalDateTime aiEvaluationTime;
+
+    /** AI学习建议（JSON数组） */
+    private String aiSuggestions;
+
+    /** AI学习建议生成时间 */
+    private LocalDateTime aiSuggestionsTime;
+
     private LocalDateTime createTime;
 
     /** 逻辑删除（0=正常, 1=退课） */
