@@ -53,6 +53,7 @@ public class AttendanceImportStrategy implements ImportStrategy {
         GenericExcelListener<AttendanceExcelDTO> listener =
                 new GenericExcelListener<>(500, this::saveBatch);
         EasyExcel.read(inputStream, AttendanceExcelDTO.class, listener)
+                .excelType(getExcelType(originalFilename))
                 .sheet().doRead();
         return buildResult(listener);
     }
@@ -62,7 +63,7 @@ public class AttendanceImportStrategy implements ImportStrategy {
      */
     private void parseFileName(String filename) {
         if (filename == null) return;
-        String name = filename.replace(".xlsx", "").replace(".xls", "");
+        String name = filename.replaceAll("(?i)\\.(xlsx|xls|csv)$", "");
         String[] parts = name.split("_");
         if (parts.length >= 2) {
             Course course = courseMapper.selectOne(

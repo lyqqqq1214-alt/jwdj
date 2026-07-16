@@ -106,7 +106,9 @@ public abstract class AbstractAssessmentImportStrategy implements ImportStrategy
             public void doAfterAllAnalysed(AnalysisContext context) {
                 log.info("Sheet解析完成: {}行数据", allRows.size());
             }
-        }).sheet().doRead();
+            // headRowNumber(0)：所有行（含表头）都进 invoke()，由上面的 isHeader 逻辑识别表头，
+            // 否则 EasyExcel 默认吞掉首行导致第一个学生行被误当表头丢弃
+        }).excelType(getExcelType(originalFilename)).headRowNumber(0).sheet().doRead();
 
         // 解析题目数
         int questionCount = detectQuestionCount(headerRow);
@@ -140,7 +142,7 @@ public abstract class AbstractAssessmentImportStrategy implements ImportStrategy
      */
     protected void parseFileName(String filename) {
         if (filename == null) return;
-        String name = filename.replace(".xlsx", "").replace(".xls", "");
+        String name = filename.replaceAll("(?i)\\.(xlsx|xls|csv)$", "");
         String[] parts = name.split("_");
         if (parts.length >= 3 && SUPPORTED_TYPES.contains(parts[1].toUpperCase())) {
             // 查找课程

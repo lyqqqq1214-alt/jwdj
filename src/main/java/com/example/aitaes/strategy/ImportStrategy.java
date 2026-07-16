@@ -22,8 +22,15 @@ public interface ImportStrategy {
      * 解决用 InputStream 读取 CSV 时 EasyExcel 无法根据文件名自动推断格式的问题
      */
     default ExcelTypeEnum getExcelType(String filename) {
-        if (filename != null && filename.toLowerCase().endsWith(".csv")) {
+        if (filename == null) {
+            return ExcelTypeEnum.XLSX;
+        }
+        String lower = filename.toLowerCase();
+        if (lower.endsWith(".csv")) {
             return ExcelTypeEnum.CSV;
+        }
+        if (lower.endsWith(".xls")) {
+            return ExcelTypeEnum.XLS;
         }
         return ExcelTypeEnum.XLSX;
     }
