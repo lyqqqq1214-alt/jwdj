@@ -7,6 +7,7 @@ import java.util.Map;
 
 @Data
 public class AiGeneratedQuestionDTO {
+    private String questionType;
     private String stem;
     private Map<String, String> options;
     private String answer;

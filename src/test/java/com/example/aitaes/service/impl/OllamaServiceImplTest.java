@@ -41,11 +41,12 @@ class OllamaServiceImplTest {
     @Test
     @DisplayName("应发送非流式JSON请求并解析结构化题目")
     void shouldGenerateStructuredQuestions() {
-        String questionsJson = "{\"questions\":[{\"stem\":\"TCP为何需要三次握手？\",\"options\":{},\"answer\":\"同步双方序列号并确认收发能力\",\"explanation\":\"三次交互可确认双向通信。\",\"knowledgeTags\":[\"TCP\"],\"socraticQuestions\":[]}]}";
+        String questionsJson = "{\"questions\":[{\"questionType\":\"简答\",\"stem\":\"TCP为何需要三次握手？\",\"options\":{},\"answer\":\"同步双方序列号并确认收发能力\",\"explanation\":\"三次交互可确认双向通信。\",\"knowledgeTags\":[\"TCP\"],\"socraticQuestions\":[]}]}";
         String ollamaResponse = "{\"response\":" + quote(questionsJson) + "}";
         server.expect(requestTo("/api/generate"))
                 .andExpect(jsonPath("$.model").value("qwen2.5:7b"))
                 .andExpect(jsonPath("$.stream").value(false))
+                .andExpect(jsonPath("$.keep_alive").value("30m"))
                 .andExpect(jsonPath("$.format.type").value("object"))
                 .andExpect(jsonPath("$.format.properties.questions.minItems").value(1))
                 .andRespond(withSuccess(ollamaResponse, MediaType.APPLICATION_JSON));
@@ -90,6 +91,33 @@ class OllamaServiceImplTest {
                 () -> assertTrue(prompt.contains("socraticQuestions")),
                 () -> assertTrue(prompt.contains("计算机网络"))
         );
+    }
+
+    @Test
+    @DisplayName("综合题两问顺序颠倒时应自动纠正并同步交换答案")
+    void shouldNormalizeReversedCompositeQuestion() {
+        String questionsJson = "{\"questions\":[{\"questionType\":\"综合题\","
+                + "\"stem\":\"材料：某链路带宽为100Mbps。\\n（1）请计算传输时延。\\n（2）请简述时延的含义。\","
+                + "\"options\":{},"
+                + "\"answer\":\"（1）公式：T=L/R；代入数据计算结果为1秒。\\n（2）时延表示数据传输所需时间。\","
+                + "\"explanation\":\"考查概念与计算。\",\"knowledgeTags\":[\"时延\"],\"socraticQuestions\":[]}]}";
+        server.expect(requestTo("/api/generate"))
+                .andRespond(withSuccess("{\"response\":" + quote(questionsJson) + "}", MediaType.APPLICATION_JSON));
+
+        AiQuestionGenerateRequest compositeRequest = AiQuestionGenerateRequest.builder()
+                .knowledgePoints(List.of("计算机网络"))
+                .questionType("综合")
+                .count(1)
+                .difficulty("中等")
+                .socraticMode(false)
+                .build();
+
+        AiGeneratedQuestionDTO question = service.generateQuestions(compositeRequest).getFirst();
+
+        assertTrue(question.getStem().indexOf("简述") < question.getStem().indexOf("计算"));
+        assertTrue(question.getAnswer().indexOf("时延表示") < question.getAnswer().indexOf("公式"));
+        assertEquals("综合", question.getQuestionType());
+        server.verify();
     }
 
     private AiQuestionGenerateRequest request(int count) {

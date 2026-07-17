@@ -27,6 +27,7 @@ import { sendNotification, getMyNotifications, Notification as NotifItem } from 
 import { getOperationLogs, OperationLog } from "../services/logService";
 import { getAllConfigs, batchUpdateConfigs, SystemConfig } from "../services/configService";
 import { uploadFile, getImportHistory, ImportLog } from "../services/importService";
+import { generateQuestions } from "../services/aiQuizService";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Role = "admin" | "teacher" | "teaching-assistant" | "student";
@@ -6023,34 +6024,34 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
     }
     setIsGenerating(true);
     try {
-      const response = await fetch("http://localhost:8080/api/quiz/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          knowledgePoints: params.topics,
-          questionType: params.types.join("、"),
-          count: params.count,
-          difficulty: params.difficulty,
-          socraticMode: params.socrates,
-        }),
+      const generated = await generateQuestions({
+        knowledgePoints: params.topics,
+        questionType: params.types.join("、"),
+        count: params.count,
+        difficulty: params.difficulty,
+        socraticMode: params.socrates,
       });
-      const result = await response.json();
-      if (!response.ok || result.code !== 200) {
-        throw new Error(result.message || "题目生成失败");
-      }
-      const questions = (result.data || []).map((q: any, index: number) => {
+      const questions = (generated || []).map((q: any, index: number) => {
         const optionEntries = Object.entries(q.options || {});
+        const questionType = q.questionType || params.types[0] || "简答";
+        const isChoice = questionType.includes("选");
+        const isMultiple = questionType.includes("多选");
+        const answerKeys = String(q.answer || "").toUpperCase().match(/[A-Z]/g) || [];
+        const answerIndexes = [...new Set(answerKeys
+          .map(key => optionEntries.findIndex(([optionKey]) => optionKey.toUpperCase() === key))
+          .filter(optionIndex => optionIndex >= 0))];
         const answerIndex = optionEntries.findIndex(([key, value]) => key === q.answer || value === q.answer);
         return {
           id: Date.now() + index,
-          type: params.types.some(type => type.includes("选")) ? "choice" : "text",
+          type: isMultiple ? "multiple" : isChoice ? "choice" : questionType === "填空" ? "fill" : "text",
+          questionType,
           topic: (q.knowledgeTags || params.topics).join("、"),
           difficulty: params.difficulty,
           professionalScore: 100,
           status: "pending" as const,
           question: q.stem,
-          options: optionEntries.map(([, value]) => String(value)),
-          answer: answerIndex >= 0 ? answerIndex : 0,
+          options: isChoice ? optionEntries.map(([, value]) => String(value)) : [],
+          answer: isMultiple ? answerIndexes : isChoice ? (answerIndex >= 0 ? answerIndex : 0) : q.answer,
           explain: q.explanation,
           socraticQuestions: q.socraticQuestions || [],
         };
@@ -6249,7 +6250,7 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
                   <input type="checkbox" checked={selectedQuestionsForExam.includes(q.id)} onChange={() => handleQuestionSelect(q.id)} 
                     className="rounded text-primary focus:ring-primary" disabled={q.status !== "approved"} />
                   <GripVertical size={14} className="text-muted-foreground" />
-                  <Tag color="blue">{q.type === "choice" ? "选择题" : q.type === "judge" ? "判断题" : "问答题"}</Tag>
+                  <Tag color="blue">{q.questionType || (q.type === "multiple" ? "多选题" : q.type === "choice" ? "选择题" : q.type === "fill" ? "填空题" : "问答题")}</Tag>
                   <Tag color="gray">{q.topic}</Tag>
                   <Tag color={q.difficulty === "简单" ? "green" : q.difficulty === "中等" ? "blue" : "red"}>{q.difficulty}</Tag>
                   {q.professionalScore < 80 && <Tag color="yellow">专业度 {q.professionalScore}</Tag>}
@@ -6264,13 +6265,18 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
               ) : (
                 <p className="text-sm mb-3">{q.question}</p>
               )}
-              {q.options && (
+              {q.options?.length > 0 && (
                 <div className="space-y-1 mb-3">
                   {q.options.map((opt, i) => (
-                    <div key={i} className={`text-xs px-3 py-1.5 rounded ${i === q.answer ? "bg-green-50 text-green-700" : "bg-muted"}`}>
+                    <div key={i} className={`text-xs px-3 py-1.5 rounded ${(Array.isArray(q.answer) ? q.answer.includes(i) : i === q.answer) ? "bg-green-50 text-green-700" : "bg-muted"}`}>
                       {String.fromCharCode(65 + i)}. {viewMode === "edit" ? <input type="text" defaultValue={opt} className="w-full bg-transparent text-xs" /> : opt}
                     </div>
                   ))}
+                </div>
+              )}
+              {q.type !== "choice" && q.type !== "multiple" && (
+                <div className="bg-green-50 rounded p-2 mb-3">
+                  <p className="text-xs font-medium text-green-700">参考答案：{q.answer}</p>
                 </div>
               )}
               <div className="bg-blue-50 rounded p-2 mb-3">

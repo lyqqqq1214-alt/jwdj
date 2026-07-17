@@ -658,7 +658,6 @@ CREATE TABLE `t_ai_analysis_result` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AI分析结果表';
 
 -- ============================================================
-<<<<<<< Updated upstream
 -- 初始化种子数据
 -- ============================================================
 
@@ -675,8 +674,6 @@ INSERT INTO `t_teacher` (`id`, `user_id`, `teacher_no`, `name`, `gender`, `colle
 (2, 2, 'T001', '张建国', '男', '计算机学院', '软件工程系', '教授', 'zjg@university.edu.cn'),
 (3, 3, 'T002', '李美玲', '女', '计算机学院', '网络工程系', '副教授', 'lml@university.edu.cn');
 
-=======
->>>>>>> Stashed changes
 -- 预警规则预置
 INSERT INTO `t_warning_rule` (`rule_name`, `rule_type`, `threshold`, `severity`, `is_active`, `description`) VALUES
 ('缺勤过多预警',      'ATTENDANCE',    '缺勤次数>=3',              'HIGH',   1, '缺勤次数达到3次触发高危预警'),

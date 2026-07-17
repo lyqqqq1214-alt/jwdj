@@ -47,6 +47,8 @@ CREATE TABLE IF NOT EXISTS t_student (
     college       VARCHAR(128) DEFAULT NULL,
     major         VARCHAR(128) DEFAULT NULL,
     class_name    VARCHAR(128) DEFAULT NULL,
+    grade         VARCHAR(16)  DEFAULT NULL,
+    avatar        VARCHAR(512) DEFAULT NULL,
     email         VARCHAR(128) DEFAULT NULL,
     phone         VARCHAR(32)  DEFAULT NULL,
     create_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
@@ -56,3 +58,7 @@ CREATE TABLE IF NOT EXISTS t_student (
     UNIQUE (student_no),
     UNIQUE (user_id)
 );
+
+-- 兼容旧版 H2 数据库：CREATE TABLE IF NOT EXISTS 不会为已有表补充新字段
+ALTER TABLE t_student ADD COLUMN IF NOT EXISTS grade VARCHAR(16) DEFAULT NULL;
+ALTER TABLE t_student ADD COLUMN IF NOT EXISTS avatar VARCHAR(512) DEFAULT NULL;

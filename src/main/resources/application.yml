@@ -36,9 +36,9 @@ aitaes:
   ai:
     ollama:
       base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
-      model: ${OLLAMA_MODEL:qwen3.5:9b}
+      model: ${OLLAMA_MODEL:qwen2.5:7b}
       connect-timeout: ${OLLAMA_CONNECT_TIMEOUT:5s}
-      read-timeout: ${OLLAMA_READ_TIMEOUT:120s}
+      read-timeout: ${OLLAMA_READ_TIMEOUT:300s}
       max-attempts: ${OLLAMA_MAX_ATTEMPTS:3}
       retry-delay: ${OLLAMA_RETRY_DELAY:1s}
       temperature: ${OLLAMA_TEMPERATURE:0.2}
