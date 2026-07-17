@@ -35,6 +35,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final TeacherMapper teacherMapper;
     private final TeachingAssistantMapper teachingAssistantMapper;
     private final UserMapper userMapper;
+    private final ExperimentMapper experimentMapper;
 
     @Override
     public DashboardOverviewDTO getOverview(Long courseId) {
@@ -115,6 +116,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .attendanceStats(getAttendanceStats(courseId))
                 .homeworkStats(getHomeworkStats(courseId))
                 .knowledgeRadar(getKnowledgeRadar(courseId))
+                .experimentStats(getExperimentStats(courseId))
                 .build();
     }
 
@@ -376,7 +378,6 @@ public class DashboardServiceImpl implements DashboardService {
                 new LambdaQueryWrapper<StudentKpMastery>()
                         .eq(StudentKpMastery::getCourseId, courseId));
 
-        // 按知识点聚合平均掌握度
         Map<String, List<StudentKpMastery>> grouped = masteryList.stream()
                 .collect(Collectors.groupingBy(StudentKpMastery::getKpName));
 
@@ -386,6 +387,49 @@ public class DashboardServiceImpl implements DashboardService {
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     .divide(new BigDecimal(e.getValue().size()), 2, RoundingMode.HALF_UP);
             return ChartItem.builder().name(e.getKey()).value(avg).build();
+        }).collect(Collectors.toList());
+    }
+
+    private List<ExperimentStat> getExperimentStats(Long courseId) {
+        Long studentCount = courseStudentMapper.selectCount(
+                new LambdaQueryWrapper<CourseStudent>()
+                        .eq(CourseStudent::getCourseId, courseId));
+
+        List<Experiment> experiments = experimentMapper.selectList(
+                new LambdaQueryWrapper<Experiment>()
+                        .eq(Experiment::getCourseId, courseId)
+                        .orderByAsc(Experiment::getExperimentNo));
+
+        Map<String, List<Experiment>> grouped = experiments.stream()
+                .collect(Collectors.groupingBy(e -> e.getExperimentName() + "_" + e.getExperimentNo()));
+
+        return grouped.entrySet().stream().sorted((a, b) -> {
+            int noA = a.getKey().contains("_") ? Integer.parseInt(a.getKey().split("_")[1]) : 0;
+            int noB = b.getKey().contains("_") ? Integer.parseInt(b.getKey().split("_")[1]) : 0;
+            return Integer.compare(noA, noB);
+        }).map(entry -> {
+            List<Experiment> list = entry.getValue();
+            Experiment first = list.get(0);
+            BigDecimal avgScore = list.isEmpty() ? BigDecimal.ZERO :
+                    list.stream()
+                            .map(e -> e.getScore() != null ? e.getScore() : BigDecimal.ZERO)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add)
+                            .divide(new BigDecimal(list.size()), 2, RoundingMode.HALF_UP);
+            int submittedCount = list.size();
+            int totalCount = studentCount.intValue();
+            BigDecimal submitRate = totalCount > 0
+                    ? new BigDecimal(submittedCount).divide(new BigDecimal(totalCount), 4, RoundingMode.HALF_UP)
+                            .multiply(new BigDecimal(100)).setScale(1, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+
+            return ExperimentStat.builder()
+                    .experimentName(first.getExperimentName())
+                    .experimentNo(first.getExperimentNo())
+                    .avgScore(avgScore)
+                    .submittedCount(submittedCount)
+                    .totalCount(totalCount)
+                    .submitRate(submitRate)
+                    .build();
         }).collect(Collectors.toList());
     }
 }

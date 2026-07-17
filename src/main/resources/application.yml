@@ -35,9 +35,9 @@ aitaes:
     max-errors: 100
   ai:
     ollama:
-      base-url: ${AI_BASE_URL:http://localhost:11434/v1}
-      api-key: ${AI_API_KEY:ollama}
-      model: ${AI_MODEL:qwen2.5:7b}
+      base-url: ${AI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+      api-key: ${AI_API_KEY:}
+      model: ${AI_MODEL:qwen-plus}
       connect-timeout: ${OLLAMA_CONNECT_TIMEOUT:10s}
       read-timeout: ${OLLAMA_READ_TIMEOUT:300s}
       max-attempts: ${OLLAMA_MAX_ATTEMPTS:3}

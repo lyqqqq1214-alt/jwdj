@@ -30,4 +30,7 @@ public class DashboardChartsDTO {
 
     /** 知识点掌握度雷达：key=知识点, value=班级平均掌握度 */
     private List<ChartItem> knowledgeRadar;
+
+    /** 实验统计：每次实验的平均分、提交情况 */
+    private List<ExperimentStat> experimentStats;
 }

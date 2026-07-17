@@ -3534,8 +3534,22 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
   const [notificationContent, setNotificationContent] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [hiddenModules, setHiddenModules] = useState<string[]>([]);
-  const [moduleOrder, setModuleOrder] = useState(["stats", "score-dist", "score-trend", "attendance", "homework", "warnings"]);
+  const [moduleOrder, setModuleOrder] = useState(["stats", "score-dist", "score-trend", "attendance", "homework", "experiment", "warnings"]);
   const [assessmentType, setAssessmentType] = useState<string | null>(null);
+
+  const typeModuleMap: Record<string, string[]> = {
+    homework: ["stats", "homework"],
+    test: ["stats", "score-dist", "score-trend", "warnings"],
+    experiment: ["stats", "experiment"],
+  };
+
+  const isModuleVisible = (moduleId: string) => {
+    if (hiddenModules.includes(moduleId)) return false;
+    if (!assessmentType) return true;
+    if (moduleId === "course-profile") return true;
+    const allowedModules = typeModuleMap[assessmentType] || [];
+    return allowedModules.includes(moduleId);
+  };
 
   // API data states
   const [dashboardCourses, setDashboardCourses] = useState<ClassVO[]>([]);
@@ -3777,7 +3791,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
             </div>
           ) : (
             <>
-              {!hiddenModules.includes("stats") && (
+              {isModuleVisible("stats") && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   {[
                     { label: "班级人数", value: currentOverview?.studentCount ?? classInfo?.studentCount ?? 0, icon: Users, color: "blue" },
@@ -3800,41 +3814,131 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                 </div>
               )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {!hiddenModules.includes("score-dist") && (
+              <div className={`grid gap-4 ${assessmentType ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
+                {isModuleVisible("score-dist") && (
                   <div className="bg-card rounded-lg border border-border p-5">
                     <h3 className="font-medium text-sm mb-4">班级成绩分布图</h3>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={currentCharts?.scoreDistribution || []}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                        <YAxis tick={{ fontSize: 11 }} />
-                        <Tooltip formatter={(v: any) => `${v}人`} />
-                        <Bar dataKey="value" fill="#1A56DB" radius={[2, 2, 0, 0]} name="人数" />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    {assessmentType === "test" ? (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <ResponsiveContainer width="100%" height={220}>
+                          <BarChart data={currentCharts?.scoreDistribution || []}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                            <YAxis tick={{ fontSize: 11 }} />
+                            <Tooltip formatter={(v: any) => `${v}人`} />
+                            <Bar dataKey="value" fill="#1A56DB" radius={[2, 2, 0, 0]} name="人数" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                        <div className="overflow-auto max-h-[220px]">
+                          <table className="w-full text-sm">
+                            <thead className="text-xs text-muted-foreground bg-muted/30 sticky top-0">
+                              <tr>
+                                <th className="text-left font-medium py-2 px-2">分数段</th>
+                                <th className="text-center font-medium py-2 px-2">人数</th>
+                                <th className="text-center font-medium py-2 px-2">占比</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(currentCharts?.scoreDistribution || []).map((item, i) => {
+                                const total = (currentCharts?.scoreDistribution || []).reduce((sum, x) => sum + (x.value || 0), 0);
+                                const pct = total > 0 ? ((item.value || 0) / total * 100).toFixed(1) : "0";
+                                return (
+                                  <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/30">
+                                    <td className="py-2 px-2 font-medium">{item.name}</td>
+                                    <td className="text-center py-2 px-2 text-primary">{item.value}</td>
+                                    <td className="text-center py-2 px-2 text-muted-foreground">{pct}%</td>
+                                  </tr>
+                                );
+                              })}
+                              {(currentCharts?.scoreDistribution || []).length === 0 && (
+                                <tr>
+                                  <td colSpan={3} className="text-center py-8 text-muted-foreground text-xs">暂无成绩数据</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={currentCharts?.scoreDistribution || []}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                          <YAxis tick={{ fontSize: 11 }} />
+                          <Tooltip formatter={(v: any) => `${v}人`} />
+                          <Bar dataKey="value" fill="#1A56DB" radius={[2, 2, 0, 0]} name="人数" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
                   </div>
                 )}
-                {!hiddenModules.includes("score-trend") && (
+                {isModuleVisible("score-trend") && (
                   <div className="bg-card rounded-lg border border-border p-5">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-medium text-sm">成绩趋势图</h3>
                     </div>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <LineChart data={currentCharts?.scoreTrend || []}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                        <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                        <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
-                        <Tooltip formatter={(v: any) => `${v}分`} />
-                        <Line type="monotone" dataKey="value" stroke="#1A56DB" strokeWidth={2} dot={{ r: 4 }} name="班级平均分" />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    {assessmentType === "test" ? (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <ResponsiveContainer width="100%" height={220}>
+                          <LineChart data={currentCharts?.scoreTrend || []}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                            <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                            <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                            <Tooltip formatter={(v: any) => `${v}分`} />
+                            <Line type="monotone" dataKey="value" stroke="#1A56DB" strokeWidth={2} dot={{ r: 4 }} name="班级平均分" />
+                          </LineChart>
+                        </ResponsiveContainer>
+                        <div className="overflow-auto max-h-[220px]">
+                          <table className="w-full text-sm">
+                            <thead className="text-xs text-muted-foreground bg-muted/30 sticky top-0">
+                              <tr>
+                                <th className="text-left font-medium py-2 px-2">考核名称</th>
+                                <th className="text-center font-medium py-2 px-2">平均分</th>
+                                <th className="text-center font-medium py-2 px-2">排名</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(currentCharts?.scoreTrend || []).map((item, i) => {
+                                const sorted = [...(currentCharts?.scoreTrend || [])].sort((a, b) => (b.value || 0) - (a.value || 0));
+                                const rank = sorted.findIndex(s => s.name === item.name) + 1;
+                                return (
+                                  <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/30">
+                                    <td className="py-2 px-2 font-medium">{item.name}</td>
+                                    <td className="text-center py-2 px-2 text-primary font-mono">{item.value}</td>
+                                    <td className="text-center py-2 px-2">
+                                      <span className={`px-2 py-0.5 text-xs rounded-full ${rank <= 3 ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}`}>
+                                        第{rank}名
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                              {(currentCharts?.scoreTrend || []).length === 0 && (
+                                <tr>
+                                  <td colSpan={3} className="text-center py-8 text-muted-foreground text-xs">暂无成绩数据</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={220}>
+                        <LineChart data={currentCharts?.scoreTrend || []}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                          <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                          <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                          <Tooltip formatter={(v: any) => `${v}分`} />
+                          <Line type="monotone" dataKey="value" stroke="#1A56DB" strokeWidth={2} dot={{ r: 4 }} name="班级平均分" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
                   </div>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {!hiddenModules.includes("attendance") && (
+              <div className={`grid gap-4 ${assessmentType ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
+                {isModuleVisible("attendance") && (
                   <div className="bg-card rounded-lg border border-border p-5">
                     <h3 className="font-medium text-sm mb-4">考勤统计</h3>
                     <ResponsiveContainer width="100%" height={200}>
@@ -3850,26 +3954,133 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                     </ResponsiveContainer>
                   </div>
                 )}
-                {!hiddenModules.includes("homework") && (
+                {isModuleVisible("homework") && (
                   <div className="bg-card rounded-lg border border-border p-5">
                     <h3 className="font-medium text-sm mb-4">作业提交统计</h3>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <BarChart data={currentCharts?.homeworkStats || []}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                        <XAxis dataKey="homeworkName" tick={{ fontSize: 10 }} />
-                        <YAxis tick={{ fontSize: 11 }} />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="onTimeCount" fill="#10B981" name="按时" />
-                        <Bar dataKey="lateCount" fill="#F59E0B" name="迟交" />
-                        <Bar dataKey="absentCount" fill="#EF4444" name="未交" />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    {assessmentType === "homework" ? (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <ResponsiveContainer width="100%" height={200}>
+                          <BarChart data={currentCharts?.homeworkStats || []}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                            <XAxis dataKey="homeworkName" tick={{ fontSize: 10 }} />
+                            <YAxis tick={{ fontSize: 11 }} />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="onTimeCount" fill="#10B981" name="按时" />
+                            <Bar dataKey="lateCount" fill="#F59E0B" name="迟交" />
+                            <Bar dataKey="absentCount" fill="#EF4444" name="未交" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                        <div className="overflow-auto max-h-[200px]">
+                          <table className="w-full text-sm">
+                            <thead className="text-xs text-muted-foreground bg-muted/30 sticky top-0">
+                              <tr>
+                                <th className="text-left font-medium py-2 px-2">作业名称</th>
+                                <th className="text-center font-medium py-2 px-2">按时</th>
+                                <th className="text-center font-medium py-2 px-2">迟交</th>
+                                <th className="text-center font-medium py-2 px-2">未交</th>
+                                <th className="text-center font-medium py-2 px-2">提交率</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(currentCharts?.homeworkStats || []).map((hw, i) => {
+                                const total = hw.onTimeCount + hw.lateCount + hw.absentCount;
+                                const rate = total > 0 ? ((hw.onTimeCount + hw.lateCount) / total * 100).toFixed(1) : "0";
+                                return (
+                                  <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/30">
+                                    <td className="py-2 px-2 font-medium">{hw.homeworkName}</td>
+                                    <td className="text-center py-2 px-2 text-green-600">{hw.onTimeCount}</td>
+                                    <td className="text-center py-2 px-2 text-yellow-600">{hw.lateCount}</td>
+                                    <td className="text-center py-2 px-2 text-red-600">{hw.absentCount}</td>
+                                    <td className="text-center py-2 px-2 font-medium">{rate}%</td>
+                                  </tr>
+                                );
+                              })}
+                              {(currentCharts?.homeworkStats || []).length === 0 && (
+                                <tr>
+                                  <td colSpan={5} className="text-center py-8 text-muted-foreground text-xs">暂无作业数据</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart data={currentCharts?.homeworkStats || []}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                          <XAxis dataKey="homeworkName" tick={{ fontSize: 10 }} />
+                          <YAxis tick={{ fontSize: 11 }} />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="onTimeCount" fill="#10B981" name="按时" />
+                          <Bar dataKey="lateCount" fill="#F59E0B" name="迟交" />
+                          <Bar dataKey="absentCount" fill="#EF4444" name="未交" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                )}
+                {isModuleVisible("experiment") && (
+                  <div className="bg-card rounded-lg border border-border p-5">
+                    <h3 className="font-medium text-sm mb-4">实验报告统计</h3>
+                    {assessmentType === "experiment" ? (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <ResponsiveContainer width="100%" height={200}>
+                          <BarChart data={currentCharts?.experimentStats || []}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                            <XAxis dataKey="experimentName" tick={{ fontSize: 10 }} />
+                            <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                            <Tooltip formatter={(v: any) => `${v}分`} />
+                            <Legend />
+                            <Bar dataKey="avgScore" fill="#8B5CF6" name="平均分" radius={[2, 2, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                        <div className="overflow-auto max-h-[200px]">
+                          <table className="w-full text-sm">
+                            <thead className="text-xs text-muted-foreground bg-muted/30 sticky top-0">
+                              <tr>
+                                <th className="text-left font-medium py-2 px-2">实验名称</th>
+                                <th className="text-center font-medium py-2 px-2">平均分</th>
+                                <th className="text-center font-medium py-2 px-2">提交率</th>
+                                <th className="text-center font-medium py-2 px-2">提交/总数</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(currentCharts?.experimentStats || []).map((exp, i) => (
+                                <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/30">
+                                  <td className="py-2 px-2 font-medium">{exp.experimentName}</td>
+                                  <td className="text-center py-2 px-2 text-purple-600 font-mono">{exp.avgScore}</td>
+                                  <td className="text-center py-2 px-2 font-medium">{exp.submitRate}%</td>
+                                  <td className="text-center py-2 px-2 text-muted-foreground text-xs">{exp.submittedCount}/{exp.totalCount}</td>
+                                </tr>
+                              ))}
+                              {(currentCharts?.experimentStats || []).length === 0 && (
+                                <tr>
+                                  <td colSpan={4} className="text-center py-8 text-muted-foreground text-xs">暂无实验数据</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart data={currentCharts?.experimentStats || []}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                          <XAxis dataKey="experimentName" tick={{ fontSize: 10 }} />
+                          <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                          <Tooltip formatter={(v: any) => `${v}分`} />
+                          <Legend />
+                          <Bar dataKey="avgScore" fill="#8B5CF6" name="平均分" radius={[2, 2, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
                   </div>
                 )}
               </div>
 
-              {!hiddenModules.includes("warnings") && (
+              {isModuleVisible("warnings") && (
                 <div className="bg-card rounded-lg border border-border overflow-hidden">
                   <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-wrap gap-3">
                     <div className="flex items-center gap-3">
@@ -3963,7 +4174,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                 </div>
               )}
 
-              {!hiddenModules.includes("course-profile") && (
+              {isModuleVisible("course-profile") && (
                 <div className="bg-card rounded-lg border border-border overflow-hidden">
                   <div className="p-4 border-b border-border">
                     <h3 className="font-medium text-sm">综合课程画像</h3>
@@ -4126,6 +4337,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                 { id: "score-trend", name: "成绩趋势图" },
                 { id: "attendance", name: "考勤统计" },
                 { id: "homework", name: "作业提交统计" },
+                { id: "experiment", name: "实验报告统计" },
                 { id: "warnings", name: "预警学生列表" },
                 { id: "course-profile", name: "综合课程画像" },
               ].map(module => (
@@ -5258,7 +5470,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
           <select value={selectedStudentId || ""} onChange={e => setSelectedStudentId(Number(e.target.value))}
             className="appearance-none bg-card border border-border px-4 py-2 pr-8 rounded-lg text-sm font-medium cursor-pointer hover:bg-accent transition-colors">
             {students.map(s => (
-              <option key={s.id} value={s.id}>{s.name} · {s.studentNo}</option>
+              <option key={s.studentId} value={s.studentId}>{s.name} · {s.studentNo}</option>
             ))}
           </select>
         </div>

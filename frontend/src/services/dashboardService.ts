@@ -21,12 +21,22 @@ export interface HomeworkStat {
   absentCount: number;
 }
 
+export interface ExperimentStat {
+  experimentName: string;
+  experimentNo: number;
+  avgScore: number;
+  submittedCount: number;
+  totalCount: number;
+  submitRate: number;
+}
+
 export interface DashboardCharts {
   scoreDistribution: ChartItem[];
   scoreTrend: ChartItem[];
   attendanceStats: ChartItem[];
   homeworkStats: HomeworkStat[];
   knowledgeRadar: ChartItem[];
+  experimentStats: ExperimentStat[];
 }
 
 export interface WarningStudent {
