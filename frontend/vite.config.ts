@@ -27,6 +27,8 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        timeout: 300000,       // 5 分钟超时，适配 AI 出题等慢接口
+        proxyTimeout: 300000,
       },
     },
   },

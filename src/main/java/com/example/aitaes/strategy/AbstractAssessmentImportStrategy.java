@@ -84,71 +84,79 @@ public abstract class AbstractAssessmentImportStrategy implements ImportStrategy
     public ImportResultDTO execute(InputStream inputStream, ImportContext ctx) {
         AssessmentSession session = new AssessmentSession();
 
-        // 1. 确定课程（页面参数优先，文件名约定回退）
-        CourseResolver.ResolvedCourse resolved = courseResolver.resolve(ctx);
-        if (resolved == null) {
-            return ImportResultDTO.failed(CourseResolver.COURSE_NOT_FOUND_MSG);
-        }
-        session.courseId = resolved.courseId();
-        session.semester = resolved.semester();
-
-        // 2. 确定考核名称与类型（页面参数优先，文件名约定回退）
-        if (ctx.getAssessmentName() != null && !ctx.getAssessmentName().isBlank()) {
-            session.assessmentName = ctx.getAssessmentName().trim();
-        }
-        resolveAssessmentInfo(ctx, session);
-        if (session.assessmentName == null || session.assessmentName.isBlank()) {
-            return ImportResultDTO.failed(
-                    "无法确定考核名称：请在页面填写考核名称（或使用文件名格式 {课程编号}_类型_考核名称.xlsx）");
-        }
-        if (session.assessmentType == null) {
-            return ImportResultDTO.failed("无法确定考核类型：期中/期末成绩导入请在页面选择期中或期末");
-        }
-
-        // 3. 读取表头与所有数据行
-        List<String> headerRow = new ArrayList<>();
-        List<RawRow> allRows = new ArrayList<>();
-        readRows(inputStream, ctx.getOriginalFilename(), headerRow, allRows);
-
-        // 4. 按表头列名定位各列
-        ColumnLayout layout = resolveColumns(headerRow);
-        if (layout.studentNoCol < 0) {
-            return ImportResultDTO.failed("表头缺少\"学号\"列，请下载并使用官方导入模板");
-        }
-        log.info("表头定位: 学号列={}, 总成绩列={}, 题目数={}",
-                layout.studentNoCol, layout.totalScoreCol, layout.questions.size());
-
-        // 5. 过滤学生数据行（学号列非空；汇总行/空行自然被跳过）
-        List<RawRow> studentRows = allRows.stream()
-                .filter(row -> !cell(row.data(), layout.studentNoCol).isBlank())
-                .toList();
-        if (studentRows.isEmpty()) {
-            // 未解析到数据行 → 统一 FAILED（不创建空考核记录）
-            return ImportResultDTO.of(0, 0, 0, 0, session.errors, session.warnings);
-        }
-
-        // 6. 查找或创建考核
-        Assessment assessment = findOrCreateAssessment(session, layout.questions.size());
-
-        // 7. 逐行处理学生数据
-        for (RawRow row : studentRows) {
-            session.totalRows++;
-            try {
-                processStudentRow(row, layout, assessment, session);
-            } catch (Exception e) {
-                session.failRows++;
-                session.errors.add(String.format("第%d行处理失败: %s", row.rowNo(), e.getMessage()));
-                log.warn("处理学生行失败: 第{}行", row.rowNo(), e);
+        try {
+            // 1. 确定课程（页面参数优先，文件名约定回退）
+            CourseResolver.ResolvedCourse resolved = courseResolver.resolve(ctx);
+            if (resolved == null) {
+                return ImportResultDTO.failed(CourseResolver.COURSE_NOT_FOUND_MSG);
             }
-        }
+            session.courseId = resolved.courseId();
+            session.semester = resolved.semester();
 
-        // 8. 导入完成后重新计算知识点掌握度
-        if (session.successRows > 0) {
-            recalculateKpMastery(assessment.getId(), session.courseId);
-        }
+            // 2. 确定考核名称与类型（页面参数优先，文件名约定回退）
+            if (ctx.getAssessmentName() != null && !ctx.getAssessmentName().isBlank()) {
+                session.assessmentName = ctx.getAssessmentName().trim();
+            }
+            resolveAssessmentInfo(ctx, session);
+            if (session.assessmentName == null || session.assessmentName.isBlank()) {
+                return ImportResultDTO.failed(
+                        "无法确定考核名称：请在页面填写考核名称（或使用文件名格式 {课程编号}_类型_考核名称.xlsx）");
+            }
+            if (session.assessmentType == null) {
+                return ImportResultDTO.failed("无法确定考核类型：期中/期末成绩导入请在页面选择期中或期末");
+            }
 
-        return ImportResultDTO.of(session.totalRows, session.successRows, session.failRows,
-                session.skippedRows, session.errors, session.warnings);
+            // 3. 读取表头与所有数据行
+            List<String> headerRow = new ArrayList<>();
+            List<RawRow> allRows = new ArrayList<>();
+            readRows(inputStream, ctx.getOriginalFilename(), headerRow, allRows);
+
+            // 4. 按表头列名定位各列
+            ColumnLayout layout = resolveColumns(headerRow);
+            if (layout.studentNoCol < 0) {
+                return ImportResultDTO.failed("表头缺少\"学号\"列，请下载并使用官方导入模板");
+            }
+            log.info("表头定位: 学号列={}, 总成绩列={}, 题目数={}",
+                    layout.studentNoCol, layout.totalScoreCol, layout.questions.size());
+
+            // 5. 过滤学生数据行（学号列非空；汇总行/空行自然被跳过）
+            List<RawRow> studentRows = allRows.stream()
+                    .filter(row -> !cell(row.data(), layout.studentNoCol).isBlank())
+                    .toList();
+            if (studentRows.isEmpty()) {
+                // 未解析到数据行 → 统一 FAILED（不创建空考核记录）
+                return ImportResultDTO.of(0, 0, 0, 0, session.errors, session.warnings);
+            }
+
+            // 6. 查找或创建考核
+            Assessment assessment = findOrCreateAssessment(session, layout.questions.size());
+
+            // 7. 逐行处理学生数据
+            for (RawRow row : studentRows) {
+                session.totalRows++;
+                try {
+                    processStudentRow(row, layout, assessment, session);
+                } catch (Exception e) {
+                    session.failRows++;
+                    session.errors.add(String.format("第%d行处理失败: %s", row.rowNo(), e.getMessage()));
+                    log.warn("处理学生行失败: 第{}行", row.rowNo(), e);
+                }
+            }
+
+            // 8. 导入完成后重新计算知识点掌握度
+            if (session.successRows > 0) {
+                recalculateKpMastery(assessment.getId(), session.courseId);
+            }
+
+            return ImportResultDTO.of(session.totalRows, session.successRows, session.failRows,
+                    session.skippedRows, session.errors, session.warnings);
+        } catch (Exception e) {
+            log.error("考核成绩导入异常: type={}, file={}", getSupportedType().getCode(),
+                    ctx.getOriginalFilename(), e);
+            session.errors.add("系统异常: " + e.getMessage());
+            return ImportResultDTO.of(session.totalRows, session.successRows, session.failRows,
+                    session.skippedRows, session.errors, session.warnings);
+        }
     }
 
     /**

@@ -135,7 +135,7 @@ public class StudentController {
                 new LambdaQueryWrapper<Attendance>()
                         .eq(Attendance::getCourseId, courseId)
                         .eq(Attendance::getStudentId, studentId)
-                        .eq(Attendance::getStatus, "出勤"));
+                        .in(Attendance::getStatus, List.of("出勤", "PRESENT")));
         data.put("attendanceRate", totalAtt > 0
                 ? new BigDecimal(presentAtt).divide(new BigDecimal(totalAtt), 4, RoundingMode.HALF_UP)
                         .multiply(new BigDecimal(100)).setScale(1, RoundingMode.HALF_UP)

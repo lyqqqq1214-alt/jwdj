@@ -234,7 +234,7 @@ CREATE TABLE t_assessment (
     description       VARCHAR(1024) DEFAULT NULL,
     create_time       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     deleted           TINYINT      DEFAULT 0,
-    UNIQUE (course_id, assessment_name),
+    UNIQUE (course_id, assessment_name, assessment_type),
     FOREIGN KEY (course_id) REFERENCES t_course(id)
 );
 

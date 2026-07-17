@@ -27,7 +27,7 @@ public class Attendance {
     /** 日期 */
     private LocalDate attendanceDate;
 
-    /** 状态：PRESENT/LATE/LEAVE/ABSENT */
+    /** 状态：出勤/迟到/请假/缺勤 */
     private String status;
 
     /** 第几周 */

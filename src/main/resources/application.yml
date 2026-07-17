@@ -35,9 +35,9 @@ aitaes:
     max-errors: 100
   ai:
     ollama:
-      base-url: ${AI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
-      api-key: ${AI_API_KEY:}
-      model: ${AI_MODEL:qwen-plus}
+      base-url: ${AI_BASE_URL:https://api.deepseek.com}
+      api-key: ${AI_API_KEY:sk-472270ade0f14244a25bfdc4dab69988}
+      model: ${AI_MODEL:deepseek-v4-pro}
       connect-timeout: ${OLLAMA_CONNECT_TIMEOUT:10s}
       read-timeout: ${OLLAMA_READ_TIMEOUT:300s}
       max-attempts: ${OLLAMA_MAX_ATTEMPTS:3}

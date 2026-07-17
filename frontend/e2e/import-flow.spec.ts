@@ -87,18 +87,25 @@ async function uploadAndCheck(
     }
   }
 
-  // 5. 上传文件（页面有两个 file input，取隐藏的那个 — import 专用）
-  const fileInput = page.locator('input[type="file"].hidden').or(page.locator('input[type="file"][accept*=".xlsx"]')).first();
+  // 5. Upload file via data-testid
+  const fileInput = page.getByTestId('import-file-input');
   await fileInput.setInputFiles(filePath);
 
-  // 6. 等结果弹窗
-  await page.waitForSelector('text=导入结果', { timeout: 20000 });
-  await expect(page.locator('text=导入结果').first()).toBeVisible();
+  // 6. Wait for result modal (or capture error toast)
+  try {
+    await page.waitForSelector('text=导入结果', { timeout: 20000 });
+    await expect(page.locator('text=导入结果').first()).toBeVisible();
+  } catch {
+    await page.screenshot({ path: `test-results/import-${tabLabel.replace(/[\/\(\)]/g, '_')}-timeout.png` });
+    const toast = page.locator('.fixed.top-20.right-6');
+    const toastText = await toast.textContent().catch(() => '');
+    throw new Error(`Result modal not shown. Toast: "${toastText}". Backend may have returned an error.`);
+  }
 
-  // 7. 截图（方便排查）
+  // 7. Screenshot
   await page.screenshot({ path: `test-results/import-${tabLabel.replace(/[\/\(\)]/g, '_')}.png` });
 
-  // 8. 关闭弹窗
+  // 8. Close modal
   const closeBtn = page.locator('button').filter({ hasText: '关闭' });
   if (await closeBtn.isVisible().catch(() => false)) {
     await closeBtn.click();

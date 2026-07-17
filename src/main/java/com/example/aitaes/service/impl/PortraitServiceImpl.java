@@ -1,6 +1,7 @@
 package com.example.aitaes.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.aitaes.common.AttendanceStatus;
 import com.example.aitaes.common.BusinessException;
 import com.example.aitaes.common.ResultCode;
 import com.example.aitaes.dto.ChartItem;
@@ -81,12 +82,16 @@ public class PortraitServiceImpl implements PortraitService {
                         .eq(Attendance::getStudentId, studentId));
         builder.attendanceList(atts.stream().map(a -> StudentProfileVO.AttendanceItem.builder()
                 .date(a.getAttendanceDate() != null ? a.getAttendanceDate().atStartOfDay() : null)
-                .status(a.getStatus()).weekNo(a.getWeekNo()).remark(a.getRemark()).build())
+                .status(AttendanceStatus.normalize(a.getStatus()))
+                .weekNo(a.getWeekNo()).remark(a.getRemark()).build())
                 .collect(Collectors.toList()));
-        long presentCount = atts.stream().filter(a -> "出勤".equals(a.getStatus())).count();
-        long absentCount = atts.stream().filter(a -> "缺勤".equals(a.getStatus())).count();
-        long lateCount = atts.stream().filter(a -> "迟到".equals(a.getStatus())).count();
-        long leaveCount = atts.stream().filter(a -> "请假".equals(a.getStatus())).count();
+        List<String> normalizedStatuses = atts.stream()
+                .map(a -> AttendanceStatus.normalize(a.getStatus()))
+                .toList();
+        long presentCount = normalizedStatuses.stream().filter("出勤"::equals).count();
+        long absentCount = normalizedStatuses.stream().filter("缺勤"::equals).count();
+        long lateCount = normalizedStatuses.stream().filter("迟到"::equals).count();
+        long leaveCount = normalizedStatuses.stream().filter("请假"::equals).count();
         builder.attendanceRate(atts.isEmpty() ? BigDecimal.ZERO
                 : new BigDecimal(presentCount).divide(new BigDecimal(atts.size()), 4, RoundingMode.HALF_UP)
                         .multiply(new BigDecimal(100)).setScale(1, RoundingMode.HALF_UP));

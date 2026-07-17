@@ -2,6 +2,7 @@ package com.example.aitaes.strategy;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.aitaes.common.AttendanceStatus;
 import com.example.aitaes.dto.ImportResultDTO;
 import com.example.aitaes.dto.excel.AttendanceExcelDTO;
 import com.example.aitaes.entity.Attendance;
@@ -105,7 +106,7 @@ public class AttendanceImportStrategy implements ImportStrategy {
                 att.setCourseId(course.courseId());
                 att.setStudentId(student.getId());
                 att.setAttendanceDate(attendanceDate);
-                att.setStatus(dto.getStatus());
+                att.setStatus(AttendanceStatus.normalize(dto.getStatus()));
                 att.setWeekNo(dto.getWeekNo());
                 att.setPeriod(dto.getPeriod());
                 att.setSemester(course.semester());

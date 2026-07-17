@@ -16,6 +16,8 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- 确保课程存在
 INSERT IGNORE INTO t_course (course_no, course_name, teacher_id, credit, course_type, semester, description) VALUES
+('CS101', '数据结构与算法', 2, 4.0, '必修', '2025-2026-1', '计算机专业核心基础课程，涵盖线性表、树、图、查找与排序等'),
+('CS201', '计算机网络', 3, 3.5, '必修', '2025-2026-1', '网络原理与应用'),
 ('CS301', '计算机网络', 2, 4.0, '必修', '2025-2026-1', '计算机专业核心基础课程，涵盖OSI模型、TCP/IP协议栈、网络层、传输层、应用层等');
 
 -- 获取课程ID
@@ -477,6 +479,38 @@ SELECT @notif1_id, u.id FROM t_user u WHERE u.username = '201826010123';
 
 INSERT IGNORE INTO t_notification_recipient (notification_id, recipient_id)
 SELECT @notif2_id, u.id FROM t_user u WHERE u.username = '201826010130';
+
+-- ============================================================
+-- Part 9: 助教权限配置（助教用户账号在 init.sql 中创建）
+-- ============================================================
+
+-- 陈明 → CS301 计算机网络：完整权限（查看数据 + 导入 + 批阅 + 画像）
+INSERT IGNORE INTO t_assistant_permission (assistant_id, course_id, can_view_data, can_import_data, can_grade, can_view_portrait)
+SELECT ta.id, c.id, 1, 1, 1, 1
+FROM t_teaching_assistant ta, t_course c
+WHERE ta.user_id = (SELECT id FROM t_user WHERE username = 'A001')
+  AND c.course_no = 'CS301';
+
+-- 赵丽 → CS101 数据结构与算法：仅查看数据和画像
+INSERT IGNORE INTO t_assistant_permission (assistant_id, course_id, can_view_data, can_import_data, can_grade, can_view_portrait)
+SELECT ta.id, c.id, 1, 0, 0, 1
+FROM t_teaching_assistant ta, t_course c
+WHERE ta.user_id = (SELECT id FROM t_user WHERE username = 'A002')
+  AND c.course_no = 'CS101';
+
+-- 赵丽 → CS301 计算机网络：仅查看数据和画像
+INSERT IGNORE INTO t_assistant_permission (assistant_id, course_id, can_view_data, can_import_data, can_grade, can_view_portrait)
+SELECT ta.id, c.id, 1, 0, 0, 1
+FROM t_teaching_assistant ta, t_course c
+WHERE ta.user_id = (SELECT id FROM t_user WHERE username = 'A002')
+  AND c.course_no = 'CS301';
+
+-- 王磊 → CS201 计算机网络：可查看数据 + 导入数据
+INSERT IGNORE INTO t_assistant_permission (assistant_id, course_id, can_view_data, can_import_data, can_grade, can_view_portrait)
+SELECT ta.id, c.id, 1, 1, 0, 0
+FROM t_teaching_assistant ta, t_course c
+WHERE ta.user_id = (SELECT id FROM t_user WHERE username = 'A003')
+  AND c.course_no = 'CS201';
 
 -- 恢复外键检查
 SET FOREIGN_KEY_CHECKS = 1;

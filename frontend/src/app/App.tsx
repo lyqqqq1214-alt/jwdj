@@ -50,6 +50,29 @@ const collegePie = [
 ];
 const PIE_COLORS = ["#1A56DB", "#0EA5E9", "#10B981", "#F59E0B", "#94A3B8"];
 
+// 考勤状态归一化（英文→中文，中文原样返回）
+const normalizeAttendanceStatus = (status: string): string => {
+  if (!status) return "";
+  const s = status.trim();
+  const map: Record<string, string> = {
+    PRESENT: "出勤", LATE: "迟到", LEAVE: "请假", ABSENT: "缺勤",
+    出勤: "出勤", 迟到: "迟到", 请假: "请假", 缺勤: "缺勤",
+  };
+  return map[s] || map[s.toUpperCase()] || s;
+};
+
+// 考勤状态 → Tag 颜色
+const getAttendanceTagColor = (status: string): string => {
+  const s = normalizeAttendanceStatus(status);
+  switch (s) {
+    case "出勤": return "green";
+    case "迟到": return "orange";
+    case "请假": return "blue";
+    case "缺勤": return "red";
+    default: return "gray";
+  }
+};
+
 const mockUsers = [
   { id: 1, uid: "2024001", name: "张伟", role: "student", college: "计算机学院", class: "2024级1班", status: "active", created: "2024-09-01 08:00" },
   { id: 2, uid: "2024002", name: "李娜", role: "student", college: "数学学院", class: "2024级2班", status: "active", created: "2024-09-01 08:05" },
@@ -5068,7 +5091,7 @@ function TeacherDataImport() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-card rounded-lg border border-border p-6">
-          <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} className="hidden" />
+          <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} className="hidden" data-testid="import-file-input" />
           <div onClick={handleClickUpload}
             className={`border-2 border-dashed border-border rounded-lg p-10 text-center transition-colors
               ${uploading ? "opacity-50 cursor-not-allowed" : !selectedCourseId ? "opacity-60 cursor-pointer" : "hover:border-primary cursor-pointer"}`}>
@@ -5422,7 +5445,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
       : [],
     attendanceRecords: profile.attendanceList?.map(a => ({
       date: a.date?.split("T")[0] || "",
-      status: a.status || "",
+      status: normalizeAttendanceStatus(a.status || ""),
     })) || [],
     homeworkRecords: profile.homeworkList?.map(h => ({
       name: h.name || "",
@@ -5583,11 +5606,12 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                   <ResponsiveContainer width="100%" height={150}>
                     <PieChart>
                       <Pie data={[
-                        { name: "出勤", value: attendanceStats["出勤"] || 0 },
-                        { name: "迟到", value: attendanceStats["迟到"] || 0 },
-                        { name: "缺勤", value: attendanceStats["缺勤"] || 0 },
+                        { name: "出勤", value: (attendanceStats["出勤"] || 0) + (attendanceStats["PRESENT"] || 0) },
+                        { name: "迟到", value: (attendanceStats["迟到"] || 0) + (attendanceStats["LATE"] || 0) },
+                        { name: "请假", value: (attendanceStats["请假"] || 0) + (attendanceStats["LEAVE"] || 0) },
+                        { name: "缺勤", value: (attendanceStats["缺勤"] || 0) + (attendanceStats["ABSENT"] || 0) },
                       ]} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value">
-                        {[{ fill: "#10B981" }, { fill: "#F59E0B" }, { fill: "#EF4444" }].map((c, i) => <Cell key={`cell-${i}`} {...c} />)}
+                        {[{ fill: "#10B981" }, { fill: "#F59E0B" }, { fill: "#3B82F6" }, { fill: "#EF4444" }].map((c, i) => <Cell key={`cell-${i}`} {...c} />)}
                       </Pie>
                       <Tooltip />
                       <Legend />
@@ -5600,7 +5624,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                     {profileData.attendanceRecords.map(r => (
                       <div key={r.date} className="flex items-center justify-between p-2 bg-muted rounded">
                         <span className="text-xs font-mono">{r.date}</span>
-                        <Tag color={r.status === "出勤" ? "green" : r.status === "迟到" ? "orange" : "red"}>{r.status}</Tag>
+                        <Tag color={getAttendanceTagColor(r.status)}>{r.status}</Tag>
                       </div>
                     ))}
                   </div>
@@ -5853,10 +5877,10 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                   <div>
                     <div className="flex items-center justify-between text-xs mb-2">
                       <span className="text-muted-foreground">出勤率</span>
-                      <span className="font-medium">{Math.round((profileData.attendanceRecords.filter(a => a.status === "出勤").length / profileData.attendanceRecords.length) * 100)}%</span>
+                      <span className="font-medium">{Math.round((profileData.attendanceRecords.filter(a => normalizeAttendanceStatus(a.status) === "出勤").length / profileData.attendanceRecords.length) * 100)}%</span>
                     </div>
                     <div className="bg-muted rounded-full h-2">
-                      <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${(profileData.attendanceRecords.filter(a => a.status === "出勤").length / profileData.attendanceRecords.length) * 100}%` }} />
+                      <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${(profileData.attendanceRecords.filter(a => normalizeAttendanceStatus(a.status) === "出勤").length / profileData.attendanceRecords.length) * 100}%` }} />
                     </div>
                   </div>
                   <div>
@@ -6134,11 +6158,12 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
                   <ResponsiveContainer width="100%" height={150}>
                     <PieChart>
                       <Pie data={[
-                        { name: "出勤", value: attendanceStats["出勤"] || 0 },
-                        { name: "迟到", value: attendanceStats["迟到"] || 0 },
-                        { name: "缺勤", value: attendanceStats["缺勤"] || 0 },
+                        { name: "出勤", value: (attendanceStats["出勤"] || 0) + (attendanceStats["PRESENT"] || 0) },
+                        { name: "迟到", value: (attendanceStats["迟到"] || 0) + (attendanceStats["LATE"] || 0) },
+                        { name: "请假", value: (attendanceStats["请假"] || 0) + (attendanceStats["LEAVE"] || 0) },
+                        { name: "缺勤", value: (attendanceStats["缺勤"] || 0) + (attendanceStats["ABSENT"] || 0) },
                       ]} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value">
-                        {[{ fill: "#10B981" }, { fill: "#F59E0B" }, { fill: "#EF4444" }].map((c, i) => <Cell key={`cell-${i}`} {...c} />)}
+                        {[{ fill: "#10B981" }, { fill: "#F59E0B" }, { fill: "#3B82F6" }, { fill: "#EF4444" }].map((c, i) => <Cell key={`cell-${i}`} {...c} />)}
                       </Pie>
                       <Tooltip />
                       <Legend />
@@ -6151,7 +6176,7 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
                     {profileData.attendanceRecords.map(r => (
                       <div key={r.date} className="flex items-center justify-between p-2 bg-muted rounded">
                         <span className="text-xs font-mono">{r.date}</span>
-                        <Tag color={r.status === "出勤" ? "green" : r.status === "迟到" ? "orange" : "red"}>{r.status}</Tag>
+                        <Tag color={getAttendanceTagColor(r.status)}>{r.status}</Tag>
                       </div>
                     ))}
                   </div>

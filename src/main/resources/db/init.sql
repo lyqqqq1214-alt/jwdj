@@ -328,7 +328,7 @@ CREATE TABLE `t_attendance` (
     `course_id`         BIGINT      NOT NULL,
     `student_id`        BIGINT      NOT NULL,
     `attendance_date`   DATE        NOT NULL,
-    `status`            VARCHAR(16) NOT NULL COMMENT 'PRESENT/LATE/LEAVE/ABSENT',
+    `status`            VARCHAR(16) NOT NULL COMMENT '出勤/迟到/请假/缺勤',
     `week_no`           INT         DEFAULT NULL,
     `period`            VARCHAR(32) DEFAULT NULL,
     `semester`          VARCHAR(32) DEFAULT NULL,
@@ -678,6 +678,18 @@ INSERT INTO `t_teacher` (`id`, `user_id`, `teacher_no`, `name`, `gender`, `colle
 (2, 2, 'T001', '张建国', '男', '计算机学院', '软件工程系', '教授', 'zjg@university.edu.cn'),
 (3, 3, 'T002', '李美玲', '女', '计算机学院', '网络工程系', '副教授', 'lml@university.edu.cn');
 
+-- 助教账号（3名助教，分别关联张建国、李美玲；默认密码 123456）
+-- 权限配置见 simulated_data.sql（依赖课程数据）
+INSERT INTO `t_user` (`username`, `password`, `role`) VALUES
+('A001', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'ASSISTANT'),
+('A002', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'ASSISTANT'),
+('A003', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'ASSISTANT');
+
+INSERT INTO `t_teaching_assistant` (`user_id`, `teacher_id`, `name`) VALUES
+((SELECT id FROM t_user WHERE username = 'A001'), (SELECT id FROM t_teacher WHERE teacher_no = 'T001'), '陈明'),
+((SELECT id FROM t_user WHERE username = 'A002'), (SELECT id FROM t_teacher WHERE teacher_no = 'T001'), '赵丽'),
+((SELECT id FROM t_user WHERE username = 'A003'), (SELECT id FROM t_teacher WHERE teacher_no = 'T002'), '王磊');
+
 -- 预警规则预置
 INSERT INTO `t_warning_rule` (`rule_name`, `rule_type`, `threshold`, `severity`, `is_active`, `description`) VALUES
 ('缺勤过多预警',      'ATTENDANCE',    '缺勤次数>=3',              'HIGH',   1, '缺勤次数达到3次触发高危预警'),
@@ -700,3 +712,12 @@ INSERT INTO `t_system_config` (`config_key`, `config_value`, `config_type`, `des
 ('log.retention_days',           '30',                      'INT',    '日志保留天数');
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- ============================================================
+-- 数据迁移：考勤状态统一为中文（兼容旧数据中可能存在的英文状态）
+-- 可重复执行，不会影响已转换的数据
+-- ============================================================
+UPDATE t_attendance SET status = '出勤' WHERE UPPER(status) = 'PRESENT';
+UPDATE t_attendance SET status = '迟到' WHERE UPPER(status) = 'LATE';
+UPDATE t_attendance SET status = '请假' WHERE UPPER(status) = 'LEAVE';
+UPDATE t_attendance SET status = '缺勤' WHERE UPPER(status) = 'ABSENT';

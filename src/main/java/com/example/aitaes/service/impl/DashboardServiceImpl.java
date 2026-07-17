@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.aitaes.dto.*;
 import com.example.aitaes.entity.*;
 import com.example.aitaes.mapper.*;
+import com.example.aitaes.common.AttendanceStatus;
 import com.example.aitaes.common.BusinessException;
 import com.example.aitaes.common.ResultCode;
 import com.example.aitaes.service.DashboardService;
@@ -70,7 +71,7 @@ public class DashboardServiceImpl implements DashboardService {
         Long presentAtt = attendanceMapper.selectCount(
                 new LambdaQueryWrapper<Attendance>()
                         .eq(Attendance::getCourseId, courseId)
-                        .eq(Attendance::getStatus, "出勤"));
+                        .in(Attendance::getStatus, List.of("出勤", "PRESENT")));
         BigDecimal attRate = totalAtt > 0
                 ? new BigDecimal(presentAtt).divide(new BigDecimal(totalAtt), 4, RoundingMode.HALF_UP)
                         .multiply(new BigDecimal(100)).setScale(1, RoundingMode.HALF_UP)
@@ -228,7 +229,7 @@ public class DashboardServiceImpl implements DashboardService {
         for (Map.Entry<Long, List<Attendance>> entry : attByCourse.entrySet()) {
             List<Attendance> atts = entry.getValue();
             long total = atts.size();
-            long present = atts.stream().filter(a -> "出勤".equals(a.getStatus())).count();
+            long present = atts.stream().filter(a -> "出勤".equals(a.getStatus()) || "PRESENT".equalsIgnoreCase(a.getStatus())).count();
             BigDecimal rate = total > 0
                     ? new BigDecimal(present).divide(new BigDecimal(total), 4, RoundingMode.HALF_UP)
                             .multiply(new BigDecimal(100)).setScale(1, RoundingMode.HALF_UP)
@@ -342,7 +343,9 @@ public class DashboardServiceImpl implements DashboardService {
                 new LambdaQueryWrapper<Attendance>()
                         .eq(Attendance::getCourseId, courseId));
         Map<String, Long> grouped = records.stream()
-                .collect(Collectors.groupingBy(Attendance::getStatus, Collectors.counting()));
+                .collect(Collectors.groupingBy(
+                        a -> AttendanceStatus.normalize(a.getStatus()),
+                        Collectors.counting()));
 
         return Arrays.asList(
                 ChartItem.builder().name("出勤").value(new BigDecimal(grouped.getOrDefault("出勤", 0L))).color("#67C23A").build(),
