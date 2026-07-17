@@ -33,6 +33,8 @@ public class DashboardServiceImpl implements DashboardService {
     private final CourseMapper courseMapper;
     private final StudentMapper studentMapper;
     private final TeacherMapper teacherMapper;
+    private final TeachingAssistantMapper teachingAssistantMapper;
+    private final UserMapper userMapper;
 
     @Override
     public DashboardOverviewDTO getOverview(Long courseId) {
@@ -148,31 +150,133 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public List<ClassVO> getMyCourses(Long userId) {
-        // 将 t_user.id 解析为 t_teacher.id
-        Teacher teacher = teacherMapper.selectOne(
-                new LambdaQueryWrapper<Teacher>()
-                        .eq(Teacher::getUserId, userId));
-        if (teacher == null) {
-            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "教师不存在");
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "用户不存在");
+        }
+
+        Long teacherId;
+        if ("TEACHER".equals(user.getRole())) {
+            Teacher teacher = teacherMapper.selectOne(
+                    new LambdaQueryWrapper<Teacher>().eq(Teacher::getUserId, userId));
+            if (teacher == null) {
+                throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "教师不存在");
+            }
+            teacherId = teacher.getId();
+        } else if ("ASSISTANT".equals(user.getRole())) {
+            TeachingAssistant ta = teachingAssistantMapper.selectOne(
+                    new LambdaQueryWrapper<TeachingAssistant>().eq(TeachingAssistant::getUserId, userId));
+            if (ta == null) {
+                throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "助教不存在");
+            }
+            teacherId = ta.getTeacherId();
+        } else {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "角色不支持");
         }
 
         List<Course> courses = courseMapper.selectList(
                 new LambdaQueryWrapper<Course>()
-                        .eq(Course::getTeacherId, teacher.getId())
+                        .eq(Course::getTeacherId, teacherId)
                         .orderByDesc(Course::getCreateTime));
-        return courses.stream().map(c -> {
-            Long count = courseStudentMapper.selectCount(
-                    new LambdaQueryWrapper<CourseStudent>()
-                            .eq(CourseStudent::getCourseId, c.getId()));
-            return ClassVO.builder()
-                    .id(c.getId())
-                    .courseNo(c.getCourseNo())
-                    .courseName(c.getCourseName())
-                    .className(c.getCourseName())
-                    .semester(c.getSemester())
-                    .studentCount(count.intValue())
-                    .build();
-        }).collect(Collectors.toList());
+        if (courses.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> courseIds = courses.stream().map(Course::getId).collect(Collectors.toList());
+
+        Map<Long, Long> studentCountMap = courseStudentMapper.selectList(
+                new LambdaQueryWrapper<CourseStudent>().in(CourseStudent::getCourseId, courseIds))
+                .stream().collect(Collectors.groupingBy(CourseStudent::getCourseId, Collectors.counting()));
+
+        Map<Long, BigDecimal> avgScoreMap = new HashMap<>();
+        List<Assessment> allAssessments = assessmentMapper.selectList(
+                new LambdaQueryWrapper<Assessment>().in(Assessment::getCourseId, courseIds)
+                        .orderByDesc(Assessment::getAssessmentDate));
+        Map<Long, List<Assessment>> assessmentByCourse = allAssessments.stream()
+                .collect(Collectors.groupingBy(Assessment::getCourseId));
+        List<Long> latestAssessmentIds = new ArrayList<>();
+        for (Map.Entry<Long, List<Assessment>> entry : assessmentByCourse.entrySet()) {
+            if (!entry.getValue().isEmpty()) {
+                latestAssessmentIds.add(entry.getValue().get(0).getId());
+            }
+        }
+        if (!latestAssessmentIds.isEmpty()) {
+            List<AssessmentRecord> latestRecords = assessmentRecordMapper.selectList(
+                    new LambdaQueryWrapper<AssessmentRecord>().in(AssessmentRecord::getAssessmentId, latestAssessmentIds));
+            Map<Long, List<AssessmentRecord>> recordsByAssessment = latestRecords.stream()
+                    .collect(Collectors.groupingBy(AssessmentRecord::getAssessmentId));
+            Map<Long, Long> assessmentToCourse = allAssessments.stream()
+                    .collect(Collectors.toMap(Assessment::getId, Assessment::getCourseId));
+            for (Long asmId : latestAssessmentIds) {
+                Long courseId = assessmentToCourse.get(asmId);
+                List<AssessmentRecord> recs = recordsByAssessment.getOrDefault(asmId, Collections.emptyList());
+                BigDecimal avg = recs.isEmpty() ? BigDecimal.ZERO :
+                        recs.stream().map(r -> r.getTotalScore() != null ? r.getTotalScore() : BigDecimal.ZERO)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                                .divide(new BigDecimal(recs.size()), 2, RoundingMode.HALF_UP);
+                avgScoreMap.put(courseId, avg);
+            }
+        }
+
+        Map<Long, BigDecimal> attendanceRateMap = new HashMap<>();
+        List<Attendance> allAttendances = attendanceMapper.selectList(
+                new LambdaQueryWrapper<Attendance>().in(Attendance::getCourseId, courseIds));
+        Map<Long, List<Attendance>> attByCourse = allAttendances.stream()
+                .collect(Collectors.groupingBy(Attendance::getCourseId));
+        for (Map.Entry<Long, List<Attendance>> entry : attByCourse.entrySet()) {
+            List<Attendance> atts = entry.getValue();
+            long total = atts.size();
+            long present = atts.stream().filter(a -> "出勤".equals(a.getStatus())).count();
+            BigDecimal rate = total > 0
+                    ? new BigDecimal(present).divide(new BigDecimal(total), 4, RoundingMode.HALF_UP)
+                            .multiply(new BigDecimal(100)).setScale(1, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+            attendanceRateMap.put(entry.getKey(), rate);
+        }
+
+        Map<Long, BigDecimal> homeworkRateMap = new HashMap<>();
+        List<Assessment> hwAssessments = assessmentMapper.selectList(
+                new LambdaQueryWrapper<Assessment>()
+                        .in(Assessment::getCourseId, courseIds)
+                        .eq(Assessment::getAssessmentType, "HOMEWORK"));
+        List<Long> hwIds = hwAssessments.stream().map(Assessment::getId).collect(Collectors.toList());
+        Map<Long, Long> hwCourseMap = hwAssessments.stream()
+                .collect(Collectors.toMap(Assessment::getId, Assessment::getCourseId));
+        if (!hwIds.isEmpty()) {
+            List<AssessmentRecord> hwRecords = assessmentRecordMapper.selectList(
+                    new LambdaQueryWrapper<AssessmentRecord>().in(AssessmentRecord::getAssessmentId, hwIds));
+            Map<Long, List<AssessmentRecord>> hwRecByCourse = new HashMap<>();
+            for (AssessmentRecord rec : hwRecords) {
+                Long courseId = hwCourseMap.get(rec.getAssessmentId());
+                if (courseId != null) {
+                    hwRecByCourse.computeIfAbsent(courseId, k -> new ArrayList<>()).add(rec);
+                }
+            }
+            for (Map.Entry<Long, List<AssessmentRecord>> entry : hwRecByCourse.entrySet()) {
+                List<AssessmentRecord> recs = entry.getValue();
+                long total = recs.size();
+                long onTime = recs.stream().filter(r -> "ON_TIME".equals(r.getSubmitStatus())).count();
+                BigDecimal rate = total > 0
+                        ? new BigDecimal(onTime).divide(new BigDecimal(total), 4, RoundingMode.HALF_UP)
+                                .multiply(new BigDecimal(100)).setScale(1, RoundingMode.HALF_UP)
+                        : BigDecimal.ZERO;
+                homeworkRateMap.put(entry.getKey(), rate);
+            }
+        }
+
+        return courses.stream().map(c -> ClassVO.builder()
+                .id(c.getId())
+                .courseNo(c.getCourseNo())
+                .courseName(c.getCourseName())
+                .className(c.getCourseName())
+                .semester(c.getSemester())
+                .credit(c.getCredit())
+                .courseType(c.getCourseType())
+                .studentCount(studentCountMap.getOrDefault(c.getId(), 0L).intValue())
+                .avgScore(avgScoreMap.getOrDefault(c.getId(), BigDecimal.ZERO))
+                .attendanceRate(attendanceRateMap.getOrDefault(c.getId(), BigDecimal.ZERO))
+                .homeworkRate(homeworkRateMap.getOrDefault(c.getId(), BigDecimal.ZERO))
+                .build()).collect(Collectors.toList());
     }
 
     // ===== 图表数据 =====

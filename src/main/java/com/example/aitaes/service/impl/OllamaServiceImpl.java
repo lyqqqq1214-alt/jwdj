@@ -12,11 +12,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,14 +44,15 @@ public class OllamaServiceImpl implements OllamaService {
         if (!StringUtils.hasText(prompt)) {
             throw new BusinessException(400, "Prompt不能为空");
         }
-        return callOllama(prompt, "json");
+        return callDashScope(prompt, null);
     }
 
     @Override
     public List<AiGeneratedQuestionDTO> generateQuestions(AiQuestionGenerateRequest request) {
         validateRequest(request);
-        String json = stripMarkdownFence(callOllama(
-                buildQuestionPrompt(request), buildQuestionSchema(request.getCount())));
+        String json = stripMarkdownFence(callDashScope(
+                buildQuestionPrompt(request),
+                Map.of("type", "json_object")));
         try {
             JsonNode root = objectMapper.readTree(json);
             JsonNode questionsNode;
@@ -84,36 +91,59 @@ public class OllamaServiceImpl implements OllamaService {
         }
     }
 
-    private String callOllama(String prompt, Object format) {
+    private String callDashScope(String prompt, Object responseFormat) {
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "user", "content", prompt));
+
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("model", properties.getModel());
-        body.put("prompt", prompt);
-        body.put("stream", false);
-        body.put("format", format);
-        body.put("keep_alive", "30m");
-        body.put("options", Map.of(
-                "temperature", properties.getTemperature(),
-                "num_predict", 4096));
+        body.put("messages", messages);
+        body.put("temperature", properties.getTemperature());
+        if (responseFormat != null) {
+            body.put("response_format", responseFormat);
+        }
 
-        RestClientException lastException = null;
+        Exception lastException = null;
         int attempts = Math.max(1, properties.getMaxAttempts());
         for (int attempt = 1; attempt <= attempts; attempt++) {
             try {
-                Map<?, ?> response = restTemplate.postForObject("/api/generate", body, Map.class);
-                Object generated = response == null ? null : response.get("response");
-                if (generated == null || !StringUtils.hasText(generated.toString())) {
-                    throw new BusinessException("Ollama返回内容为空");
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.setBearerAuth(properties.getApiKey());
+                HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+                ResponseEntity<Map> response = restTemplate.postForEntity(
+                        "/chat/completions", request, Map.class);
+                Map<?, ?> data = response.getBody();
+                if (data == null || !data.containsKey("choices")) {
+                    throw new BusinessException("DashScope返回格式异常");
                 }
-                return generated.toString();
-            } catch (RestClientException ex) {
+                List<?> choices = (List<?>) data.get("choices");
+                if (choices == null || choices.isEmpty()) {
+                    throw new BusinessException("DashScope返回内容为空");
+                }
+                Map<?, ?> choice = (Map<?, ?>) choices.get(0);
+                Map<?, ?> message = (Map<?, ?>) choice.get("message");
+                if (message == null || message.get("content") == null) {
+                    throw new BusinessException("DashScope返回内容为空");
+                }
+                return message.get("content").toString();
+            } catch (HttpClientErrorException ex) {
                 lastException = ex;
-                log.warn("Ollama调用失败，第{}/{}次尝试: {}", attempt, attempts, ex.getMessage());
+                log.warn("DashScope调用失败(HTTP {}), 第{}/{}次尝试: {}",
+                        ex.getStatusCode(), attempt, attempts, ex.getResponseBodyAsString());
+                if (attempt < attempts) {
+                    sleepBeforeRetry();
+                }
+            } catch (ResourceAccessException ex) {
+                lastException = ex;
+                log.warn("DashScope网络异常，第{}/{}次尝试: {}", attempt, attempts, ex.getMessage());
                 if (attempt < attempts) {
                     sleepBeforeRetry();
                 }
             }
         }
-        throw new BusinessException(503, "本地大模型服务暂不可用: "
+        throw new BusinessException(503, "AI服务暂不可用: "
                 + (lastException == null ? "未知错误" : lastException.getMessage()));
     }
 
@@ -127,7 +157,7 @@ public class OllamaServiceImpl implements OllamaService {
                 - 苏格拉底模式：%s
 
                 只返回JSON对象，不要Markdown代码块或任何额外文字。顶层仅包含questions数组，数组必须恰好包含%d个对象。
-                每道题必须直接考查“知识点”列表中的至少一个知识点，禁止生成列表以外主题的题目。
+                每道题必须直接考查"知识点"列表中的至少一个知识点，禁止生成列表以外主题的题目。
                 questions中的每个对象必须包含：
                 {"questionType":"单选/多选/填空/简答/综合","stem":"题干","options":{"A":"选项A","B":"选项B"},"answer":"答案",
                  "explanation":"解析","knowledgeTags":["知识点标签"],"socraticQuestions":["递进追问"]}
@@ -166,7 +196,6 @@ public class OllamaServiceImpl implements OllamaService {
                         "type", "array", "minItems", count, "maxItems", count, "items", questionSchema)),
                 "required", List.of("questions"));
     }
-
     private void validateRequest(AiQuestionGenerateRequest request) {
         if (request == null || request.getKnowledgePoints() == null
                 || request.getKnowledgePoints().isEmpty()
@@ -288,7 +317,7 @@ public class OllamaServiceImpl implements OllamaService {
             Thread.sleep(Math.max(0, properties.getRetryDelay().toMillis()));
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new BusinessException("Ollama重试等待被中断");
+            throw new BusinessException("AI调用重试等待被中断");
         }
     }
 }

@@ -7,6 +7,7 @@ import com.example.aitaes.util.PasswordUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -18,9 +19,13 @@ import java.util.Random;
 
 /**
  * 数据初始化器 — 应用启动时自动初始化种子用户数据和测试数据
+ * <p>
+ * 仅在非 test profile 下运行：JUnit 集成测试用 @Sql 自建 schema/数据，
+ * 若在测试上下文启动时执行本类会因 H2 空库（表尚未创建）而导致上下文加载失败。
  */
 @Slf4j
 @Component
+@Profile("!test")
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
@@ -52,16 +57,13 @@ public class DataInitializer implements CommandLineRunner {
         initTeacherUsers();
         initStudentUsers();
 
-        if (courseMapper.selectCount(new LambdaQueryWrapper<>()) == 0) {
-            initCourses();
-            initCourseStudents();
-            initAssessments();
-            initAttendance();
-            initExperiments();
-            initKnowledgeMastery();
-        } else {
-            log.info("业务测试数据已存在，跳过初始化");
-        }
+        // 每个模块独立检查，确保即使部分数据已存在也能补充缺失数据
+        initCourses();
+        initCourseStudents();
+        initAssessments();
+        initAttendance();
+        initExperiments();
+        initKnowledgeMastery();
         
         log.info("种子数据初始化完成");
     }
@@ -230,6 +232,16 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化课程
      */
     private void initCourses() {
+        Course cs101 = courseMapper.selectOne(new LambdaQueryWrapper<Course>()
+                .eq(Course::getCourseNo, "CS101"));
+        if (cs101 != null) {
+            course1Id = cs101.getId();
+            Course cs102 = courseMapper.selectOne(new LambdaQueryWrapper<Course>()
+                    .eq(Course::getCourseNo, "CS102"));
+            course2Id = cs102 != null ? cs102.getId() : null;
+            log.debug("课程测试数据已存在，course1Id={}, course2Id={}", course1Id, course2Id);
+            return;
+        }
         Course course1 = new Course();
         course1.setCourseNo("CS101");
         course1.setCourseName("数据结构与算法");
@@ -259,6 +271,11 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化选课关联
      */
     private void initCourseStudents() {
+        if (courseStudentMapper.selectCount(new LambdaQueryWrapper<CourseStudent>()
+                .eq(CourseStudent::getCourseId, course1Id)) > 0) {
+            log.debug("选课关联已存在，跳过初始化");
+            return;
+        }
         for (Long courseId : new Long[]{course1Id, course2Id}) {
             courseStudentMapper.insert(buildCourseStudent(courseId, student1Id, "2024级1班"));
             courseStudentMapper.insert(buildCourseStudent(courseId, student2Id, "2024级1班"));
@@ -279,6 +296,11 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化考核及成绩记录
      */
     private void initAssessments() {
+        if (assessmentMapper.selectCount(new LambdaQueryWrapper<Assessment>()
+                .eq(Assessment::getCourseId, course1Id)) > 0) {
+            log.debug("考核数据已存在，跳过初始化");
+            return;
+        }
         String[][] assessments = {
                 {"作业1：链表实现", "HOMEWORK", "100", "5", "2025-09-15"},
                 {"作业2：二叉树遍历", "HOMEWORK", "100", "5", "2025-10-10"},
@@ -325,6 +347,11 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化考勤记录（12周）
      */
     private void initAttendance() {
+        if (attendanceMapper.selectCount(new LambdaQueryWrapper<Attendance>()
+                .eq(Attendance::getCourseId, course1Id)) > 0) {
+            log.debug("考勤数据已存在，跳过初始化");
+            return;
+        }
         LocalDate startDate = LocalDate.of(2025, 9, 1);
         String[] statusOptions = {"出勤", "出勤", "出勤", "出勤", "出勤", "出勤", "出勤", "迟到", "请假", "缺勤"};
 
@@ -351,6 +378,11 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化实验报告
      */
     private void initExperiments() {
+        if (experimentMapper.selectCount(new LambdaQueryWrapper<Experiment>()
+                .eq(Experiment::getCourseId, course1Id)) > 0) {
+            log.debug("实验数据已存在，跳过初始化");
+            return;
+        }
         String[][] experiments = {
                 {"实验1：线性表应用", "1", "92", "2025-09-28"},
                 {"实验2：树与图操作", "2", "88", "2025-10-26"},
@@ -384,6 +416,11 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化知识点掌握度
      */
     private void initKnowledgeMastery() {
+        if (studentKpMasteryMapper.selectCount(new LambdaQueryWrapper<StudentKpMastery>()
+                .eq(StudentKpMastery::getCourseId, course1Id)) > 0) {
+            log.debug("知识点掌握度数据已存在，跳过初始化");
+            return;
+        }
         String[] kpNames = {"链表", "栈与队列", "二叉树", "图的遍历", "排序算法", "查找算法", "哈希表", "递归与分治"};
         int[] mastery1 = {88, 92, 85, 78, 90, 82, 75, 80};
         int[] mastery2 = {85, 88, 90, 80, 82, 78, 70, 85};

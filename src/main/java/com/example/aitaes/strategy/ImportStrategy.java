@@ -15,7 +15,7 @@ public interface ImportStrategy {
     ImportType getSupportedType();
 
     /** 执行导入，返回导入结果统计 */
-    ImportResultDTO execute(InputStream inputStream, String originalFilename);
+    ImportResultDTO execute(InputStream inputStream, ImportContext context);
 
     /**
      * 根据文件名后缀推断 EasyExcel 格式类型

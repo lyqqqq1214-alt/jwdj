@@ -26,6 +26,10 @@ api.interceptors.request.use(
 // 响应拦截器 - 处理错误
 api.interceptors.response.use(
   (response) => {
+    // blob 响应（文件下载）直接透传，不做 Result 解包
+    if (response.config.responseType === 'blob') {
+      return response;
+    }
     const res = response.data;
     // 后端统一返回 Result 格式: { code, message, data }
     if (res.code === 200) {

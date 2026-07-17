@@ -12,6 +12,12 @@ export interface ChartItem {
   value: number;
 }
 
+export interface ScoreTrendItem {
+  name: string;
+  score: number;
+  classAvg: number;
+}
+
 export interface StudentWrongQuestion {
   id: number;
   questionContent: string;
@@ -34,7 +40,7 @@ export async function getStudentPortrait(courseId: number) {
 
 export async function getStudentTrends(courseId: number) {
   const res = await api.get('/student/trends', { params: { courseId } });
-  return res.data as ChartItem[];
+  return res.data as ScoreTrendItem[];
 }
 
 export async function getStudentWrongQuestions(courseId: number) {

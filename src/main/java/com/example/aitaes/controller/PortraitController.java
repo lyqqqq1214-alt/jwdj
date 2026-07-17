@@ -52,4 +52,14 @@ public class PortraitController {
         return Result.success("AI评价生成成功",
                 portraitService.generateAiEvaluation(studentId, courseId));
     }
+
+    /**
+     * 生成AI学习建议
+     */
+    @PostMapping("/student/{studentId}/ai-suggestions")
+    public Result<String> generateAiSuggestions(@PathVariable Long studentId,
+                                                 @RequestParam Long courseId) {
+        return Result.success("AI学习建议生成成功",
+                portraitService.generateAiSuggestions(studentId, courseId));
+    }
 }

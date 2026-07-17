@@ -72,6 +72,11 @@ class ImportStrategyFormatTest {
         return student;
     }
 
+    /** 仅带文件名的导入上下文（走文件名约定回退路径） */
+    private static ImportContext ctxOf(String filename) {
+        return ImportContext.builder().originalFilename(filename).build();
+    }
+
     /** 用 EasyExcel 在内存中生成 DTO 映射的 Excel 字节 */
     private static byte[] writeExcel(Class<?> dtoClass, List<?> rows, ExcelTypeEnum type) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -91,7 +96,7 @@ class ImportStrategyFormatTest {
             }
 
             @Override
-            public ImportResultDTO execute(InputStream inputStream, String originalFilename) {
+            public ImportResultDTO execute(InputStream inputStream, ImportContext context) {
                 return null;
             }
         };
@@ -130,7 +135,8 @@ class ImportStrategyFormatTest {
 
         @BeforeEach
         void setUp() {
-            strategy = new ExperimentImportStrategy(experimentMapper, studentMapper, courseMapper);
+            strategy = new ExperimentImportStrategy(experimentMapper, studentMapper,
+                    new CourseResolver(courseMapper));
         }
 
         @Test
@@ -148,7 +154,7 @@ class ImportStrategyFormatTest {
             InputStream in = new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8));
 
             // When
-            ImportResultDTO result = strategy.execute(in, "CS101_EXPERIMENT_实验一.csv");
+            ImportResultDTO result = strategy.execute(in, ctxOf("CS101_EXPERIMENT_实验一.csv"));
 
             // Then
             assertEquals(2, result.getTotalRows());
@@ -176,7 +182,7 @@ class ImportStrategyFormatTest {
 
             // When
             ImportResultDTO result = strategy.execute(
-                    new ByteArrayInputStream(bytes), "CS101_EXPERIMENT_实验一.xlsx");
+                    new ByteArrayInputStream(bytes), ctxOf("CS101_EXPERIMENT_实验一.xlsx"));
 
             // Then
             assertEquals(1, result.getSuccessRows());
@@ -218,7 +224,7 @@ class ImportStrategyFormatTest {
 
             // When
             ImportResultDTO result = strategy.execute(
-                    new ByteArrayInputStream(bytes), "teacher.xls");
+                    new ByteArrayInputStream(bytes), ctxOf("teacher.xls"));
 
             // Then
             assertEquals(1, result.getTotalRows());
@@ -241,7 +247,8 @@ class ImportStrategyFormatTest {
 
         @BeforeEach
         void setUp() {
-            strategy = new AttendanceImportStrategy(attendanceMapper, studentMapper, courseMapper);
+            strategy = new AttendanceImportStrategy(attendanceMapper, studentMapper,
+                    new CourseResolver(courseMapper));
         }
 
         @Test
@@ -264,7 +271,7 @@ class ImportStrategyFormatTest {
 
             // When
             ImportResultDTO result = strategy.execute(
-                    new ByteArrayInputStream(bytes), "CS101_ATTENDANCE_第1周.xlsx");
+                    new ByteArrayInputStream(bytes), ctxOf("CS101_ATTENDANCE_第1周.xlsx"));
 
             // Then
             assertEquals(1, result.getSuccessRows());
@@ -287,7 +294,7 @@ class ImportStrategyFormatTest {
         @BeforeEach
         void setUp() {
             strategy = new ClassStudentImportStrategy(studentMapper, userMapper,
-                    courseMapper, courseStudentMapper, systemConfigMapper);
+                    courseStudentMapper, systemConfigMapper, new CourseResolver(courseMapper));
         }
 
         @Test
@@ -315,7 +322,7 @@ class ImportStrategyFormatTest {
 
             // When
             ImportResultDTO result = strategy.execute(
-                    new ByteArrayInputStream(bytes), "CS101_CLASS_STUDENT_软件2101.xlsx");
+                    new ByteArrayInputStream(bytes), ctxOf("CS101_CLASS_STUDENT_软件2101.xlsx"));
 
             // Then
             assertEquals(1, result.getSuccessRows());
@@ -375,6 +382,8 @@ class ImportStrategyFormatTest {
                 return 1;
             });
             when(studentMapper.selectOne(any())).thenReturn(buildStudent(1L, "S2024001"));
+            // 重复记录检查 → 无已有记录
+            when(recordMapper.selectOne(any())).thenReturn(null);
             when(recordMapper.insert(any(AssessmentRecord.class))).thenAnswer(inv -> {
                 AssessmentRecord r = inv.getArgument(0);
                 r.setId(200L);
@@ -390,12 +399,13 @@ class ImportStrategyFormatTest {
         void shouldImportAllRows_WhenQuizXlsx() {
             // Given
             QuizImportStrategy strategy = new QuizImportStrategy(assessmentMapper,
-                    recordMapper, deductionMapper, studentMapper, courseMapper, masteryMapper);
+                    recordMapper, deductionMapper, studentMapper, courseMapper, masteryMapper,
+                    new CourseResolver(courseMapper));
             stubCommonMappers();
 
             // When
             ImportResultDTO result = strategy.execute(
-                    new ByteArrayInputStream(assessmentXlsx(3)), "CS101_QUIZ_第1次测验.xlsx");
+                    new ByteArrayInputStream(assessmentXlsx(3)), ctxOf("CS101_QUIZ_第1次测验.xlsx"));
 
             // Then
             assertEquals(3, result.getTotalRows(), "表头行不应吞掉第一个学生行");
@@ -414,13 +424,14 @@ class ImportStrategyFormatTest {
         void shouldParseFileName_WhenExamScoreWithUnderscore() {
             // Given
             ExamScoreImportStrategy strategy = new ExamScoreImportStrategy(assessmentMapper,
-                    recordMapper, deductionMapper, studentMapper, courseMapper, masteryMapper);
+                    recordMapper, deductionMapper, studentMapper, courseMapper, masteryMapper,
+                    new CourseResolver(courseMapper));
             stubCommonMappers();
 
             // When
             ImportResultDTO result = strategy.execute(
                     new ByteArrayInputStream(assessmentXlsx(2)),
-                    "CS101_EXAM_SCORE_MIDTERM_期中考试.xlsx");
+                    ctxOf("CS101_EXAM_SCORE_MIDTERM_期中考试.xlsx"));
 
             // Then
             assertEquals(2, result.getSuccessRows());

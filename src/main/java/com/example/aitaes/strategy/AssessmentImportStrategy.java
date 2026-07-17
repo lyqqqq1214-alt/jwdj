@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
  * 作业成绩导入策略
  * <p>
  * 继承 {@link AbstractAssessmentImportStrategy}，assessment_type = HOMEWORK。
- * 文件名格式：{课程编号}_HOMEWORK_{考核名称}.xlsx
+ * 课程与考核名称优先来自页面参数，回退文件名格式：{课程编号}_HOMEWORK_{考核名称}.xlsx
  */
 @Slf4j
 @Component
@@ -20,9 +20,10 @@ public class AssessmentImportStrategy extends AbstractAssessmentImportStrategy {
                                      RecordKpDeductionMapper deductionMapper,
                                      StudentMapper studentMapper,
                                      CourseMapper courseMapper,
-                                     StudentKpMasteryMapper masteryMapper) {
+                                     StudentKpMasteryMapper masteryMapper,
+                                     CourseResolver courseResolver) {
         super(assessmentMapper, recordMapper, deductionMapper,
-                studentMapper, courseMapper, masteryMapper);
+                studentMapper, courseMapper, masteryMapper, courseResolver);
     }
 
     @Override

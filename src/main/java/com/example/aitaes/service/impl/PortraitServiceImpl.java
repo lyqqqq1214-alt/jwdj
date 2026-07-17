@@ -38,6 +38,16 @@ public class PortraitServiceImpl implements PortraitService {
 
     @Override
     public StudentProfileVO getProfile(Long studentId, Long courseId) {
+        return buildProfile(studentId, courseId);
+    }
+
+    /**
+     * 构建画像数据（不含 AI 评价）。
+     * AI 评价由专用接口 generateAiEvaluation 生成 —— 它需要画像数据构建 prompt，
+     * 若在此处内联调用会形成 getProfile ⇄ generateAiEvaluation 无限互递归（栈溢出），
+     * 且画像查询会被 Ollama 同步调用拖慢。
+     */
+    private StudentProfileVO buildProfile(Long studentId, Long courseId) {
         Student student = studentMapper.selectById(studentId);
         if (student == null) {
             throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "学生不存在");
@@ -85,7 +95,8 @@ public class PortraitServiceImpl implements PortraitService {
         builder.leaveCount(leaveCount);
 
         // 作业
-        builder.homeworkList(getHomeworkList(studentId, courseId));
+        List<StudentProfileVO.HomeworkItem> homeworkList = getHomeworkList(studentId, courseId);
+        builder.homeworkList(homeworkList);
 
         // 实验
         List<Experiment> exps = experimentMapper.selectList(
@@ -101,10 +112,67 @@ public class PortraitServiceImpl implements PortraitService {
         builder.knowledgeRadar(getKnowledgeRadar(studentId, courseId, false));
         builder.classAvgRadar(getKnowledgeRadar(studentId, courseId, true));
 
-        // AI 评价（预留）
-        builder.aiEvaluation(generateAiEvaluation(studentId, courseId));
+        // 总评成绩（平均分）
+        builder.totalScore(calculateTotalScore(studentId, courseId));
 
+        // 作业提交率
+        long submittedCount = homeworkList.stream()
+                .filter(h -> h.getSubmitStatus() != null && !"NOT_SUBMITTED".equals(h.getSubmitStatus()))
+                .count();
+        builder.homeworkRate(homeworkList.isEmpty() ? BigDecimal.ZERO
+                : new BigDecimal(submittedCount).divide(new BigDecimal(homeworkList.size()), 4, RoundingMode.HALF_UP)
+                        .multiply(new BigDecimal(100)).setScale(1, RoundingMode.HALF_UP));
+
+        // 班级排名
+        calculateClassRank(studentId, courseId, builder);
+
+        // AI 评价（从数据库读取已保存的评价）
+        builder.aiEvaluation(cs != null ? cs.getAiEvaluation() : null);
+        builder.aiSuggestions(cs != null ? cs.getAiSuggestions() : null);
         return builder.build();
+    }
+
+    private BigDecimal calculateTotalScore(Long studentId, Long courseId) {
+        List<Assessment> assessments = assessmentMapper.selectList(
+                new LambdaQueryWrapper<Assessment>()
+                        .eq(Assessment::getCourseId, courseId)
+                        .eq(Assessment::getStatus, "PUBLISHED")
+                        .orderByDesc(Assessment::getAssessmentDate));
+        if (assessments.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal totalScore = BigDecimal.ZERO;
+        int count = 0;
+        for (Assessment a : assessments) {
+            AssessmentRecord record = assessmentRecordMapper.selectOne(
+                    new LambdaQueryWrapper<AssessmentRecord>()
+                            .eq(AssessmentRecord::getAssessmentId, a.getId())
+                            .eq(AssessmentRecord::getStudentId, studentId));
+            if (record != null && record.getTotalScore() != null) {
+                totalScore = totalScore.add(record.getTotalScore());
+                count++;
+            }
+        }
+        if (count == 0) {
+            return BigDecimal.ZERO;
+        }
+        return totalScore.divide(new BigDecimal(count), 1, RoundingMode.HALF_UP);
+    }
+
+    private void calculateClassRank(Long studentId, Long courseId, StudentProfileVO.StudentProfileVOBuilder builder) {
+        Long totalStudents = courseStudentMapper.selectCount(
+                new LambdaQueryWrapper<CourseStudent>().eq(CourseStudent::getCourseId, courseId));
+        builder.classTotal(totalStudents != null ? totalStudents.intValue() : 0);
+
+        List<CourseStudent> allStudents = courseStudentMapper.selectList(
+                new LambdaQueryWrapper<CourseStudent>().eq(CourseStudent::getCourseId, courseId));
+        List<BigDecimal> allScores = allStudents.stream()
+                .map(cs -> calculateTotalScore(cs.getStudentId(), courseId))
+                .sorted(Comparator.reverseOrder())
+                .collect(Collectors.toList());
+        BigDecimal myScore = calculateTotalScore(studentId, courseId);
+        int rank = allScores.indexOf(myScore) + 1;
+        builder.classRank(rank > 0 ? rank : null);
     }
 
     @Override
@@ -228,8 +296,8 @@ public class PortraitServiceImpl implements PortraitService {
 
     @Override
     public String generateAiEvaluation(Long studentId, Long courseId) {
-        // 先获取画像数据用于构建 prompt
-        StudentProfileVO profile = getProfile(studentId, courseId);
+        // 先获取画像数据用于构建 prompt（不含 AI 评价字段，避免递归）
+        StudentProfileVO profile = buildProfile(studentId, courseId);
 
         StringBuilder prompt = new StringBuilder();
         prompt.append("你是一位教学专家，请根据以下学生数据生成一段约200字的学情综合评价：\n\n");
@@ -239,14 +307,12 @@ public class PortraitServiceImpl implements PortraitService {
             prompt.append("班级：").append(profile.getClassName()).append("\n");
         }
 
-        // 考勤
         prompt.append("\n【考勤情况】\n");
         prompt.append("出勤率：").append(profile.getAttendanceRate()).append("%\n");
         prompt.append("缺勤").append(profile.getAbsentCount()).append("次，");
         prompt.append("迟到").append(profile.getLateCount()).append("次，");
         prompt.append("请假").append(profile.getLeaveCount()).append("次\n");
 
-        // 成绩
         if (profile.getScoreTrendList() != null && !profile.getScoreTrendList().isEmpty()) {
             TrendDTO trend = profile.getScoreTrendList().get(0);
             prompt.append("\n【考试成绩趋势】\n");
@@ -256,7 +322,6 @@ public class PortraitServiceImpl implements PortraitService {
             }
         }
 
-        // 作业
         if (profile.getHomeworkList() != null && !profile.getHomeworkList().isEmpty()) {
             prompt.append("\n【作业情况】\n");
             for (StudentProfileVO.HomeworkItem hw : profile.getHomeworkList()) {
@@ -266,7 +331,6 @@ public class PortraitServiceImpl implements PortraitService {
             }
         }
 
-        // 实验
         if (profile.getExperimentList() != null && !profile.getExperimentList().isEmpty()) {
             prompt.append("\n【实验报告】\n");
             for (StudentProfileVO.ExperimentItem exp : profile.getExperimentList()) {
@@ -275,7 +339,6 @@ public class PortraitServiceImpl implements PortraitService {
             }
         }
 
-        // 知识点掌握度
         if (profile.getKnowledgeRadar() != null && !profile.getKnowledgeRadar().isEmpty()) {
             prompt.append("\n【知识点掌握度】\n");
             for (ChartItem kp : profile.getKnowledgeRadar()) {
@@ -289,10 +352,19 @@ public class PortraitServiceImpl implements PortraitService {
             log.info("开始生成AI学情评价: studentId={}, courseId={}", studentId, courseId);
             String evaluation = ollamaService.generate(prompt.toString());
             if (evaluation != null && !evaluation.isBlank()) {
-                // 清理可能的 markdown 标记
                 evaluation = evaluation.replaceAll("```[\\s\\S]*?```", "").trim();
                 if (evaluation.length() > 500) {
                     evaluation = evaluation.substring(0, 500);
+                }
+                CourseStudent cs = courseStudentMapper.selectOne(
+                        new LambdaQueryWrapper<CourseStudent>()
+                                .eq(CourseStudent::getCourseId, courseId)
+                                .eq(CourseStudent::getStudentId, studentId));
+                if (cs != null) {
+                    cs.setAiEvaluation(evaluation);
+                    cs.setAiEvaluationTime(java.time.LocalDateTime.now());
+                    courseStudentMapper.updateById(cs);
+                    log.info("AI评价已保存: studentId={}, courseId={}", studentId, courseId);
                 }
                 return evaluation;
             }
@@ -300,5 +372,83 @@ public class PortraitServiceImpl implements PortraitService {
             log.warn("AI评价生成失败: {}", e.getMessage());
         }
         return "AI评价暂不可用，请稍后重试。";
+    }
+
+    @Override
+    public String generateAiSuggestions(Long studentId, Long courseId) {
+        StudentProfileVO profile = getProfile(studentId, courseId);
+
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("你是一位教学专家，请根据以下学生数据生成3-5条个性化学习建议：\n\n");
+        prompt.append("学生姓名：").append(profile.getName()).append("\n");
+        prompt.append("学号：").append(profile.getStudentNo()).append("\n");
+
+        prompt.append("\n【考勤情况】\n");
+        prompt.append("出勤率：").append(profile.getAttendanceRate()).append("%\n");
+        prompt.append("缺勤").append(profile.getAbsentCount()).append("次，");
+        prompt.append("迟到").append(profile.getLateCount()).append("次，");
+        prompt.append("请假").append(profile.getLeaveCount()).append("次\n");
+
+        if (profile.getScoreTrendList() != null && !profile.getScoreTrendList().isEmpty()) {
+            TrendDTO trend = profile.getScoreTrendList().get(0);
+            prompt.append("\n【考试成绩趋势】\n");
+            for (int i = 0; i < trend.getSemesters().size(); i++) {
+                prompt.append(trend.getSemesters().get(i)).append("：")
+                        .append(trend.getOverallScores().get(i)).append("分\n");
+            }
+        }
+
+        if (profile.getHomeworkList() != null && !profile.getHomeworkList().isEmpty()) {
+            prompt.append("\n【作业情况】\n");
+            for (StudentProfileVO.HomeworkItem hw : profile.getHomeworkList()) {
+                prompt.append(hw.getName()).append("：")
+                        .append(hw.getScore() != null ? hw.getScore() + "分" : "未提交")
+                        .append("（").append(hw.getSubmitStatus() != null ? hw.getSubmitStatus() : "未知").append("）\n");
+            }
+        }
+
+        if (profile.getExperimentList() != null && !profile.getExperimentList().isEmpty()) {
+            prompt.append("\n【实验报告】\n");
+            for (StudentProfileVO.ExperimentItem exp : profile.getExperimentList()) {
+                prompt.append(exp.getName()).append("：")
+                        .append(exp.getScore() != null ? exp.getScore() + "分" : "未评分").append("\n");
+            }
+        }
+
+        if (profile.getKnowledgeRadar() != null && !profile.getKnowledgeRadar().isEmpty()) {
+            prompt.append("\n【知识点掌握度】\n");
+            for (ChartItem kp : profile.getKnowledgeRadar()) {
+                prompt.append(kp.getName()).append("：").append(kp.getValue()).append("%\n");
+            }
+        }
+
+        prompt.append("\n请根据以上数据，生成3-5条个性化学习建议，每条建议包含：\n");
+        prompt.append("- type: 建议类型，可选值为 strong（优势项）、weak（薄弱项）、improve（改进项）\n");
+        prompt.append("- title: 建议标题（简短，10字以内）\n");
+        prompt.append("- content: 具体建议内容（30-60字）\n\n");
+        prompt.append("只返回JSON数组，不要Markdown代码块或任何额外文字。格式示例：\n");
+        prompt.append("[{\"type\":\"strong\",\"title\":\"基础扎实\",\"content\":\"...\"},{\"type\":\"weak\",\"title\":\"需加强\",\"content\":\"...\"}]");
+
+        try {
+            log.info("开始生成AI学习建议: studentId={}, courseId={}", studentId, courseId);
+            String suggestions = ollamaService.generate(prompt.toString());
+            if (suggestions != null && !suggestions.isBlank()) {
+                suggestions = suggestions.replaceAll("```[\\s\\S]*?```", "").trim();
+                CourseStudent cs = courseStudentMapper.selectOne(
+                        new LambdaQueryWrapper<CourseStudent>()
+                                .eq(CourseStudent::getCourseId, courseId)
+                                .eq(CourseStudent::getStudentId, studentId));
+                if (cs != null) {
+                    cs.setAiSuggestions(suggestions);
+                    cs.setAiSuggestionsTime(java.time.LocalDateTime.now());
+                    courseStudentMapper.updateById(cs);
+                    log.info("AI学习建议已保存: studentId={}, courseId={}", studentId, courseId);
+                }
+                return suggestions;
+            }
+        } catch (Exception e) {
+            log.warn("AI学习建议生成失败: {}", e.getMessage());
+        }
+        return "[]";
     }
 }
