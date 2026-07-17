@@ -19,7 +19,7 @@ import {
 import { login, saveUser, getCurrentUser, clearUser, mapRole, logout } from "../services/authService";
 import { getDashboardFull, getMyCourses, DashboardOverview, DashboardCharts, WarningStudent, ClassVO } from "../services/dashboardService";
 import { getTeacherList, createTeacher, updateTeacher, deleteTeacher, updateTeacherStatus, resetTeacherPassword, TeacherVO } from "../services/teacherService";
-import { getStudentOverview, getStudentTrends, getStudentWrongQuestions, StudentOverview } from "../services/studentService";
+import { getStudentOverview, getStudentTrends, getStudentWrongQuestions, getStudentCourses, StudentOverview, StudentCourse } from "../services/studentService";
 import { getStudentProfile, toggleFocusStudent, generateAiEvaluation, generateAiSuggestions, getMyPortrait, generateMyAiSuggestions, StudentProfile as StudentProfileData, LearningSuggestion } from "../services/portraitService";
 import { getMyClasses, getClassStudents, createClass, addStudentToClass, removeStudentFromClass, ClassVO as ClsVO, StudentVO } from "../services/classService";
 import { getPendingExams, getExamPapers, createExamPaper, deleteExamPaper, publishExamPaper, closeExamPaper, getExamResults, submitExam, ExamPaper } from "../services/examService";
@@ -8612,15 +8612,27 @@ function TeacherQuizReview() {
 
 // ─── Student: Dashboard ───────────────────────────────────────────────────────
 function StudentDashboard({ onNav }: { onNav: (p: Page) => void }) {
-  const savedCourseId = localStorage.getItem("selectedCourseId");
-  const initialCourseId = savedCourseId ? parseInt(savedCourseId) : studentCourses[0].id;
-  const [selectedCourseId, setSelectedCourseId] = useState(initialCourseId);
+  const currentUser = getCurrentUser();
+  const [studentCourses, setStudentCourses] = useState<StudentCourse[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [studentOverview, setStudentOverview] = useState<StudentOverview | null>(null);
   const [scoreTrends, setScoreTrends] = useState<any[]>([]);
   const [pendingExamList, setPendingExamList] = useState<ExamPaper[]>([]);
 
-  // Fetch student data on course change
   useEffect(() => {
+    getStudentCourses().then(courses => {
+      setStudentCourses(courses);
+      if (courses.length > 0) {
+        const saved = localStorage.getItem("selectedCourseId");
+        const savedId = saved ? parseInt(saved) : null;
+        const found = savedId && courses.find(c => c.id === savedId);
+        setSelectedCourseId(found ? savedId! : courses[0].id);
+      }
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCourseId) return;
     getStudentOverview(selectedCourseId).then(data => {
       setStudentOverview(data);
     }).catch(() => {
@@ -8638,32 +8650,33 @@ function StudentDashboard({ onNav }: { onNav: (p: Page) => void }) {
     });
   }, [selectedCourseId]);
 
-  const selectedCourse = studentCourses.find(c => c.id === selectedCourseId) || studentCourses[0];
-  const courseScoreTrend = scoreTrends.length > 0 ? scoreTrends.map((t: any) => ({ exam: t.name, score: typeof t.value === 'number' ? t.value : 0, type: 'test' })) : (courseScoreTrends[selectedCourseId] || []);
-  const warnings = courseWarnings[selectedCourseId] || [];
-  const pendingExams = pendingExamList.length || mockExams.filter(e => e.status === "pending" && e.course === selectedCourse.name).length;
+  const selectedCourse = studentCourses.find(c => c.id === selectedCourseId);
+  const courseScoreTrend = scoreTrends.length > 0 ? scoreTrends.map((t: any) => ({ exam: t.name, score: t.score || 0, classAvg: t.classAvg || 0 })) : [];
+  const pendingExams = pendingExamList.length;
 
   const handleCourseChange = (courseId: number) => {
     setSelectedCourseId(courseId);
     localStorage.setItem("selectedCourseId", courseId.toString());
   };
 
+  const studentName = currentUser?.displayName || "同学";
+
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-primary to-blue-500 rounded-lg p-6 text-white">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h2 className="text-xl font-semibold">你好，张伟 👋</h2>
-            <p className="text-blue-100 text-sm mt-1">2024-2025学年第二学期 · 计算机学院 2024级1班</p>
+            <h2 className="text-xl font-semibold">你好，{studentName} 👋</h2>
+            <p className="text-blue-100 text-sm mt-1">{selectedCourse?.semester || ""} · {selectedCourse?.className || ""}</p>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-blue-200">当前课程</span>
             <div className="relative">
-              <select value={selectedCourseId} onChange={e => handleCourseChange(parseInt(e.target.value))}
+              <select value={selectedCourseId || ""} onChange={e => handleCourseChange(parseInt(e.target.value))}
                 className="appearance-none bg-white/20 backdrop-blur-sm text-white px-4 py-2 pr-8 rounded-lg text-sm font-medium cursor-pointer hover:bg-white/30 transition-colors">
                 {studentCourses.map(c => (
                   <option key={c.id} value={c.id} className="text-gray-900">
-                    {c.name} · 进度 {c.progress}%
+                    {c.courseName}
                   </option>
                 ))}
               </select>
@@ -8674,32 +8687,22 @@ function StudentDashboard({ onNav }: { onNav: (p: Page) => void }) {
         <div className="mt-3 flex items-center gap-4">
           <div>
             <p className="text-xs text-blue-200">授课教师</p>
-            <p className="font-medium">{selectedCourse.teacher}</p>
-          </div>
-          <div className="w-px h-8 bg-white/20" />
-          <div>
-            <p className="text-xs text-blue-200">课程进度</p>
-            <div className="flex items-center gap-2">
-              <div className="w-32 h-2 bg-white/20 rounded-full overflow-hidden">
-                <div className="h-full bg-white rounded-full" style={{ width: `${selectedCourse.progress}%` }} />
-              </div>
-              <span className="font-medium text-sm">{selectedCourse.progress}%</span>
-            </div>
+            <p className="font-medium">{selectedCourse?.teacherName || "—"}</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard count={(studentOverview?.currentScore || selectedCourse.total) ?? "—"} label="当前成绩" icon={Target} color="blue" />
-        <StatCard count={`${studentOverview?.attendanceRate || selectedCourse.attendance}%`} label="出勤率" icon={Activity} color="green" />
-        <StatCard count={`${studentOverview?.homeworkRate || selectedCourse.submissionRate}%`} label="作业提交率" icon={CheckCircle} color="purple" />
+        <StatCard count={studentOverview?.currentScore ?? "—"} label="当前成绩" icon={Target} color="blue" />
+        <StatCard count={`${studentOverview?.attendanceRate ?? 0}%`} label="出勤率" icon={Activity} color="green" />
+        <StatCard count={`${studentOverview?.homeworkRate ?? 0}%`} label="作业提交率" icon={CheckCircle} color="purple" />
         <StatCard count={pendingExams} label="待完成考试" icon={Clock} color="orange" />
       </div>
 
       <div className="bg-card rounded-lg border border-border p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-medium text-sm">成绩趋势</h3>
-          <span className="text-xs text-muted-foreground">{selectedCourse.name}</span>
+          <span className="text-xs text-muted-foreground">{selectedCourse?.courseName || ""}</span>
         </div>
         {courseScoreTrend.length > 0 ? (
           <ResponsiveContainer width="100%" height={220}>
@@ -8722,21 +8725,20 @@ function StudentDashboard({ onNav }: { onNav: (p: Page) => void }) {
         <div className="bg-card rounded-lg border border-border p-5">
           <h3 className="font-medium text-sm mb-4">待参加考试</h3>
           <div className="space-y-3">
-            {mockExams.filter(e => e.status === "pending" && e.course === selectedCourse.name).map(e => (
+            {pendingExamList.filter(e => e.status === "pending").map(e => (
               <div key={e.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div>
                   <p className="font-medium text-sm">{e.name}</p>
-                  <p className="text-xs text-muted-foreground">{e.course} · {e.duration}分钟</p>
+                  <p className="text-xs text-muted-foreground">{selectedCourse?.courseName || ""} · {e.duration}分钟</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-orange-600">{e.deadline}</p>
                   <button onClick={() => onNav("student-exam")} className="mt-1 px-3 py-1 text-xs bg-primary text-white rounded hover:bg-blue-700">
                     参加考试
                   </button>
                 </div>
               </div>
             ))}
-            {pendingExams === 0 && (
+            {pendingExamList.filter(e => e.status === "pending").length === 0 && (
               <p className="text-center text-sm text-muted-foreground py-4">暂无待参加考试</p>
             )}
           </div>
@@ -8745,32 +8747,7 @@ function StudentDashboard({ onNav }: { onNav: (p: Page) => void }) {
         <div className="bg-card rounded-lg border border-border p-5">
           <h3 className="font-medium text-sm mb-4">预警提示</h3>
           <div className="space-y-3">
-            {warnings.map((w, i) => (
-              <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border ${
-                w.type === "danger" ? "bg-red-50 border-red-200" :
-                w.type === "warning" ? "bg-orange-50 border-orange-200" :
-                "bg-blue-50 border-blue-200"
-              }`}>
-                {w.type === "danger" ? <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" /> :
-                 w.type === "warning" ? <AlertCircle size={16} className="text-orange-500 flex-shrink-0 mt-0.5" /> :
-                 <Bell size={16} className="text-blue-500 flex-shrink-0 mt-0.5" />}
-                <div>
-                  <p className={`font-medium text-sm ${
-                    w.type === "danger" ? "text-red-700" :
-                    w.type === "warning" ? "text-orange-700" :
-                    "text-blue-700"
-                  }`}>{w.title}</p>
-                  <p className={`text-xs mt-0.5 ${
-                    w.type === "danger" ? "text-red-600" :
-                    w.type === "warning" ? "text-orange-600" :
-                    "text-blue-600"
-                  }`}>{w.message}</p>
-                </div>
-              </div>
-            ))}
-            {warnings.length === 0 && (
-              <p className="text-center text-sm text-muted-foreground py-4">暂无预警提示</p>
-            )}
+            <p className="text-center text-sm text-muted-foreground py-4">暂无预警提示</p>
           </div>
         </div>
       </div>
@@ -8817,16 +8794,28 @@ function StudentProfile() {
     return { label: "不及格", color: "red" };
   };
 
-  const savedCourseId = localStorage.getItem("selectedCourseId");
-  const initialCourseId = savedCourseId ? parseInt(savedCourseId) : studentCourses[0].id;
-  const [selectedCourseId, setSelectedCourseId] = useState(initialCourseId);
+  const [studentCourses, setStudentCourses] = useState<StudentCourse[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [profile, setProfile] = useState<StudentProfileData | null>(null);
   const [loading, setLoading] = useState(false);
   const [generatingSuggestions, setGeneratingSuggestions] = useState(false);
 
-  const selectedCourse = studentCourses.find(c => c.id === selectedCourseId) || studentCourses[0];
+  useEffect(() => {
+    getStudentCourses().then(courses => {
+      setStudentCourses(courses);
+      if (courses.length > 0) {
+        const saved = localStorage.getItem("selectedCourseId");
+        const savedId = saved ? parseInt(saved) : null;
+        const found = savedId && courses.find(c => c.id === savedId);
+        setSelectedCourseId(found ? savedId! : courses[0].id);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const selectedCourse = studentCourses.find(c => c.id === selectedCourseId);
 
   useEffect(() => {
+    if (!selectedCourseId) return;
     setLoading(true);
     getMyPortrait(selectedCourseId).then(data => {
       setProfile(data);
@@ -8841,7 +8830,7 @@ function StudentProfile() {
   const handleGenerateSuggestions = async () => {
     setGeneratingSuggestions(true);
     try {
-      const text = await generateMyAiSuggestions(selectedCourseId);
+      const text = await generateMyAiSuggestions(selectedCourseId!);
       setProfile(prev => prev ? { ...prev, aiSuggestions: text } : null);
       showToastMsg("AI学习建议已生成");
     } catch { showToastMsg("AI学习建议生成失败"); }
@@ -8861,7 +8850,7 @@ function StudentProfile() {
   const profileStudentNo = profile?.studentNo || "";
   const profileCollege = profile?.college || "";
   const profileClassName = profile?.className || "";
-  const knowledgeData = profile?.knowledgeRadar?.map(k => ({ subject: k.name, value: Number(k.value) || 0 })) || courseKnowledgeData[selectedCourseId] || [];
+  const knowledgeData = profile?.knowledgeRadar?.map(k => ({ subject: k.name, value: Number(k.value) || 0 })) || [];
   const scoreTrend = profile?.scoreTrendList?.[0]?.semesters.map((sem, i) => ({
     exam: sem, score: Number(profile?.scoreTrendList![0].overallScores[i] || 0), classAvg: 75,
   })) || [];
@@ -8888,11 +8877,11 @@ function StudentProfile() {
           <div className="flex items-center gap-3">
             <span className="text-xs text-blue-200">选择课程</span>
             <div className="relative">
-              <select value={selectedCourseId} onChange={e => handleCourseChange(parseInt(e.target.value))}
+              <select value={selectedCourseId || ""} onChange={e => handleCourseChange(parseInt(e.target.value))}
                 className="appearance-none bg-white/20 backdrop-blur-sm text-white px-4 py-2 pr-8 rounded-lg text-sm font-medium cursor-pointer hover:bg-white/30 transition-colors">
                 {studentCourses.map(c => (
                   <option key={c.id} value={c.id} className="text-gray-900">
-                    {c.name} · 进度 {c.progress}%
+                    {c.courseName}
                   </option>
                 ))}
               </select>
@@ -8929,7 +8918,7 @@ function StudentProfile() {
         <div className="bg-card rounded-lg border border-border p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium text-sm">知识点掌握度</h3>
-            <span className="text-xs text-muted-foreground">{selectedCourse.name}</span>
+            <span className="text-xs text-muted-foreground">{selectedCourse?.courseName || ""}</span>
           </div>
           <div className="space-y-3">
             {knowledgeData.map(k => (
@@ -8973,24 +8962,16 @@ function StudentProfile() {
               <BookOpen size={20} className="text-primary" />
             </div>
             <div>
-              <p className="font-medium">{selectedCourse.name}</p>
-              <p className="text-xs text-muted-foreground">{selectedCourse.teacher} · {selectedCourse.code}</p>
+              <p className="font-medium">{selectedCourse?.courseName || "—"}</p>
+              <p className="text-xs text-muted-foreground">{selectedCourse?.teacherName || ""} · {selectedCourse?.courseNo || ""}</p>
             </div>
           </div>
           <div className="flex items-center gap-6">
             <div className="text-center">
-              <p className="text-xs text-muted-foreground">薄弱知识点</p>
-              <p className="font-mono text-lg font-semibold mt-1">{selectedCourse.weak > 0 ? `${selectedCourse.weak}个` : "无"}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">分析状态</p>
-              <p className="font-mono text-lg font-semibold mt-1">{selectedCourse.analyzed ? "已分析" : "待分析"}</p>
-            </div>
-            <div className="text-center">
               <p className="text-xs text-muted-foreground">总评成绩</p>
-              <p className="font-mono text-2xl font-bold text-primary mt-1">{selectedCourse.total ?? "—"}</p>
+              <p className="font-mono text-2xl font-bold text-primary mt-1">{profile?.totalScore != null ? profile.totalScore.toFixed(1) : "—"}</p>
             </div>
-            <Tag color={gradeLabel(selectedCourse.total).color as any}>{gradeLabel(selectedCourse.total).label}</Tag>
+            <Tag color={gradeLabel(profile?.totalScore ?? 0).color as any}>{gradeLabel(profile?.totalScore ?? 0).label}</Tag>
           </div>
         </div>
       </div>
@@ -9101,14 +9082,25 @@ function StudentScoreTrend() {
   const [showClassAvg, setShowClassAvg] = useState(true);
   const [apiTrends, setApiTrends] = useState<{ exam: string; score: number; classAvg: number }[]>([]);
   const [loadingTrends, setLoadingTrends] = useState(true);
-
-  const savedCourseId = localStorage.getItem("selectedCourseId");
-  const initialCourseId = savedCourseId ? parseInt(savedCourseId) : studentCourses[0].id;
-  const [selectedCourseId, setSelectedCourseId] = useState(initialCourseId);
-
-  const selectedCourse = studentCourses.find(c => c.id === selectedCourseId) || studentCourses[0];
+  const [studentCourses, setStudentCourses] = useState<StudentCourse[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
   useEffect(() => {
+    getStudentCourses().then(courses => {
+      setStudentCourses(courses);
+      if (courses.length > 0) {
+        const saved = localStorage.getItem("selectedCourseId");
+        const savedId = saved ? parseInt(saved) : null;
+        const found = savedId && courses.find(c => c.id === savedId);
+        setSelectedCourseId(found ? savedId! : courses[0].id);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const selectedCourse = studentCourses.find(c => c.id === selectedCourseId);
+
+  useEffect(() => {
+    if (!selectedCourseId) return;
     setLoadingTrends(true);
     getStudentTrends(selectedCourseId).then(data => {
       if (data && data.length > 0) {
@@ -9143,17 +9135,17 @@ function StudentScoreTrend() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="text-xl font-semibold">成绩趋势分析</h2>
-            <p className="text-blue-100 text-sm mt-1">{selectedCourse.name}</p>
+            <p className="text-blue-100 text-sm mt-1">{selectedCourse?.courseName || ""}</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <span className="text-xs text-blue-200">选择课程</span>
               <div className="relative">
-                <select value={selectedCourseId} onChange={e => handleCourseChange(parseInt(e.target.value))}
+                <select value={selectedCourseId || ""} onChange={e => handleCourseChange(parseInt(e.target.value))}
                   className="appearance-none bg-white/20 backdrop-blur-sm text-white px-4 py-2 pr-8 rounded-lg text-sm font-medium cursor-pointer hover:bg-white/30 transition-colors">
                   {studentCourses.map(c => (
                     <option key={c.id} value={c.id} className="text-gray-900">
-                      {c.name} · 进度 {c.progress}%
+                      {c.courseName}
                     </option>
                   ))}
                 </select>
@@ -9198,7 +9190,7 @@ function StudentScoreTrend() {
       <div className="bg-card rounded-lg border border-border p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-medium text-sm">成绩变化趋势</h3>
-          <span className="text-xs text-muted-foreground">{selectedCourse.name}</span>
+          <span className="text-xs text-muted-foreground">{selectedCourse?.courseName || ""}</span>
         </div>
         {courseScoreTrend.length > 0 ? (
           <ResponsiveContainer width="100%" height={280}>
@@ -9267,7 +9259,7 @@ function StudentWrongBook() {
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [expandedCourses, setExpandedCourses] = useState<Record<string, boolean>>({});
   const [expandedChapters, setExpandedChapters] = useState<Record<string, boolean>>({});
-  const [selectedQuestion, setSelectedQuestion] = useState<typeof wrongQuestions[0] | null>(null);
+  const [selectedQuestion, setSelectedQuestion] = useState<any | null>(null);
   const [practiceMode, setPracticeMode] = useState(false);
   const [practiceQuestionsList, setPracticeQuestionsList] = useState<any[]>([]);
   const [practiceIdx, setPracticeIdx] = useState(0);
@@ -9278,19 +9270,30 @@ function StudentWrongBook() {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [apiWrongQuestions, setApiWrongQuestions] = useState<any[]>([]);
   const [loadingWrong, setLoadingWrong] = useState(true);
-
-  const savedCourseId = localStorage.getItem("selectedCourseId");
-  const initialCourseId = savedCourseId ? parseInt(savedCourseId) : studentCourses[0].id;
-  const [selectedCourseId, setSelectedCourseId] = useState(initialCourseId);
-
-  const selectedCourse = studentCourses.find(c => c.id === selectedCourseId) || studentCourses[0];
+  const [studentCourses, setStudentCourses] = useState<StudentCourse[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
   useEffect(() => {
+    getStudentCourses().then(courses => {
+      setStudentCourses(courses);
+      if (courses.length > 0) {
+        const saved = localStorage.getItem("selectedCourseId");
+        const savedId = saved ? parseInt(saved) : null;
+        const found = savedId && courses.find(c => c.id === savedId);
+        setSelectedCourseId(found ? savedId! : courses[0].id);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const selectedCourse = studentCourses.find(c => c.id === selectedCourseId);
+
+  useEffect(() => {
+    if (!selectedCourseId) return;
     getStudentWrongQuestions(selectedCourseId).then(data => {
       if (data && data.length > 0) {
         setApiWrongQuestions(data.map(q => ({
           id: q.id,
-          course: q.courseName || selectedCourse.name,
+          course: q.courseName || selectedCourse?.courseName || "",
           chapter: q.knowledgePoint || "未知",
           section: q.knowledgePoint || "",
           question: q.questionContent,
@@ -9319,16 +9322,16 @@ function StudentWrongBook() {
     setExpandedChapters(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const allQuestions = apiWrongQuestions.length > 0 ? apiWrongQuestions : wrongQuestions;
+  const allQuestions = apiWrongQuestions;
   const filteredQuestions = allQuestions.filter(q => {
-    if (q.course !== selectedCourse.name) return false;
+    if (q.course !== selectedCourse?.courseName) return false;
     if (!selectedChapter && !selectedSection) return true;
     if (selectedChapter && q.chapter !== selectedChapter) return false;
     if (selectedSection && q.section !== selectedSection) return false;
     return true;
   });
 
-  const startPractice = (question: typeof wrongQuestions[0]) => {
+  const startPractice = (question: any) => {
     setPracticeQuestionsList([
       { ...question, isOriginal: true },
       {
@@ -9355,11 +9358,11 @@ function StudentWrongBook() {
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground">选择课程</span>
             <div className="relative">
-              <select value={selectedCourseId} onChange={e => handleCourseChange(parseInt(e.target.value))}
+              <select value={selectedCourseId || ""} onChange={e => handleCourseChange(parseInt(e.target.value))}
                 className="appearance-none bg-card border border-border px-4 py-2 pr-8 rounded-lg text-sm font-medium cursor-pointer hover:bg-accent transition-colors">
                 {studentCourses.map(c => (
                   <option key={c.id} value={c.id}>
-                    {c.name} · 进度 {c.progress}%
+                    {c.courseName}
                   </option>
                 ))}
               </select>

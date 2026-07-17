@@ -78,6 +78,8 @@ public class ClassStudentImportStrategy implements ImportStrategy {
         List<String> studentNos = batch.stream()
                 .map(row -> row.data().getStudentNo())
                 .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
                 .distinct()
                 .toList();
 
@@ -96,7 +98,8 @@ public class ClassStudentImportStrategy implements ImportStrategy {
 
         for (ExcelRow<ClassStudentExcelDTO> row : batch) {
             ClassStudentExcelDTO dto = row.data();
-            if (dto.getStudentNo() == null || dto.getStudentNo().isBlank()) {
+            String studentNo = dto.getStudentNo() != null ? dto.getStudentNo().trim() : null;
+            if (studentNo == null || studentNo.isBlank()) {
                 collector.skip(row.rowNo(), "学号为空，跳过");
                 continue;
             }
@@ -104,10 +107,10 @@ public class ClassStudentImportStrategy implements ImportStrategy {
             try {
                 Long studentId;
 
-                if (!existingNos.contains(dto.getStudentNo())) {
+                if (!existingNos.contains(studentNo)) {
                     // 2a. 新学生：创建 t_user + t_student
                     User user = new User();
-                    user.setUsername(dto.getStudentNo());
+                    user.setUsername(studentNo);
                     user.setPassword(PasswordUtil.encode(defaultPassword));
                     user.setRole("STUDENT");
                     user.setStatus("ACTIVE");
@@ -117,7 +120,7 @@ public class ClassStudentImportStrategy implements ImportStrategy {
 
                     Student student = new Student();
                     student.setUserId(user.getId());
-                    student.setStudentNo(dto.getStudentNo());
+                    student.setStudentNo(studentNo);
                     student.setName(dto.getName());
                     student.setGender(dto.getGender());
                     student.setCollege(dto.getCollege());
@@ -129,17 +132,16 @@ public class ClassStudentImportStrategy implements ImportStrategy {
                     studentMapper.insert(student);
 
                     studentId = student.getId();
-                    existingNos.add(dto.getStudentNo()); // 避免同批次重复创建
+                    existingNos.add(studentNo); // 避免同批次重复创建
                     createdAccounts++;
-                    log.debug("创建学生账号: studentNo={}, name={}", dto.getStudentNo(), dto.getName());
+                    log.debug("创建学生账号: studentNo={}, name={}", studentNo, dto.getName());
                 } else {
                     // 2b. 已有学生：查 ID
                     Student existing = studentMapper.selectOne(
                             new LambdaQueryWrapper<Student>()
-                                    .eq(Student::getStudentNo, dto.getStudentNo()));
+                                    .eq(Student::getStudentNo, studentNo));
                     if (existing == null) {
-                        collector.fail(row.rowNo(), "学生查询失败: " + dto.getStudentNo());
-                        continue;
+                        collector.fail(row.rowNo(), "学生查询失败: " + studentNo);
                     }
                     studentId = existing.getId();
                 }
@@ -171,7 +173,7 @@ public class ClassStudentImportStrategy implements ImportStrategy {
             } catch (Exception e) {
                 collector.fail(row.rowNo(), "处理失败: " + e.getMessage());
                 log.warn("处理学生名单行失败: 第{}行 studentNo={}, 原因: {}",
-                        row.rowNo(), dto.getStudentNo(), e.getMessage());
+                        row.rowNo(), studentNo, e.getMessage());
             }
         }
 

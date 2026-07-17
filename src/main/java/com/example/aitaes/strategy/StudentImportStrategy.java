@@ -67,6 +67,8 @@ public class StudentImportStrategy implements ImportStrategy {
         List<String> studentNos = batch.stream()
                 .map(row -> row.data().getStudentNo())
                 .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
                 .distinct()
                 .toList();
 
@@ -85,19 +87,20 @@ public class StudentImportStrategy implements ImportStrategy {
 
         for (ExcelRow<StudentExcelDTO> row : batch) {
             StudentExcelDTO dto = row.data();
-            if (dto.getStudentNo() == null || dto.getStudentNo().isBlank()) {
+            String studentNo = dto.getStudentNo() != null ? dto.getStudentNo().trim() : null;
+            if (studentNo == null || studentNo.isBlank()) {
                 collector.skip(row.rowNo(), "学号为空，跳过");
                 continue;
             }
-            if (existingNos.contains(dto.getStudentNo())) {
-                collector.skip(row.rowNo(), "学号已存在，跳过: " + dto.getStudentNo());
+            if (existingNos.contains(studentNo)) {
+                collector.skip(row.rowNo(), "学号已存在，跳过: " + studentNo);
                 continue;
             }
 
             try {
                 // 2a. 创建 t_user 认证账号
                 User user = new User();
-                user.setUsername(dto.getStudentNo());
+                user.setUsername(studentNo);
                 user.setPassword(PasswordUtil.encode(defaultPassword));
                 user.setRole("STUDENT");
                 user.setStatus("ACTIVE");
@@ -108,16 +111,17 @@ public class StudentImportStrategy implements ImportStrategy {
                 // 2b. 创建 t_student，关联 user_id
                 Student student = new Student();
                 BeanUtils.copyProperties(dto, student);
+                student.setStudentNo(studentNo);
                 student.setUserId(user.getId());
                 student.setCreateTime(LocalDateTime.now());
                 studentMapper.insert(student);
 
-                existingNos.add(dto.getStudentNo()); // 避免同批次重复创建
+                existingNos.add(studentNo); // 避免同批次重复创建
                 createdCount++;
                 collector.success();
             } catch (Exception e) {
                 collector.fail(row.rowNo(), "创建学生账号失败: " + e.getMessage());
-                log.warn("创建学生账号失败: studentNo={}, 原因: {}", dto.getStudentNo(), e.getMessage());
+                log.warn("创建学生账号失败: studentNo={}, 原因: {}", studentNo, e.getMessage());
             }
         }
 

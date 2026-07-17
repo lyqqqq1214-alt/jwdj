@@ -7,6 +7,17 @@ export interface StudentOverview {
   pendingExams: number;
 }
 
+export interface StudentCourse {
+  id: number;
+  courseNo: string;
+  courseName: string;
+  className: string;
+  teacherName: string;
+  semester: string;
+  credit: number;
+  courseType: string;
+}
+
 export interface ChartItem {
   name: string;
   value: number;
@@ -26,6 +37,11 @@ export interface StudentWrongQuestion {
   knowledgePoint?: string;
   courseName?: string;
   createTime?: string;
+}
+
+export async function getStudentCourses() {
+  const res = await api.get('/student/courses');
+  return res.data as StudentCourse[];
 }
 
 export async function getStudentOverview(courseId: number) {

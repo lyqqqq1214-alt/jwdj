@@ -9,6 +9,9 @@ import com.example.aitaes.entity.Assessment;
 import com.example.aitaes.entity.AssessmentRecord;
 import com.example.aitaes.entity.Attendance;
 import com.example.aitaes.entity.Student;
+import com.example.aitaes.entity.Course;
+import com.example.aitaes.entity.CourseStudent;
+import com.example.aitaes.entity.Teacher;
 import com.example.aitaes.entity.StudentWrongQuestion;
 import com.example.aitaes.mapper.*;
 import com.example.aitaes.service.PortraitService;
@@ -39,6 +42,7 @@ public class StudentController {
     private final StudentWrongQuestionMapper wrongQuestionMapper;
     private final StudentMapper studentMapper;
     private final CourseMapper courseMapper;
+    private final TeacherMapper teacherMapper;
     private final PortraitService portraitService;
 
     private Long getStudentId(Long userId) {
@@ -48,6 +52,52 @@ public class StudentController {
             throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "学生不存在");
         }
         return student.getId();
+    }
+
+    /**
+     * 我的课程列表
+     */
+    @GetMapping("/courses")
+    public Result<List<StudentCourseVO>> myCourses(@RequestAttribute("userId") Long userId) {
+        Long studentId = getStudentId(userId);
+        List<CourseStudent> courseStudents = courseStudentMapper.selectList(
+                new LambdaQueryWrapper<CourseStudent>()
+                        .eq(CourseStudent::getStudentId, studentId));
+        if (courseStudents.isEmpty()) {
+            return Result.success(Collections.emptyList());
+        }
+        List<Long> courseIds = courseStudents.stream()
+                .map(CourseStudent::getCourseId)
+                .collect(Collectors.toList());
+        List<Course> courses = courseMapper.selectBatchIds(courseIds);
+        Map<Long, Course> courseMap = courses.stream()
+                .collect(Collectors.toMap(Course::getId, c -> c));
+        Set<Long> teacherIds = courses.stream()
+                .map(Course::getTeacherId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, String> teacherNameMap = Collections.emptyMap();
+        if (!teacherIds.isEmpty()) {
+            List<Teacher> teachers = teacherMapper.selectBatchIds(teacherIds);
+            teacherNameMap = teachers.stream()
+                    .collect(Collectors.toMap(Teacher::getId, Teacher::getName, (a, b) -> a));
+        }
+        List<StudentCourseVO> result = new ArrayList<>();
+        for (CourseStudent cs : courseStudents) {
+            Course c = courseMap.get(cs.getCourseId());
+            if (c == null) continue;
+            result.add(StudentCourseVO.builder()
+                    .id(c.getId())
+                    .courseNo(c.getCourseNo())
+                    .courseName(c.getCourseName())
+                    .className(cs.getClassName())
+                    .teacherName(teacherNameMap.getOrDefault(c.getTeacherId(), ""))
+                    .semester(c.getSemester())
+                    .credit(c.getCredit())
+                    .courseType(c.getCourseType())
+                    .build());
+        }
+        return Result.success(result);
     }
 
     /**

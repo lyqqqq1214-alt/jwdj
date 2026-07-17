@@ -63,16 +63,17 @@ public class AttendanceImportStrategy implements ImportStrategy {
         for (ExcelRow<AttendanceExcelDTO> row : batch) {
             AttendanceExcelDTO dto = row.data();
             try {
-                if (dto.getStudentNo() == null || dto.getStudentNo().isBlank()) {
+                String studentNo = dto.getStudentNo() != null ? dto.getStudentNo().trim() : null;
+                if (studentNo == null || studentNo.isBlank()) {
                     collector.skip(row.rowNo(), "学号为空，跳过");
                     continue;
                 }
 
                 Student student = studentMapper.selectOne(
                         new LambdaQueryWrapper<Student>()
-                                .eq(Student::getStudentNo, dto.getStudentNo()));
+                                .eq(Student::getStudentNo, studentNo));
                 if (student == null) {
-                    collector.fail(row.rowNo(), "学生不存在: " + dto.getStudentNo() + "（请先导入学生名单）");
+                    collector.fail(row.rowNo(), "学生不存在: " + studentNo + "（请先导入学生名单）");
                     continue;
                 }
 
@@ -96,7 +97,7 @@ public class AttendanceImportStrategy implements ImportStrategy {
                                 .eq(Attendance::getAttendanceDate, attendanceDate));
                 if (existing != null) {
                     collector.skip(row.rowNo(), "该学生当日已有考勤记录，跳过: "
-                            + dto.getStudentNo() + " " + dto.getAttendanceDate());
+                            + studentNo + " " + dto.getAttendanceDate());
                     continue;
                 }
 
