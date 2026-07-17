@@ -168,6 +168,8 @@ CREATE TABLE `t_course_student` (
     `is_focus`      TINYINT     DEFAULT 0 COMMENT '教师重点关注标记',
     `ai_evaluation` TEXT        DEFAULT NULL COMMENT 'AI综合评价',
     `ai_evaluation_time` DATETIME DEFAULT NULL COMMENT 'AI评价生成时间',
+    `ai_suggestions` TEXT       DEFAULT NULL COMMENT 'AI学习建议(JSON数组)',
+    `ai_suggestions_time` DATETIME DEFAULT NULL COMMENT 'AI学习建议生成时间',
     `create_time`   DATETIME    DEFAULT CURRENT_TIMESTAMP,
     `deleted`       TINYINT     DEFAULT 0 COMMENT '逻辑删除(退课)',
     PRIMARY KEY (`id`),
