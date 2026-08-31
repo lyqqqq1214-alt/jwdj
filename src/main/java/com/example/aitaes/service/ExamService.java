@@ -3,6 +3,11 @@ package com.example.aitaes.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.aitaes.dto.ExamPaperCreateDTO;
 import com.example.aitaes.dto.ExamResultDTO;
+import com.example.aitaes.dto.GradingItemVO;
+import com.example.aitaes.dto.StudentExamRecordVO;
+import com.example.aitaes.dto.StudentExamResultVO;
+import com.example.aitaes.dto.StudentExamVO;
+import com.example.aitaes.dto.SubmitExamResultDTO;
 import com.example.aitaes.entity.ExamPaper;
 import com.example.aitaes.entity.QuestionBank;
 
@@ -17,8 +22,8 @@ public interface ExamService {
 
     // ===== 试卷管理 =====
 
-    ExamPaper createPaper(Long teacherId, ExamPaperCreateDTO dto);
-    IPage<ExamPaper> listPapers(int pageNum, int pageSize, Long courseId, Long teacherId);
+    ExamPaper createPaper(Long userId, ExamPaperCreateDTO dto);
+    IPage<ExamPaper> listPapers(int pageNum, int pageSize, Long courseId, Long userId);
     ExamPaper getPaperById(Long id);
     ExamPaper updatePaper(Long id, ExamPaperCreateDTO dto);
     void deletePaper(Long id);
@@ -27,9 +32,11 @@ public interface ExamService {
 
     // ===== 学生考试 =====
 
-    List<ExamPaper> getPendingExams(Long studentId);
-    ExamPaper getExamForStudent(Long paperId, Long studentId);
-    void submitExam(Long paperId, Long studentId, Map<Long, String> answers);
+    List<ExamPaper> getPendingExams(Long userId);
+    StudentExamVO getExamForStudent(Long paperId, Long userId);
+    SubmitExamResultDTO submitExam(Long paperId, Long userId, Map<Long, String> answers);
+    List<StudentExamRecordVO> getMyExamRecords(Long userId);
+    StudentExamResultVO getMyExamResult(Long paperId, Long userId);
 
     // ===== 考试结果 =====
 
@@ -37,8 +44,8 @@ public interface ExamService {
 
     // ===== 主观题批阅 =====
 
-    List<Map<String, Object>> getGradingList(Long courseId);
-    void submitGrade(Long recordId, BigDecimal score, String comment);
+    List<GradingItemVO> getGradingList(Long courseId, Long paperId);
+    void submitGrade(Long answerId, Long graderUserId, BigDecimal score, String comment);
 
     // ===== AI 预留接口 =====
 

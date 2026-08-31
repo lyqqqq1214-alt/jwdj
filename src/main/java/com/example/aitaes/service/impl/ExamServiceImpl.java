@@ -5,12 +5,18 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.aitaes.common.BusinessException;
 import com.example.aitaes.common.ResultCode;
-import com.example.aitaes.dto.ChartItem;
 import com.example.aitaes.dto.ExamPaperCreateDTO;
 import com.example.aitaes.dto.ExamResultDTO;
+import com.example.aitaes.dto.GradingItemVO;
+import com.example.aitaes.dto.StudentExamRecordVO;
+import com.example.aitaes.dto.StudentExamResultVO;
+import com.example.aitaes.dto.StudentExamVO;
+import com.example.aitaes.dto.SubmitExamResultDTO;
 import com.example.aitaes.entity.*;
 import com.example.aitaes.mapper.*;
 import com.example.aitaes.service.ExamService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,12 +41,15 @@ public class ExamServiceImpl implements ExamService {
     private final QuestionBankMapper questionBankMapper;
     private final AssessmentMapper assessmentMapper;
     private final AssessmentRecordMapper assessmentRecordMapper;
+    private final ExamAnswerMapper examAnswerMapper;
     private final CourseStudentMapper courseStudentMapper;
     private final StudentMapper studentMapper;
+    private final StudentWrongQuestionMapper studentWrongQuestionMapper;
     private final CourseMapper courseMapper;
     private final TeacherMapper teacherMapper;
     private final TeachingAssistantMapper teachingAssistantMapper;
     private final UserMapper userMapper;
+    private final ObjectMapper objectMapper;
 
     // ===== 私有方法 =====
 
@@ -75,6 +84,15 @@ public class ExamServiceImpl implements ExamService {
         return teacher.getId();
     }
 
+    private Long resolveStudentId(Long userId) {
+        Student student = studentMapper.selectOne(
+                new LambdaQueryWrapper<Student>().eq(Student::getUserId, userId));
+        if (student == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "学生不存在");
+        }
+        return student.getId();
+    }
+
     // ===== 试卷管理 =====
 
     @Override
@@ -102,6 +120,7 @@ public class ExamServiceImpl implements ExamService {
                 epq.setQuestionId(qi.getQuestionId());
                 epq.setQuestionNo(qi.getQuestionNo());
                 epq.setScore(qi.getScore());
+                epq.setContentOverride(qi.getContent());
                 examPaperQuestionMapper.insert(epq);
 
                 // 更新题目使用次数
@@ -145,11 +164,22 @@ public class ExamServiceImpl implements ExamService {
     @Override
     @Transactional
     public ExamPaper updatePaper(Long id, ExamPaperCreateDTO dto) {
-        getPaperById(id);
-        // 删除旧题目关联
+        ExamPaper paper = getPaperById(id);
+        if (!"DRAFT".equals(paper.getStatus())) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "试卷已发布，无法修改");
+        }
+        paper.setPaperName(dto.getPaperName());
+        paper.setCourseId(dto.getCourseId());
+        paper.setTotalScore(dto.getTotalScore() != null ? dto.getTotalScore() : paper.getTotalScore());
+        paper.setDurationMinutes(dto.getDurationMinutes() != null ? dto.getDurationMinutes() : paper.getDurationMinutes());
+        paper.setStartTime(dto.getStartTime());
+        paper.setEndTime(dto.getEndTime());
+        paper.setTargetClasses(dto.getTargetClasses());
+        examPaperMapper.updateById(paper);
+
+        // 删除旧题目关联，重新关联
         examPaperQuestionMapper.delete(
                 new LambdaQueryWrapper<ExamPaperQuestion>().eq(ExamPaperQuestion::getPaperId, id));
-        // 重新关联
         if (dto.getQuestions() != null) {
             for (ExamPaperCreateDTO.QuestionItem qi : dto.getQuestions()) {
                 ExamPaperQuestion epq = new ExamPaperQuestion();
@@ -157,10 +187,11 @@ public class ExamServiceImpl implements ExamService {
                 epq.setQuestionId(qi.getQuestionId());
                 epq.setQuestionNo(qi.getQuestionNo());
                 epq.setScore(qi.getScore());
+                epq.setContentOverride(qi.getContent());
                 examPaperQuestionMapper.insert(epq);
             }
         }
-        return getPaperById(id);
+        return paper;
     }
 
     @Override
@@ -172,95 +203,392 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Transactional
     public void publishPaper(Long id) {
         ExamPaper paper = getPaperById(id);
+        if (!"DRAFT".equals(paper.getStatus())) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "试卷已发布，不能重复发布");
+        }
+        if (paper.getStartTime() == null || paper.getEndTime() == null) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "请先设置考试开始与截止时间");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (!paper.getStartTime().isBefore(paper.getEndTime())) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "考试开始时间必须早于截止时间");
+        }
+        if (!paper.getEndTime().isAfter(now)) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "考试截止时间必须晚于当前时间");
+        }
+
+        List<ExamPaperQuestion> questions = examPaperQuestionMapper.selectList(
+                new LambdaQueryWrapper<ExamPaperQuestion>().eq(ExamPaperQuestion::getPaperId, id));
+        if (questions.isEmpty()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "试卷未关联任何题目，无法发布");
+        }
+
+        // 一张试卷对应一条考核（按 paperId 复用）
+        Assessment assessment = assessmentMapper.selectOne(
+                new LambdaQueryWrapper<Assessment>().eq(Assessment::getPaperId, id));
+        if (assessment == null) {
+            assessment = new Assessment();
+            assessment.setPaperId(id);
+            assessment.setCourseId(paper.getCourseId());
+            assessment.setAssessmentName(paper.getPaperName());
+            assessment.setAssessmentType("EXAM");
+            assessment.setTotalScore(paper.getTotalScore());
+            assessment.setQuestionCount(questions.size());
+            assessment.setStartTime(paper.getStartTime());
+            assessment.setEndTime(paper.getEndTime());
+            assessment.setDurationMinutes(paper.getDurationMinutes());
+            assessment.setStatus("PUBLISHED");
+            assessmentMapper.insert(assessment);
+        } else {
+            assessment.setCourseId(paper.getCourseId());
+            assessment.setAssessmentName(paper.getPaperName());
+            assessment.setTotalScore(paper.getTotalScore());
+            assessment.setQuestionCount(questions.size());
+            assessment.setStartTime(paper.getStartTime());
+            assessment.setEndTime(paper.getEndTime());
+            assessment.setDurationMinutes(paper.getDurationMinutes());
+            assessment.setStatus("PUBLISHED");
+            assessmentMapper.updateById(assessment);
+        }
+
         paper.setStatus("PUBLISHED");
         examPaperMapper.updateById(paper);
-        log.info("发布考试: paperId={}", id);
+        log.info("发布考试: paperId={}, assessmentId={}", id, assessment.getId());
     }
 
     @Override
+    @Transactional
     public void closePaper(Long id) {
         ExamPaper paper = getPaperById(id);
-        paper.setStatus("CLOSED");
+        paper.setStatus("ENDED");
         examPaperMapper.updateById(paper);
+
+        Assessment assessment = assessmentMapper.selectOne(
+                new LambdaQueryWrapper<Assessment>().eq(Assessment::getPaperId, id));
+        if (assessment != null) {
+            assessment.setStatus("ENDED");
+            assessmentMapper.updateById(assessment);
+        }
         log.info("结束考试: paperId={}", id);
     }
 
     // ===== 学生考试 =====
 
     @Override
-    public List<ExamPaper> getPendingExams(Long studentId) {
+    public List<ExamPaper> getPendingExams(Long userId) {
+        Long studentId = resolveStudentId(userId);
         // 查找学生所在课程
         List<CourseStudent> csList = courseStudentMapper.selectList(
                 new LambdaQueryWrapper<CourseStudent>().eq(CourseStudent::getStudentId, studentId));
         if (csList.isEmpty()) return Collections.emptyList();
 
         List<Long> courseIds = csList.stream().map(CourseStudent::getCourseId).collect(Collectors.toList());
-        return examPaperMapper.selectList(
+        List<ExamPaper> papers = examPaperMapper.selectList(
                 new LambdaQueryWrapper<ExamPaper>()
                         .in(ExamPaper::getCourseId, courseIds)
                         .eq(ExamPaper::getStatus, "PUBLISHED")
                         .orderByDesc(ExamPaper::getCreateTime));
+
+        LocalDateTime now = LocalDateTime.now();
+        return papers.stream()
+                .filter(p -> p.getEndTime() == null || now.isBefore(p.getEndTime()))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public ExamPaper getExamForStudent(Long paperId, Long studentId) {
+    public StudentExamVO getExamForStudent(Long paperId, Long userId) {
+        Long studentId = resolveStudentId(userId);
         ExamPaper paper = getPaperById(paperId);
-        if (!"PUBLISHED".equals(paper.getStatus())) {
+        if ("DRAFT".equals(paper.getStatus()) || "ENDED".equals(paper.getStatus())) {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "考试不可用");
         }
-        // 检查学生是否在目标班级
-        List<CourseStudent> csList = courseStudentMapper.selectList(
+        LocalDateTime now = LocalDateTime.now();
+        if (paper.getStartTime() != null && now.isBefore(paper.getStartTime())) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "考试尚未开始");
+        }
+        if (paper.getEndTime() != null && now.isAfter(paper.getEndTime())) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "考试已结束");
+        }
+
+        // 检查学生是否选修该课程
+        CourseStudent cs = courseStudentMapper.selectOne(
                 new LambdaQueryWrapper<CourseStudent>()
                         .eq(CourseStudent::getCourseId, paper.getCourseId())
                         .eq(CourseStudent::getStudentId, studentId));
-        if (csList.isEmpty()) {
+        if (cs == null) {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "你不在该考试的参与班级中");
         }
-        return paper;
+
+        // 组装题目（剥离答案/解析）
+        List<ExamPaperQuestion> epqs = examPaperQuestionMapper.selectList(
+                new LambdaQueryWrapper<ExamPaperQuestion>()
+                        .eq(ExamPaperQuestion::getPaperId, paperId)
+                        .orderByAsc(ExamPaperQuestion::getQuestionNo));
+        List<Long> questionIds = epqs.stream().map(ExamPaperQuestion::getQuestionId).collect(Collectors.toList());
+        Map<Long, QuestionBank> qbMap = questionIds.isEmpty() ? Collections.emptyMap()
+                : questionBankMapper.selectBatchIds(questionIds).stream()
+                        .collect(Collectors.toMap(QuestionBank::getId, q -> q));
+
+        List<StudentExamVO.QuestionItem> items = epqs.stream().map(epq -> {
+            QuestionBank qb = qbMap.get(epq.getQuestionId());
+            String content = effectiveContent(epq, qb);
+            return StudentExamVO.QuestionItem.builder()
+                    .questionId(epq.getQuestionId())
+                    .questionNo(epq.getQuestionNo())
+                    .questionType(qb != null ? qb.getQuestionType() : null)
+                    .score(epq.getScore())
+                    .stem(content != null ? parseStem(content) : null)
+                    .options(content != null ? parseOptions(content) : Collections.emptyList())
+                    .knowledgePoints(qb != null ? qb.getKnowledgePoints() : null)
+                    .build();
+        }).collect(Collectors.toList());
+
+        return StudentExamVO.builder()
+                .paperId(paper.getId())
+                .paperName(paper.getPaperName())
+                .courseId(paper.getCourseId())
+                .totalScore(paper.getTotalScore())
+                .durationMinutes(paper.getDurationMinutes())
+                .startTime(paper.getStartTime())
+                .endTime(paper.getEndTime())
+                .status(paper.getStatus())
+                .questions(items)
+                .build();
     }
 
     @Override
     @Transactional
-    public void submitExam(Long paperId, Long studentId, Map<Long, String> answers) {
+    public SubmitExamResultDTO submitExam(Long paperId, Long userId, Map<Long, String> answers) {
+        Long studentId = resolveStudentId(userId);
         ExamPaper paper = getPaperById(paperId);
-        List<ExamPaperQuestion> questions = examPaperQuestionMapper.selectList(
-                new LambdaQueryWrapper<ExamPaperQuestion>().eq(ExamPaperQuestion::getPaperId, paperId));
-
-        // 自动批改客观题
-        BigDecimal totalScore = BigDecimal.ZERO;
-        for (ExamPaperQuestion epq : questions) {
-            QuestionBank qb = questionBankMapper.selectById(epq.getQuestionId());
-            if (qb == null) continue;
-            String studentAnswer = answers.getOrDefault(epq.getQuestionId(), "");
-            // 客观题比对答案（题目 content JSON 中应包含 answer 字段）
-            if (isObjective(qb.getQuestionType())) {
-                String correctAnswer = extractAnswer(qb.getContent());
-                if (correctAnswer != null && correctAnswer.equalsIgnoreCase(studentAnswer.trim())) {
-                    totalScore = totalScore.add(epq.getScore());
-                }
-            }
+        if ("DRAFT".equals(paper.getStatus()) || "ENDED".equals(paper.getStatus())) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "考试不可用");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (paper.getStartTime() != null && now.isBefore(paper.getStartTime())) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "考试尚未开始");
+        }
+        if (paper.getEndTime() != null && now.isAfter(paper.getEndTime())) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "考试已结束，无法交卷");
         }
 
-        // 创建考核记录
-        Assessment assessment = new Assessment();
-        assessment.setCourseId(paper.getCourseId());
-        assessment.setAssessmentName(paper.getPaperName());
-        assessment.setAssessmentType("EXAM");
-        assessment.setTotalScore(paper.getTotalScore());
-        assessment.setStatus("CLOSED");
-        assessmentMapper.insert(assessment);
+        // 一张试卷对应一条考核
+        Assessment assessment = assessmentMapper.selectOne(
+                new LambdaQueryWrapper<Assessment>().eq(Assessment::getPaperId, paperId));
+        if (assessment == null) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "考试未发布，无法交卷");
+        }
+
+        // 防重复交卷
+        Long submitted = assessmentRecordMapper.selectCount(
+                new LambdaQueryWrapper<AssessmentRecord>()
+                        .eq(AssessmentRecord::getAssessmentId, assessment.getId())
+                        .eq(AssessmentRecord::getStudentId, studentId));
+        if (submitted != null && submitted > 0) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "请勿重复交卷");
+        }
 
         AssessmentRecord record = new AssessmentRecord();
         record.setAssessmentId(assessment.getId());
         record.setStudentId(studentId);
-        record.setTotalScore(totalScore);
+        record.setTotalScore(BigDecimal.ZERO);
         record.setSubmitStatus("ON_TIME");
-        record.setSubmitTime(LocalDateTime.now());
+        record.setSubmitTime(now);
         assessmentRecordMapper.insert(record);
 
+        List<ExamPaperQuestion> questions = examPaperQuestionMapper.selectList(
+                new LambdaQueryWrapper<ExamPaperQuestion>().eq(ExamPaperQuestion::getPaperId, paperId));
+
+        BigDecimal totalScore = BigDecimal.ZERO;
+        int objectiveCount = 0;
+        int subjectiveCount = 0;
+        for (ExamPaperQuestion epq : questions) {
+            QuestionBank qb = questionBankMapper.selectById(epq.getQuestionId());
+            ExamAnswer answer = new ExamAnswer();
+            answer.setPaperId(paperId);
+            answer.setAssessmentId(assessment.getId());
+            answer.setRecordId(record.getId());
+            answer.setStudentId(studentId);
+            answer.setQuestionId(epq.getQuestionId());
+            answer.setQuestionNo(epq.getQuestionNo());
+            answer.setQuestionType(qb != null ? qb.getQuestionType() : null);
+            answer.setMaxScore(epq.getScore());
+            String studentAnswer = answers != null ? answers.getOrDefault(epq.getQuestionId(), "") : "";
+            answer.setStudentAnswer(studentAnswer);
+
+            if (qb != null && isObjective(qb.getQuestionType())) {
+                objectiveCount++;
+                String correct = parseAnswer(effectiveContent(epq, qb));
+                answer.setCorrectAnswer(correct);
+                boolean correctFlag = isCorrectAnswer(correct, studentAnswer, qb.getQuestionType());
+                answer.setIsCorrect(correctFlag ? 1 : 0);
+                answer.setScore(correctFlag ? epq.getScore() : BigDecimal.ZERO);
+                answer.setGraded(1);
+                if (correctFlag) {
+                    totalScore = totalScore.add(epq.getScore());
+                } else {
+                    writeWrongQuestion(studentId, paper.getCourseId(), qb, studentAnswer, correct);
+                }
+            } else {
+                // 主观题：仅保存答案，待教师批阅
+                subjectiveCount++;
+                answer.setCorrectAnswer(parseAnswer(effectiveContent(epq, qb)));
+                answer.setScore(null);
+                answer.setGraded(0);
+            }
+            examAnswerMapper.insert(answer);
+        }
+
+        record.setTotalScore(totalScore);
+        assessmentRecordMapper.updateById(record);
         log.info("学生交卷: paperId={}, studentId={}, score={}", paperId, studentId, totalScore);
+        return SubmitExamResultDTO.builder()
+                .objectiveScore(totalScore)
+                .totalScore(totalScore)
+                .objectiveCount(objectiveCount)
+                .subjectiveCount(subjectiveCount)
+                .build();
+    }
+
+    @Override
+    public List<StudentExamRecordVO> getMyExamRecords(Long userId) {
+        Long studentId = resolveStudentId(userId);
+        List<AssessmentRecord> records = assessmentRecordMapper.selectList(
+                new LambdaQueryWrapper<AssessmentRecord>()
+                        .eq(AssessmentRecord::getStudentId, studentId)
+                        .orderByDesc(AssessmentRecord::getSubmitTime));
+        if (records.isEmpty()) return Collections.emptyList();
+
+        // 批量加载考核 / 试卷 / 课程
+        Set<Long> assessmentIds = records.stream().map(AssessmentRecord::getAssessmentId).collect(Collectors.toSet());
+        Map<Long, Assessment> assessmentMap = assessmentMapper.selectBatchIds(assessmentIds).stream()
+                .collect(Collectors.toMap(Assessment::getId, a -> a));
+        Set<Long> paperIds = assessmentMap.values().stream().map(Assessment::getPaperId)
+                .filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, ExamPaper> paperMap = paperIds.isEmpty() ? Collections.emptyMap()
+                : examPaperMapper.selectBatchIds(paperIds).stream()
+                        .collect(Collectors.toMap(ExamPaper::getId, p -> p));
+        Set<Long> courseIds = assessmentMap.values().stream().map(Assessment::getCourseId)
+                .filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, Course> courseMap = courseIds.isEmpty() ? Collections.emptyMap()
+                : courseMapper.selectBatchIds(courseIds).stream()
+                        .collect(Collectors.toMap(Course::getId, c -> c));
+
+        // 批量加载作答，按 recordId 分组
+        Set<Long> recordIds = records.stream().map(AssessmentRecord::getId).collect(Collectors.toSet());
+        List<ExamAnswer> allAnswers = examAnswerMapper.selectList(
+                new LambdaQueryWrapper<ExamAnswer>().in(ExamAnswer::getRecordId, recordIds));
+        Map<Long, List<ExamAnswer>> answerMap = allAnswers.stream()
+                .collect(Collectors.groupingBy(ExamAnswer::getRecordId));
+
+        return records.stream().map(r -> {
+            Assessment a = assessmentMap.get(r.getAssessmentId());
+            ExamPaper p = a != null && a.getPaperId() != null ? paperMap.get(a.getPaperId()) : null;
+            Course c = a != null && a.getCourseId() != null ? courseMap.get(a.getCourseId()) : null;
+
+            List<ExamAnswer> answers = answerMap.getOrDefault(r.getId(), Collections.emptyList());
+            BigDecimal myScore = answers.stream()
+                    .map(x -> x.getScore() != null ? x.getScore() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal objectiveScore = answers.stream()
+                    .filter(x -> isObjective(x.getQuestionType()))
+                    .map(x -> x.getScore() != null ? x.getScore() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            int subjectivePending = (int) answers.stream()
+                    .filter(x -> !isObjective(x.getQuestionType()))
+                    .filter(x -> x.getGraded() == null || x.getGraded() == 0)
+                    .count();
+
+            return StudentExamRecordVO.builder()
+                    .recordId(r.getId())
+                    .paperId(a != null ? a.getPaperId() : null)
+                    .paperName(p != null ? p.getPaperName() : (a != null ? a.getAssessmentName() : null))
+                    .courseId(a != null ? a.getCourseId() : null)
+                    .courseName(c != null ? c.getCourseName() : null)
+                    .totalScore(p != null ? p.getTotalScore() : (a != null ? a.getTotalScore() : null))
+                    .myScore(myScore)
+                    .objectiveScore(objectiveScore)
+                    .subjectivePending(subjectivePending)
+                    .submitTime(r.getSubmitTime() != null ? r.getSubmitTime().toString() : null)
+                    .status(subjectivePending > 0 ? "GRADING" : "GRADED")
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public StudentExamResultVO getMyExamResult(Long paperId, Long userId) {
+        Long studentId = resolveStudentId(userId);
+        ExamPaper paper = getPaperById(paperId);
+
+        Assessment assessment = assessmentMapper.selectOne(
+                new LambdaQueryWrapper<Assessment>().eq(Assessment::getPaperId, paperId));
+        if (assessment == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "考试不存在");
+        }
+
+        AssessmentRecord record = assessmentRecordMapper.selectOne(
+                new LambdaQueryWrapper<AssessmentRecord>()
+                        .eq(AssessmentRecord::getAssessmentId, assessment.getId())
+                        .eq(AssessmentRecord::getStudentId, studentId));
+        if (record == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "你未参加该考试");
+        }
+
+        List<ExamAnswer> answers = examAnswerMapper.selectList(
+                new LambdaQueryWrapper<ExamAnswer>()
+                        .eq(ExamAnswer::getRecordId, record.getId())
+                        .orderByAsc(ExamAnswer::getQuestionNo));
+
+        Set<Long> questionIds = answers.stream().map(ExamAnswer::getQuestionId).collect(Collectors.toSet());
+        Map<Long, QuestionBank> qbMap = questionIds.isEmpty() ? Collections.emptyMap()
+                : questionBankMapper.selectBatchIds(questionIds).stream()
+                        .collect(Collectors.toMap(QuestionBank::getId, q -> q));
+
+        Map<Long, String> overrideMap = loadOverrideMap(paperId);
+
+        List<StudentExamResultVO.AnswerItem> items = answers.stream().map(a -> {
+            QuestionBank qb = qbMap.get(a.getQuestionId());
+            String content = overrideMap.getOrDefault(a.getQuestionId(), qb != null ? qb.getContent() : null);
+            return StudentExamResultVO.AnswerItem.builder()
+                    .questionNo(a.getQuestionNo())
+                    .questionType(a.getQuestionType())
+                    .stem(content != null ? parseStem(content) : null)
+                    .options(content != null ? parseOptions(content) : Collections.emptyList())
+                    .studentAnswer(a.getStudentAnswer())
+                    .correctAnswer(a.getCorrectAnswer())
+                    .score(a.getScore())
+                    .maxScore(a.getMaxScore())
+                    .isCorrect(a.getIsCorrect())
+                    .graded(a.getGraded())
+                    .comment(a.getComment())
+                    .build();
+        }).collect(Collectors.toList());
+
+        BigDecimal myScore = answers.stream()
+                .map(x -> x.getScore() != null ? x.getScore() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal objectiveScore = answers.stream()
+                .filter(x -> isObjective(x.getQuestionType()))
+                .map(x -> x.getScore() != null ? x.getScore() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        int subjectivePending = (int) answers.stream()
+                .filter(x -> !isObjective(x.getQuestionType()))
+                .filter(x -> x.getGraded() == null || x.getGraded() == 0)
+                .count();
+
+        return StudentExamResultVO.builder()
+                .paperId(paper.getId())
+                .paperName(paper.getPaperName())
+                .totalScore(paper.getTotalScore())
+                .myScore(myScore)
+                .objectiveScore(objectiveScore)
+                .subjectivePending(subjectivePending)
+                .submitTime(record.getSubmitTime() != null ? record.getSubmitTime().toString() : null)
+                .answers(items)
+                .build();
     }
 
     // ===== 考试结果 =====
@@ -269,13 +597,8 @@ public class ExamServiceImpl implements ExamService {
     public ExamResultDTO getExamResults(Long paperId) {
         ExamPaper paper = getPaperById(paperId);
 
-        // 查找关联的 assessment
         Assessment assessment = assessmentMapper.selectOne(
-                new LambdaQueryWrapper<Assessment>()
-                        .eq(Assessment::getAssessmentName, paper.getPaperName())
-                        .eq(Assessment::getCourseId, paper.getCourseId())
-                        .orderByDesc(Assessment::getCreateTime)
-                        .last("LIMIT 1"));
+                new LambdaQueryWrapper<Assessment>().eq(Assessment::getPaperId, paperId));
 
         if (assessment == null) {
             return ExamResultDTO.builder()
@@ -315,8 +638,9 @@ public class ExamServiceImpl implements ExamService {
 
         // 学生成绩列表
         List<Long> studentIds = records.stream().map(AssessmentRecord::getStudentId).collect(Collectors.toList());
-        Map<Long, Student> studentMap = studentMapper.selectBatchIds(studentIds).stream()
-                .collect(Collectors.toMap(Student::getId, s -> s));
+        Map<Long, Student> studentMap = studentIds.isEmpty() ? Collections.emptyMap()
+                : studentMapper.selectBatchIds(studentIds).stream()
+                        .collect(Collectors.toMap(Student::getId, s -> s));
 
         List<ExamResultDTO.StudentScoreItem> studentScores = records.stream().map(r -> {
             Student s = studentMap.get(r.getStudentId());
@@ -342,44 +666,238 @@ public class ExamServiceImpl implements ExamService {
     // ===== 主观题批阅 =====
 
     @Override
-    public List<Map<String, Object>> getGradingList(Long courseId) {
-        // 简化实现：返回该课程下所有考试的主观题待批阅记录
-        List<Map<String, Object>> result = new ArrayList<>();
-        // 实际应查询需要手动批阅的 assessment_record
-        return result;
+    public List<GradingItemVO> getGradingList(Long courseId, Long paperId) {
+        List<Long> paperIds;
+        if (paperId != null) {
+            paperIds = List.of(paperId);
+        } else {
+            List<ExamPaper> papers = examPaperMapper.selectList(
+                    new LambdaQueryWrapper<ExamPaper>().eq(ExamPaper::getCourseId, courseId));
+            paperIds = papers.stream().map(ExamPaper::getId).collect(Collectors.toList());
+            if (paperIds.isEmpty()) return Collections.emptyList();
+        }
+
+        List<ExamAnswer> answers = examAnswerMapper.selectList(
+                new LambdaQueryWrapper<ExamAnswer>()
+                        .in(ExamAnswer::getPaperId, paperIds)
+                        .eq(ExamAnswer::getGraded, 0)
+                        .in(ExamAnswer::getQuestionType, List.of("SHORT", "COMPREHENSIVE"))
+                        .orderByAsc(ExamAnswer::getQuestionNo));
+        if (answers.isEmpty()) return Collections.emptyList();
+
+        Map<Long, ExamPaper> paperMap = examPaperMapper.selectBatchIds(paperIds).stream()
+                .collect(Collectors.toMap(ExamPaper::getId, p -> p));
+        Set<Long> studentIds = answers.stream().map(ExamAnswer::getStudentId).collect(Collectors.toSet());
+        Map<Long, Student> studentMap = studentMapper.selectBatchIds(studentIds).stream()
+                .collect(Collectors.toMap(Student::getId, s -> s));
+        Set<Long> questionIds = answers.stream().map(ExamAnswer::getQuestionId).collect(Collectors.toSet());
+        Map<Long, QuestionBank> qbMap = questionBankMapper.selectBatchIds(questionIds).stream()
+                .collect(Collectors.toMap(QuestionBank::getId, q -> q));
+
+        Map<Long, Map<Long, String>> overrideMap = new HashMap<>();
+        for (Long pid : paperIds) {
+            overrideMap.put(pid, loadOverrideMap(pid));
+        }
+
+        return answers.stream().map(a -> {
+            ExamPaper p = paperMap.get(a.getPaperId());
+            Student s = studentMap.get(a.getStudentId());
+            QuestionBank qb = qbMap.get(a.getQuestionId());
+            String content = overrideMap.getOrDefault(a.getPaperId(), Collections.emptyMap())
+                    .getOrDefault(a.getQuestionId(), qb != null ? qb.getContent() : null);
+            return GradingItemVO.builder()
+                    .answerId(a.getId())
+                    .recordId(a.getRecordId())
+                    .paperId(a.getPaperId())
+                    .paperName(p != null ? p.getPaperName() : null)
+                    .studentId(a.getStudentId())
+                    .studentNo(s != null ? s.getStudentNo() : null)
+                    .studentName(s != null ? s.getName() : null)
+                    .questionNo(a.getQuestionNo())
+                    .questionType(a.getQuestionType())
+                    .questionStem(content != null ? parseStem(content) : null)
+                    .studentAnswer(a.getStudentAnswer())
+                    .correctAnswer(a.getCorrectAnswer())
+                    .maxScore(a.getMaxScore())
+                    .score(a.getScore())
+                    .submitTime(a.getCreateTime())
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     @Override
-    public void submitGrade(Long recordId, BigDecimal score, String comment) {
-        AssessmentRecord record = assessmentRecordMapper.selectById(recordId);
-        if (record == null) {
-            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "批阅记录不存在");
+    @Transactional
+    public void submitGrade(Long answerId, Long graderUserId, BigDecimal score, String comment) {
+        ExamAnswer answer = examAnswerMapper.selectById(answerId);
+        if (answer == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "作答记录不存在");
         }
-        record.setTotalScore(score);
-        record.setWeakestAspect(comment);
-        assessmentRecordMapper.updateById(record);
-        log.info("主观题批阅: recordId={}, score={}", recordId, score);
+        if (isObjective(answer.getQuestionType())) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "客观题已自动批改，无需手动批阅");
+        }
+        if (answer.getGraded() != null && answer.getGraded() == 1) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "该题已批阅，请勿重复操作");
+        }
+        if (answer.getMaxScore() != null && score.compareTo(answer.getMaxScore()) > 0) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "分数不能超过本题满分");
+        }
+
+        answer.setScore(score);
+        answer.setComment(comment);
+        answer.setGraded(1);
+        answer.setGraderId(resolveTeacherId(graderUserId));
+        examAnswerMapper.updateById(answer);
+
+        recalculateRecordTotal(answer.getRecordId());
+        log.info("主观题批阅: answerId={}, recordId={}, score={}", answerId, answer.getRecordId(), score);
     }
 
-    // ===== 辅助方法 =====
+    private void recalculateRecordTotal(Long recordId) {
+        List<ExamAnswer> answers = examAnswerMapper.selectList(
+                new LambdaQueryWrapper<ExamAnswer>().eq(ExamAnswer::getRecordId, recordId));
+        BigDecimal total = answers.stream()
+                .map(a -> a.getScore() != null ? a.getScore() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        AssessmentRecord record = assessmentRecordMapper.selectById(recordId);
+        if (record != null) {
+            record.setTotalScore(total);
+            assessmentRecordMapper.updateById(record);
+        }
+    }
+
+    // ===== 错题本 =====
+
+    private void writeWrongQuestion(Long studentId, Long courseId, QuestionBank qb,
+                                    String studentAnswer, String correctAnswer) {
+        StudentWrongQuestion existing = studentWrongQuestionMapper.selectOne(
+                new LambdaQueryWrapper<StudentWrongQuestion>()
+                        .eq(StudentWrongQuestion::getStudentId, studentId)
+                        .eq(StudentWrongQuestion::getCourseId, courseId)
+                        .eq(StudentWrongQuestion::getSourceId, qb.getId())
+                        .eq(StudentWrongQuestion::getSource, "ASSESSMENT"));
+        if (existing != null) {
+            existing.setWrongCount((existing.getWrongCount() != null ? existing.getWrongCount() : 0) + 1);
+            existing.setStudentAnswer(studentAnswer);
+            existing.setCorrectAnswer(correctAnswer);
+            existing.setUpdateTime(LocalDateTime.now());
+            studentWrongQuestionMapper.updateById(existing);
+        } else {
+            StudentWrongQuestion wq = new StudentWrongQuestion();
+            wq.setStudentId(studentId);
+            wq.setCourseId(courseId);
+            wq.setQuestionContent(qb.getContent());
+            wq.setStudentAnswer(studentAnswer);
+            wq.setCorrectAnswer(correctAnswer);
+            wq.setKnowledgePoints(qb.getKnowledgePoints());
+            wq.setAnalysis(parseAnalysis(qb.getContent()));
+            wq.setWrongCount(1);
+            wq.setSource("ASSESSMENT");
+            wq.setSourceId(qb.getId());
+            studentWrongQuestionMapper.insert(wq);
+        }
+    }
+
+    // ===== 题目内容解析 =====
+
+    private String effectiveContent(ExamPaperQuestion epq, QuestionBank qb) {
+        if (epq != null && epq.getContentOverride() != null && !epq.getContentOverride().isBlank()) {
+            return epq.getContentOverride();
+        }
+        return qb != null ? qb.getContent() : null;
+    }
+
+    private Map<Long, String> loadOverrideMap(Long paperId) {
+        List<ExamPaperQuestion> epqs = examPaperQuestionMapper.selectList(
+                new LambdaQueryWrapper<ExamPaperQuestion>()
+                        .eq(ExamPaperQuestion::getPaperId, paperId));
+        return epqs.stream()
+                .filter(e -> e.getContentOverride() != null && !e.getContentOverride().isBlank())
+                .collect(Collectors.toMap(ExamPaperQuestion::getQuestionId, ExamPaperQuestion::getContentOverride));
+    }
+
+    private JsonNode parseContent(String content) {
+        if (content == null || content.isBlank()) return null;
+        try {
+            return objectMapper.readTree(content);
+        } catch (Exception e) {
+            log.warn("解析题目内容 JSON 失败: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private String parseAnswer(String content) {
+        JsonNode node = parseContent(content);
+        if (node == null) return null;
+        JsonNode answer = node.get("answer");
+        if (answer == null || answer.isNull()) return null;
+        if (answer.isArray()) return answer.toString();
+        return answer.asText();
+    }
+
+    private String parseStem(String content) {
+        JsonNode node = parseContent(content);
+        if (node == null) return null;
+        JsonNode stem = node.get("stem");
+        if (stem == null || stem.isNull()) {
+            JsonNode question = node.get("question");
+            return question != null ? question.asText() : null;
+        }
+        return stem.asText();
+    }
+
+    private String parseAnalysis(String content) {
+        JsonNode node = parseContent(content);
+        if (node == null) return null;
+        JsonNode analysis = node.get("analysis");
+        return analysis != null && !analysis.isNull() ? analysis.asText() : null;
+    }
+
+    private List<StudentExamVO.Option> parseOptions(String content) {
+        JsonNode node = parseContent(content);
+        if (node == null) return Collections.emptyList();
+        JsonNode options = node.get("options");
+        if (options == null || options.isNull()) return Collections.emptyList();
+        List<StudentExamVO.Option> result = new ArrayList<>();
+        if (options.isArray()) {
+            for (JsonNode o : options) {
+                result.add(StudentExamVO.Option.builder()
+                        .label(o.path("label").asText())
+                        .text(o.path("text").asText())
+                        .build());
+            }
+        } else if (options.isObject()) {
+            Iterator<String> names = options.fieldNames();
+            while (names.hasNext()) {
+                String label = names.next();
+                result.add(StudentExamVO.Option.builder()
+                        .label(label)
+                        .text(options.get(label).asText())
+                        .build());
+            }
+        }
+        return result;
+    }
+
+    // ===== 客观题批改 =====
 
     private boolean isObjective(String questionType) {
         return "SINGLE".equals(questionType) || "MULTI".equals(questionType)
                 || "FILL".equals(questionType) || "TRUE_FALSE".equals(questionType);
     }
 
-    private String extractAnswer(String content) {
-        // content 为 JSON，尝试简单提取 answer 字段
-        if (content == null) return null;
-        try {
-            int idx = content.indexOf("\"answer\"");
-            if (idx < 0) return null;
-            int colon = content.indexOf(":", idx);
-            int start = content.indexOf("\"", colon + 1);
-            int end = content.indexOf("\"", start + 1);
-            return content.substring(start + 1, end);
-        } catch (Exception e) {
-            return null;
+    private boolean isCorrectAnswer(String correct, String student, String type) {
+        if (correct == null || student == null) return false;
+        return normalizeAnswer(correct, type).equals(normalizeAnswer(student, type));
+    }
+
+    private String normalizeAnswer(String raw, String type) {
+        if (raw == null) return "";
+        String trimmed = raw.trim();
+        if ("MULTI".equals(type)) {
+            char[] arr = trimmed.replaceAll("[,\\s、]", "").toUpperCase().toCharArray();
+            Arrays.sort(arr);
+            return new String(arr);
         }
+        return trimmed.replaceAll("\\s+", "").toUpperCase();
     }
 }

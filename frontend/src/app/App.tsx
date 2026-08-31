@@ -4,7 +4,7 @@ import {
   TrendingUp, GraduationCap, Bell, Search, Moon, Sun, Upload,
   FileText, CheckCircle, XCircle, Clock, Eye, Edit2, Trash2,
   Plus, Download, Filter, BarChart2, Brain, Target, Star, Heart,
-  AlertCircle, BookMarked, Play, RotateCcw, ChevronDown, ChevronLeft,
+  AlertCircle, BookMarked, Play, RotateCcw, ChevronDown, ChevronUp, ChevronLeft,
   Activity, Award, Layers, Zap, Menu, X, User, Calendar, Save,
   FileSearch, Wifi, WifiOff, Server, BarChart3, PieChart as PieChartIcon, History,
   Shield, Database, AlertTriangle, ArrowUpRight, ArrowDownRight,
@@ -22,12 +22,13 @@ import { getTeacherList, createTeacher, updateTeacher, deleteTeacher, updateTeac
 import { getStudentOverview, getStudentTrends, getStudentWrongQuestions, getStudentCourses, StudentOverview, StudentCourse } from "../services/studentService";
 import { getStudentProfile, toggleFocusStudent, generateAiEvaluation, generateAiSuggestions, getMyPortrait, generateMyAiSuggestions, StudentProfile as StudentProfileData, LearningSuggestion } from "../services/portraitService";
 import { getMyClasses, getClassStudents, createClass, addStudentToClass, removeStudentFromClass, ClassVO as ClsVO, StudentVO } from "../services/classService";
-import { getPendingExams, getExamPapers, createExamPaper, deleteExamPaper, publishExamPaper, closeExamPaper, getExamResults, submitExam, ExamPaper } from "../services/examService";
+import { getPendingExams, getExamPapers, createExamPaper, deleteExamPaper, publishExamPaper, closeExamPaper, getExamResults, submitExam, getStudentExam, getMyExamRecords, getMyExamResult, getGradingList, submitGrade, ExamPaper, ExamResultDTO, StudentExamVO, SubmitExamResultDTO, StudentExamRecordVO, StudentExamResultVO, GradingItemVO } from "../services/examService";
 import { sendNotification, getMyNotifications, Notification as NotifItem } from "../services/notificationService";
 import { getOperationLogs, OperationLog } from "../services/logService";
 import { getAllConfigs, batchUpdateConfigs, SystemConfig } from "../services/configService";
 import { uploadFile, getImportHistory, downloadTemplate as fetchTemplateBlob, ImportLog } from "../services/importService";
 import { generateQuestions } from "../services/aiQuizService";
+import { getQuestionList, getKnowledgeTree, QuestionBank, KnowledgePoint } from "../services/questionBankService";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Role = "admin" | "teacher" | "teaching-assistant" | "student";
@@ -6325,7 +6326,7 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
 }
 
 // ─── Teaching Assistant: Grading (考试批阅) ──────────────────────────────────────
-function TA_Grading() {
+function TA_GradingLegacy() {
   const [selectedTask, setSelectedTask] = useState<number | null>(null);
   const [selectedQuestion, setSelectedQuestion] = useState<number | null>(null);
   const [score, setScore] = useState("");
@@ -7259,7 +7260,7 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
 }
 
 // ─── Teacher: Exam Management (考试管理) ───────────────────────────────────────
-function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions }: {
+function TeacherExamManagementLegacy({ selectedQuizQuestions, setSelectedQuizQuestions }: {
   selectedQuizQuestions: number[];
   setSelectedQuizQuestions: (ids: number[]) => void;
 }) {
@@ -9950,7 +9951,7 @@ function StudentWrongBook() {
 }
 
 // ─── Student: Exam ─────────────────────────────────────────────────────────────
-function StudentExam() {
+function StudentExamLegacy() {
   const [activeExam, setActiveExam] = useState<typeof mockExams[0] | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, any>>({});
@@ -10268,6 +10269,1192 @@ function StudentExam() {
   );
 }
 
+// ─── Teaching Assistant: Grading (考试批阅 · 真实接口) ────────────────────────────
+function TA_Grading() {
+  const [courses, setCourses] = useState<ClassVO[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [items, setItems] = useState<GradingItemVO[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedAnswerId, setSelectedAnswerId] = useState<number | null>(null);
+  const [score, setScore] = useState("");
+  const [comment, setComment] = useState("");
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
+
+  useEffect(() => {
+    getMyCourses().then(data => setCourses(data || [])).catch(() => setCourses([]));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCourseId) { setItems([]); setSelectedAnswerId(null); return; }
+    setLoading(true);
+    getGradingList(selectedCourseId)
+      .then(data => { setItems(data || []); setSelectedAnswerId(null); })
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, [selectedCourseId]);
+
+  const currentItem = items.find(i => i.answerId === selectedAnswerId) || null;
+
+  const typeLabel = (t?: string) => {
+    if (t === "SHORT") return "简答题";
+    if (t === "COMPREHENSIVE") return "综合题";
+    if (t === "FILL") return "填空题";
+    return "主观题";
+  };
+
+  const handleSubmitGrade = async () => {
+    if (!currentItem) return;
+    if (score.trim() === "") { showToastMsg("请输入分数"); return; }
+    const numScore = parseFloat(score);
+    if (isNaN(numScore)) { showToastMsg("请输入有效分数"); return; }
+    if (numScore < 0 || (currentItem.maxScore != null && numScore > currentItem.maxScore)) {
+      showToastMsg(`分数需在 0 ~ ${currentItem.maxScore ?? "满分"} 之间`);
+      return;
+    }
+    try {
+      await submitGrade(currentItem.answerId, numScore, comment.trim() || undefined);
+      showToastMsg("批阅完成");
+      setItems(prev => prev.filter(i => i.answerId !== currentItem.answerId));
+      setSelectedAnswerId(null);
+      setScore("");
+      setComment("");
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "批阅失败");
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      {toast && (
+        <div className="fixed top-20 right-6 z-50 px-4 py-3 bg-primary text-white text-sm rounded-lg shadow-lg animate-[fadeIn_0.2s_ease-out]">
+          <div className="flex items-center gap-2"><CheckCircle size={14} />{toast}</div>
+        </div>
+      )}
+
+      <div className="bg-card rounded-lg border border-border p-4 flex flex-wrap items-center gap-3">
+        <label className="text-sm font-medium text-foreground">选择课程</label>
+        <select
+          value={selectedCourseId ?? ""}
+          onChange={e => setSelectedCourseId(e.target.value ? Number(e.target.value) : null)}
+          className="px-3 py-2 border border-border rounded-md text-sm bg-background"
+        >
+          <option value="">请选择课程</option>
+          {courses.map(c => (
+            <option key={c.id} value={c.id}>{c.courseName || c.className || `课程 ${c.id}`}</option>
+          ))}
+        </select>
+        <span className="text-sm text-muted-foreground">待批阅主观题：<span className="font-semibold text-foreground">{items.length}</span> 道</span>
+      </div>
+
+      {loading ? (
+        <div className="bg-card rounded-lg border border-border p-10 text-center text-sm text-muted-foreground">加载中…</div>
+      ) : items.length === 0 ? (
+        <div className="bg-card rounded-lg border border-border p-10 text-center">
+          <FileText size={32} className="mx-auto text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground">{selectedCourseId ? "该课程暂无待批阅的主观题" : "请先选择课程"}</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          <div className="lg:col-span-2 space-y-2">
+            {items.map(i => (
+              <div
+                key={i.answerId}
+                onClick={() => { setSelectedAnswerId(i.answerId); setScore(""); setComment(""); }}
+                className={`bg-card rounded-lg border p-3 cursor-pointer transition-colors ${selectedAnswerId === i.answerId ? "border-primary ring-1 ring-primary" : "border-border hover:border-primary/50"}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">{i.studentName || `学生${i.studentId}`}</span>
+                  <Tag color="gray">第{i.questionNo}题</Tag>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{i.paperName}</p>
+                <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{i.questionStem}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="lg:col-span-3 bg-card rounded-lg border border-border p-5">
+            {!currentItem ? (
+              <div className="text-center py-16 text-sm text-muted-foreground">请选择左侧一道待批阅题目</div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-foreground">批阅 · {currentItem.studentName || `学生${currentItem.studentId}`} · 第{currentItem.questionNo}题</h3>
+                  <Tag color="blue">{typeLabel(currentItem.questionType)}</Tag>
+                </div>
+                <div className="space-y-3">
+                  <div className="rounded-md bg-muted/50 p-3">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">题目</p>
+                    <p className="text-sm whitespace-pre-wrap">{currentItem.questionStem || "（无题干）"}</p>
+                  </div>
+                  <div className="rounded-md bg-muted/50 p-3">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">学生答案</p>
+                    <p className="text-sm whitespace-pre-wrap">{currentItem.studentAnswer || "（未作答）"}</p>
+                  </div>
+                  {currentItem.correctAnswer && (
+                    <div className="rounded-md bg-muted/50 p-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">参考答案</p>
+                      <p className="text-sm whitespace-pre-wrap">{currentItem.correctAnswer}</p>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 pt-2 border-t border-border">
+                  <label className="text-sm font-medium">得分</label>
+                  <input
+                    type="number"
+                    value={score}
+                    onChange={e => setScore(e.target.value)}
+                    placeholder={`满分 ${currentItem.maxScore ?? "—"}`}
+                    className="w-28 px-3 py-2 border border-border rounded-md text-sm"
+                  />
+                  <span className="text-xs text-muted-foreground">/ {currentItem.maxScore ?? "—"} 分</span>
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">评语（可选）</label>
+                  <textarea
+                    value={comment}
+                    onChange={e => setComment(e.target.value)}
+                    rows={3}
+                    placeholder="给学生的批注…"
+                    className="w-full px-3 py-2 border border-border rounded-md text-sm resize-none"
+                  />
+                </div>
+                <button
+                  onClick={handleSubmitGrade}
+                  className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90"
+                >
+                  提交批阅
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Teacher: Exam Management (考试管理 · 真实接口) ──────────────────────────────
+interface EditableExamQuestion {
+  questionId: number;
+  questionType: string;
+  score: number;
+  stem: string;
+  options: { label: string; text: string }[];
+  answer: string;
+  analysis: string;
+  knowledgePoints?: string;
+}
+
+function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions }: {
+  selectedQuizQuestions: number[];
+  setSelectedQuizQuestions: (ids: number[]) => void;
+}) {
+  const [papers, setPapers] = useState<ExamPaper[]>([]);
+  const [loadingPapers, setLoadingPapers] = useState(true);
+
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
+  const [createStep, setCreateStep] = useState(1);
+  const [examInfo, setExamInfo] = useState({ name: "", courseId: null as number | null, startTime: "", endTime: "" });
+  const [courses, setCourses] = useState<ClassVO[]>([]);
+  const [myClasses, setMyClasses] = useState<ClsVO[]>([]);
+  const [selectedClassIds, setSelectedClassIds] = useState<number[]>([]);
+  const [bankQuestions, setBankQuestions] = useState<QuestionBank[]>([]);
+  const [knowledgeTree, setKnowledgeTree] = useState<KnowledgePoint[]>([]);
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<number[]>([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+
+  // Step 2 筛选条件
+  const [filterType, setFilterType] = useState<string | null>(null);
+  const [filterDifficulty, setFilterDifficulty] = useState<string | null>(null);
+  const [filterSource, setFilterSource] = useState<string | null>(null); // "AI" | "MANUAL"
+  const [filterKnowledge, setFilterKnowledge] = useState<string | null>(null);
+
+  // Step 3 可编辑题目快照
+  const [editable, setEditable] = useState<EditableExamQuestion[]>([]);
+
+  const [selectedExam, setSelectedExam] = useState<number | null>(null);
+  const [results, setResults] = useState<ExamResultDTO | null>(null);
+  const [loadingResults, setLoadingResults] = useState(false);
+
+  const [toast, setToast] = useState<string | null>(null);
+  const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
+
+  const loadPapers = () => {
+    setLoadingPapers(true);
+    getExamPapers(1, 100)
+      .then(data => setPapers(data.records || []))
+      .catch(() => setPapers([]))
+      .finally(() => setLoadingPapers(false));
+  };
+
+  useEffect(loadPapers, []);
+  useEffect(() => { getMyCourses().then(data => setCourses(data || [])).catch(() => setCourses([])); }, []);
+  useEffect(() => { getMyClasses().then(data => setMyClasses(data || [])).catch(() => setMyClasses([])); }, []);
+
+  useEffect(() => {
+    if (!examInfo.courseId) { setBankQuestions([]); setKnowledgeTree([]); return; }
+    setLoadingQuestions(true);
+    getQuestionList(1, 500, examInfo.courseId)
+      .then(data => setBankQuestions(data.records || []))
+      .catch(() => setBankQuestions([]))
+      .finally(() => setLoadingQuestions(false));
+    getKnowledgeTree(examInfo.courseId)
+      .then(data => setKnowledgeTree(data || []))
+      .catch(() => setKnowledgeTree([]));
+  }, [examInfo.courseId]);
+
+  const stemOf = (q: QuestionBank): string => {
+    try {
+      const raw = (q as any).content || (q as any).questionContent || "";
+      const c = JSON.parse(raw);
+      return c.stem || c.question || c.title || raw;
+    } catch {
+      return (q as any).content || (q as any).questionContent || "";
+    }
+  };
+
+  const parseContent = (raw?: string): { stem: string; options: { label: string; text: string }[]; answer: string; analysis: string } => {
+    const fallback = { stem: raw || "", options: [] as { label: string; text: string }[], answer: "", analysis: "" };
+    if (!raw) return fallback;
+    try {
+      const c = JSON.parse(raw);
+      let options: { label: string; text: string }[] = [];
+      if (Array.isArray(c.options)) {
+        options = c.options.map((o: any) => ({ label: String(o?.label ?? ""), text: String(o?.text ?? o ?? "") }));
+      } else if (c.options && typeof c.options === "object") {
+        options = Object.entries(c.options).map(([label, text]) => ({ label, text: String(text ?? "") }));
+      }
+      const answer = Array.isArray(c.answer) ? c.answer.join(",") : (c.answer != null ? String(c.answer) : "");
+      return {
+        stem: c.stem != null ? String(c.stem) : (c.question != null ? String(c.question) : ""),
+        options,
+        answer,
+        analysis: c.analysis != null ? String(c.analysis) : "",
+      };
+    } catch {
+      return fallback;
+    }
+  };
+
+  const flattenKnowledge = (nodes: KnowledgePoint[]): string[] => {
+    const out: string[] = [];
+    const walk = (list: KnowledgePoint[]) => {
+      for (const n of list) { out.push(n.name); if (n.children) walk(n.children); }
+    };
+    walk(nodes);
+    return out;
+  };
+  const knowledgeOptions = flattenKnowledge(knowledgeTree);
+
+  const questionTypes = [
+    { value: "SINGLE", label: "单选" },
+    { value: "MULTI", label: "多选" },
+    { value: "FILL", label: "填空" },
+    { value: "SHORT", label: "简答" },
+    { value: "COMPREHENSIVE", label: "综合" },
+    { value: "TRUE_FALSE", label: "判断" },
+  ];
+  const difficulties = [
+    { value: "EASY", label: "简单" },
+    { value: "MEDIUM", label: "中等" },
+    { value: "HARD", label: "困难" },
+  ];
+
+  const filteredQuestions = bankQuestions.filter(q => {
+    if (filterType && q.questionType !== filterType) return false;
+    if (filterDifficulty && q.difficulty !== filterDifficulty) return false;
+    if (filterSource) {
+      const ai = q.aiGenerated === 1 ? 1 : 0;
+      if (filterSource === "AI" && ai !== 1) return false;
+      if (filterSource === "MANUAL" && ai !== 0) return false;
+    }
+    if (filterKnowledge) {
+      const kps = (q.knowledgePoints || "").split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+      if (!kps.includes(filterKnowledge)) return false;
+    }
+    return true;
+  });
+
+  const toggleClass = (id: number) => {
+    setSelectedClassIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const buildEditable = (ids: number[]) => {
+    const list = ids
+      .map(id => {
+        const q = bankQuestions.find(b => b.id === id);
+        if (!q) return null;
+        const c = parseContent((q as any).content);
+        return {
+          questionId: q.id,
+          questionType: q.questionType || "",
+          score: 10,
+          stem: c.stem,
+          options: c.options,
+          answer: c.answer,
+          analysis: c.analysis,
+          knowledgePoints: q.knowledgePoints,
+        } as EditableExamQuestion;
+      })
+      .filter((x): x is EditableExamQuestion => x !== null);
+    setEditable(list);
+  };
+
+  const updateEditable = (idx: number, patch: Partial<EditableExamQuestion>) => {
+    setEditable(prev => prev.map((q, i) => (i === idx ? { ...q, ...patch } : q)));
+  };
+
+  const moveEditable = (idx: number, dir: -1 | 1) => {
+    setEditable(prev => {
+      const target = idx + dir;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+  };
+
+  const updateOptionText = (qIdx: number, optIdx: number, text: string) => {
+    setEditable(prev => prev.map((q, i) => (i === qIdx
+      ? { ...q, options: q.options.map((o, j) => (j === optIdx ? { ...o, text } : o)) }
+      : q)));
+  };
+
+  const typeLabel = (t?: string) => {
+    const map: Record<string, string> = { SINGLE: "单选", MULTI: "多选", FILL: "填空", SHORT: "简答", COMPREHENSIVE: "综合", TRUE_FALSE: "判断" };
+    return map[t || ""] || t || "未知";
+  };
+
+  const diffTag = (d?: string) => {
+    if (d === "EASY") return <Tag color="green">简单</Tag>;
+    if (d === "HARD") return <Tag color="red">困难</Tag>;
+    return <Tag color="yellow">中等</Tag>;
+  };
+
+  const statusTag = (s?: string) => {
+    if (s === "PUBLISHED") return <Tag color="green">已发布</Tag>;
+    if (s === "CLOSED") return <Tag color="gray">已结束</Tag>;
+    return <Tag color="yellow">草稿</Tag>;
+  };
+
+  const toggleQuestion = (id: number) => {
+    setSelectedQuestionIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const openWizard = () => {
+    setSelectedQuestionIds([...selectedQuizQuestions]);
+    setSelectedClassIds([]);
+    setFilterType(null);
+    setFilterDifficulty(null);
+    setFilterSource(null);
+    setFilterKnowledge(null);
+    setEditable([]);
+    setShowCreateWizard(true);
+    setCreateStep(1);
+  };
+
+  const resetWizard = () => {
+    setShowCreateWizard(false);
+    setCreateStep(1);
+    setExamInfo({ name: "", courseId: null, startTime: "", endTime: "" });
+    setSelectedQuestionIds([]);
+    setSelectedClassIds([]);
+    setFilterType(null);
+    setFilterDifficulty(null);
+    setFilterSource(null);
+    setFilterKnowledge(null);
+    setEditable([]);
+    setBankQuestions([]);
+    setKnowledgeTree([]);
+    setSelectedQuizQuestions([]);
+  };
+
+  const goNext = () => {
+    if (createStep === 1) {
+      if (!examInfo.name.trim()) { showToastMsg("请输入试卷名称"); return; }
+      if (!examInfo.courseId) { showToastMsg("请选择课程"); return; }
+      if (!examInfo.startTime || !examInfo.endTime) { showToastMsg("请设置开始与结束时间"); return; }
+      setCreateStep(2);
+    } else if (createStep === 2) {
+      if (selectedQuestionIds.length === 0) { showToastMsg("请至少选择一道题目"); return; }
+      buildEditable(selectedQuestionIds);
+      setCreateStep(3);
+    }
+  };
+
+  const handleCreateExam = async () => {
+    if (!examInfo.name.trim()) { showToastMsg("请输入试卷名称"); return; }
+    if (!examInfo.courseId) { showToastMsg("请选择课程"); return; }
+    if (!examInfo.startTime || !examInfo.endTime) { showToastMsg("请设置开始与结束时间"); return; }
+    if (editable.length === 0) { showToastMsg("请至少选择一道题目"); return; }
+    const start = new Date(examInfo.startTime).getTime();
+    const end = new Date(examInfo.endTime).getTime();
+    const durationMinutes = Math.max(1, Math.round((end - start) / 60000));
+    const totalScore = editable.reduce((sum, q) => sum + (q.score || 0), 0);
+    const targetClasses = selectedClassIds
+      .map(id => myClasses.find(c => c.id === id)?.className)
+      .filter(Boolean)
+      .join(",");
+    const questions = editable.map((q, idx) => {
+      const contentObj: Record<string, unknown> = { stem: q.stem };
+      if (q.options.length > 0) contentObj.options = q.options.map(o => ({ label: o.label, text: o.text }));
+      contentObj.answer = q.answer;
+      if (q.analysis) contentObj.analysis = q.analysis;
+      return {
+        questionId: q.questionId,
+        questionNo: idx + 1,
+        score: q.score || 0,
+        content: JSON.stringify(contentObj),
+      };
+    });
+    try {
+      await createExamPaper({
+        paperName: examInfo.name.trim(),
+        courseId: examInfo.courseId,
+        totalScore,
+        durationMinutes,
+        startTime: examInfo.startTime,
+        endTime: examInfo.endTime,
+        targetClasses: targetClasses || undefined,
+        questions,
+      });
+      showToastMsg("试卷创建成功");
+      resetWizard();
+      loadPapers();
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "创建失败");
+    }
+  };
+
+  const openResults = (id: number) => {
+    setSelectedExam(id);
+    setResults(null);
+    setLoadingResults(true);
+    getExamResults(id)
+      .then(data => setResults(data))
+      .catch(e => { showToastMsg(e instanceof Error ? e.message : "加载结果失败"); setSelectedExam(null); })
+      .finally(() => setLoadingResults(false));
+  };
+
+  const handlePublish = async (id: number) => {
+    try { await publishExamPaper(id); showToastMsg("考试已发布"); loadPapers(); }
+    catch (e) { showToastMsg(e instanceof Error ? e.message : "发布失败"); }
+  };
+  const handleClose = async (id: number) => {
+    try { await closeExamPaper(id); showToastMsg("考试已结束"); loadPapers(); }
+    catch (e) { showToastMsg(e instanceof Error ? e.message : "操作失败"); }
+  };
+  const handleDelete = async (id: number) => {
+    if (!confirm("确认删除该试卷？")) return;
+    try { await deleteExamPaper(id); showToastMsg("试卷已删除"); loadPapers(); }
+    catch (e) { showToastMsg(e instanceof Error ? e.message : "删除失败"); }
+  };
+
+  const fmtTime = (t?: string) => (t ? t.replace("T", " ").slice(0, 16) : "—");
+
+  // ===== 结果视图 =====
+  if (selectedExam !== null) {
+    return (
+      <div className="space-y-5">
+        {toast && (
+          <div className="fixed top-20 right-6 z-50 px-4 py-3 bg-primary text-white text-sm rounded-lg shadow-lg animate-[fadeIn_0.2s_ease-out]">
+            <div className="flex items-center gap-2"><CheckCircle size={14} />{toast}</div>
+          </div>
+        )}
+        <button onClick={() => setSelectedExam(null)} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ChevronLeft size={16} /> 返回试卷列表
+        </button>
+        {loadingResults ? (
+          <div className="bg-card rounded-lg border border-border p-10 text-center text-sm text-muted-foreground">加载结果中…</div>
+        ) : !results ? (
+          <div className="bg-card rounded-lg border border-border p-10 text-center text-sm text-muted-foreground">暂无结果</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <StatCard count={results.totalStudents ?? 0} label="应考人数" icon={Users} color="blue" />
+              <StatCard count={results.submittedCount ?? 0} label="已交卷" icon={FileText} color="green" />
+              <StatCard count={results.averageScore ?? 0} label="平均分" icon={BarChart2} color="orange" />
+              <StatCard count={results.maxScore ?? 0} label="最高分" icon={TrendingUp} color="purple" />
+              <StatCard count={`${results.passRate ?? 0}%`} label="及格率" icon={CheckCircle} color="green" />
+            </div>
+
+            <div className="bg-card rounded-lg border border-border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">学号</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">姓名</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">总分</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">状态</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">交卷时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(results.studentScores || []).length === 0 ? (
+                    <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">暂无学生交卷</td></tr>
+                  ) : (
+                    (results.studentScores || []).map(s => (
+                      <tr key={s.studentId} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
+                        <td className="px-4 py-3 font-mono text-xs">{s.studentNo || "—"}</td>
+                        <td className="px-4 py-3 font-medium">{s.name || `学生${s.studentId}`}</td>
+                        <td className="px-4 py-3 font-mono">{s.totalScore ?? "—"}</td>
+                        <td className="px-4 py-3">{s.submitStatus === "SUBMITTED" ? <Tag color="green">已交卷</Tag> : <Tag color="gray">未交卷</Tag>}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{fmtTime(s.submitTime)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // ===== 列表 + 建卷视图 =====
+  return (
+    <div className="space-y-5">
+      {toast && (
+        <div className="fixed top-20 right-6 z-50 px-4 py-3 bg-primary text-white text-sm rounded-lg shadow-lg animate-[fadeIn_0.2s_ease-out]">
+          <div className="flex items-center gap-2"><CheckCircle size={14} />{toast}</div>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-foreground">考试管理</h2>
+        <button onClick={openWizard} className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">
+          <Plus size={16} /> 创建考试
+        </button>
+      </div>
+
+      {showCreateWizard && (
+        <div className="bg-card rounded-lg border border-border p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            {["基本信息", "选择题目", "确认发布"].map((label, idx) => {
+              const step = idx + 1;
+              return (
+                <div key={label} className="flex items-center gap-2">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${createStep >= step ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}>{step}</div>
+                  <span className={`text-sm ${createStep >= step ? "text-foreground font-medium" : "text-muted-foreground"}`}>{label}</span>
+                  {step < 3 && <div className="w-8 h-px bg-border" />}
+                </div>
+              );
+            })}
+          </div>
+
+          {createStep === 1 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium block mb-1">试卷名称</label>
+                <input value={examInfo.name} onChange={e => setExamInfo({ ...examInfo, name: e.target.value })} placeholder="如：第1章 单元测验" className="w-full px-3 py-2 border border-border rounded-md text-sm" />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1">选择课程</label>
+                <select value={examInfo.courseId ?? ""} onChange={e => setExamInfo({ ...examInfo, courseId: e.target.value ? Number(e.target.value) : null })} className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background">
+                  <option value="">请选择课程</option>
+                  {courses.map(c => <option key={c.id} value={c.id}>{c.courseName || c.className || `课程 ${c.id}`}</option>)}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium block mb-1">开始时间</label>
+                  <input type="datetime-local" value={examInfo.startTime} onChange={e => setExamInfo({ ...examInfo, startTime: e.target.value })} className="w-full px-3 py-2 border border-border rounded-md text-sm" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">结束时间</label>
+                  <input type="datetime-local" value={examInfo.endTime} onChange={e => setExamInfo({ ...examInfo, endTime: e.target.value })} className="w-full px-3 py-2 border border-border rounded-md text-sm" />
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium block mb-1">选择班级（多选）</label>
+                <div className="border border-border rounded-md p-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-44 overflow-y-auto">
+                  {myClasses.length === 0 ? (
+                    <p className="text-sm text-muted-foreground col-span-full py-2 text-center">暂无班级数据</p>
+                  ) : (
+                    myClasses.map(c => {
+                      const checked = selectedClassIds.includes(c.id);
+                      return (
+                        <label key={c.id} className={`flex items-center gap-2 text-sm cursor-pointer rounded px-2 py-1.5 transition-colors ${checked ? "bg-primary/5" : "hover:bg-accent/40"}`}>
+                          <input type="checkbox" checked={checked} onChange={() => toggleClass(c.id)} />
+                          <span>{c.className}</span>
+                          {c.courseName && <span className="text-xs text-muted-foreground truncate">({c.courseName})</span>}
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+                {selectedClassIds.length > 0 && <p className="text-xs text-muted-foreground mt-1">已选 {selectedClassIds.length} 个班级</p>}
+              </div>
+            </div>
+          )}
+
+          {createStep === 2 && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">题型筛选</label>
+                  <div className="flex flex-wrap gap-1">
+                    {questionTypes.map(t => (
+                      <button key={t.value} onClick={() => setFilterType(filterType === t.value ? null : t.value)} className={`px-2 py-1 text-xs rounded-full transition-colors ${filterType === t.value ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">难度筛选</label>
+                  <div className="flex flex-wrap gap-1">
+                    {difficulties.map(d => (
+                      <button key={d.value} onClick={() => setFilterDifficulty(filterDifficulty === d.value ? null : d.value)} className={`px-2 py-1 text-xs rounded-full transition-colors ${filterDifficulty === d.value ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">来源筛选</label>
+                  <div className="flex flex-wrap gap-1">
+                    <button onClick={() => setFilterSource(filterSource === "AI" ? null : "AI")} className={`px-2 py-1 text-xs rounded-full transition-colors ${filterSource === "AI" ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-accent"}`}>AI生成</button>
+                    <button onClick={() => setFilterSource(filterSource === "MANUAL" ? null : "MANUAL")} className={`px-2 py-1 text-xs rounded-full transition-colors ${filterSource === "MANUAL" ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-accent"}`}>手动录入</button>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">知识点筛选</label>
+                  <select value={filterKnowledge ?? ""} onChange={e => setFilterKnowledge(e.target.value || null)} className="w-full px-2 py-1.5 border border-border rounded-md text-xs bg-background">
+                    <option value="">全部知识点</option>
+                    {knowledgeOptions.map(k => <option key={k} value={k}>{k}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {loadingQuestions ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">加载题库中…</p>
+              ) : bankQuestions.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">该课程暂无题目，请先在题库中添加题目</p>
+              ) : filteredQuestions.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">没有符合条件的题目，请调整筛选条件</p>
+              ) : (
+                <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                  {filteredQuestions.map(q => {
+                    const checked = selectedQuestionIds.includes(q.id);
+                    const order = selectedQuestionIds.indexOf(q.id);
+                    const c = parseContent((q as any).content);
+                    return (
+                      <div key={q.id} onClick={() => toggleQuestion(q.id)} className={`border rounded-md p-3 cursor-pointer transition-colors ${checked ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                        <div className="flex items-start gap-3">
+                          <input type="checkbox" checked={checked} readOnly className="mt-1" />
+                          {checked && <span className="mt-0.5 text-xs font-semibold text-primary whitespace-nowrap">第{order + 1}题</span>}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Tag color="blue">{typeLabel(q.questionType)}</Tag>
+                              {diffTag(q.difficulty)}
+                              <Tag color={q.aiGenerated === 1 ? "blue" : "orange"}>{q.aiGenerated === 1 ? "AI生成" : "手动录入"}</Tag>
+                              {(q.knowledgePoints || "").split(/[,，、]/).filter(Boolean).slice(0, 2).map(k => <span key={k} className="text-xs text-muted-foreground">#{k.trim()}</span>)}
+                            </div>
+                            <p className="text-sm mt-1 line-clamp-2">{c.stem || stemOf(q)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="text-sm text-muted-foreground">已选 {selectedQuestionIds.length} 道题目（按勾选顺序自动编号）</div>
+            </div>
+          )}
+
+          {createStep === 3 && (
+            <div className="space-y-3">
+              <div className="rounded-md bg-muted/50 p-3 text-sm space-y-1">
+                <p><span className="text-muted-foreground">试卷：</span>{examInfo.name}</p>
+                <p><span className="text-muted-foreground">课程：</span>{courses.find(c => c.id === examInfo.courseId)?.courseName || courses.find(c => c.id === examInfo.courseId)?.className || `课程 ${examInfo.courseId}`}</p>
+                <p><span className="text-muted-foreground">班级：</span>{selectedClassIds.length > 0 ? selectedClassIds.map(id => myClasses.find(c => c.id === id)?.className).filter(Boolean).join("、") : "未选择"}</p>
+                <p><span className="text-muted-foreground">时间：</span>{fmtTime(examInfo.startTime)} ~ {fmtTime(examInfo.endTime)}</p>
+                <p><span className="text-muted-foreground">题目：</span>{editable.length} 道，共 {editable.reduce((s, q) => s + (q.score || 0), 0)} 分</p>
+              </div>
+
+              {editable.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">暂无题目</p>
+              ) : (
+                editable.map((q, idx) => (
+                  <div key={q.questionId} className="border border-border rounded-md p-4 space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold">第 {idx + 1} 题</span>
+                      <Tag color="blue">{typeLabel(q.questionType)}</Tag>
+                      <span className="text-xs text-muted-foreground">#{q.questionId}</span>
+                      <div className="flex items-center gap-1 ml-auto">
+                        <button onClick={() => moveEditable(idx, -1)} disabled={idx === 0} className="p-1 border border-border rounded hover:bg-accent disabled:opacity-30"><ChevronUp size={14} /></button>
+                        <button onClick={() => moveEditable(idx, 1)} disabled={idx === editable.length - 1} className="p-1 border border-border rounded hover:bg-accent disabled:opacity-30"><ChevronDown size={14} /></button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-muted-foreground whitespace-nowrap">分值</label>
+                      <input type="number" value={q.score} onChange={e => updateEditable(idx, { score: Number(e.target.value) || 0 })} className="w-20 px-2 py-1 border border-border rounded-md text-sm" />
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-muted-foreground block mb-1">题干</label>
+                      <textarea value={q.stem} onChange={e => updateEditable(idx, { stem: e.target.value })} rows={3} className="w-full px-3 py-2 border border-border rounded-md text-sm resize-none" />
+                    </div>
+
+                    {q.options.length > 0 && (
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground block mb-1">选项</label>
+                        {q.options.map((o, oi) => (
+                          <div key={o.label} className="flex items-center gap-2">
+                            <span className="text-sm font-medium w-5 text-center">{o.label}.</span>
+                            <input value={o.text} onChange={e => updateOptionText(idx, oi, e.target.value)} className="flex-1 px-2 py-1 border border-border rounded-md text-sm" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-xs text-muted-foreground block mb-1">答案</label>
+                      <input value={q.answer} onChange={e => updateEditable(idx, { answer: e.target.value })} placeholder={q.questionType === "MULTI" ? "多选答案，如 A,C" : "参考答案"} className="w-full px-2 py-1 border border-border rounded-md text-sm" />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-between pt-2 border-t border-border">
+            <button onClick={() => { if (createStep === 1) resetWizard(); else setCreateStep(s => s - 1); }} className="px-3 py-2 rounded-md text-sm border border-border hover:bg-accent/50">
+              {createStep === 1 ? "取消" : "上一步"}
+            </button>
+            {createStep < 3 ? (
+              <button onClick={goNext} className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">下一步</button>
+            ) : (
+              <button onClick={handleCreateExam} className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">创建并发布</button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {loadingPapers ? (
+        <div className="bg-card rounded-lg border border-border p-10 text-center text-sm text-muted-foreground">加载中…</div>
+      ) : papers.length === 0 ? (
+        <div className="bg-card rounded-lg border border-border p-10 text-center">
+          <FileText size={32} className="mx-auto text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground">暂无试卷，点击右上角「创建考试」</p>
+        </div>
+      ) : (
+        <div className="bg-card rounded-lg border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">试卷名称</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">课程</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">起止时间</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">状态</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {papers.map(p => (
+                <tr key={p.id} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
+                  <td className="px-4 py-3 font-medium">{p.paperName}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{p.courseName || "—"}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{fmtTime(p.startTime)} ~ {fmtTime(p.endTime)}</td>
+                  <td className="px-4 py-3">{statusTag(p.status)}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => openResults(p.id)} className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"><Eye size={14} />结果</button>
+                      {p.status !== "PUBLISHED" && (
+                        <button onClick={() => handlePublish(p.id)} className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:underline"><Play size={14} />发布</button>
+                      )}
+                      {p.status === "PUBLISHED" && (
+                        <button onClick={() => handleClose(p.id)} className="inline-flex items-center gap-1 text-xs text-orange-600 hover:underline"><Clock size={14} />结束</button>
+                      )}
+                      <button onClick={() => handleDelete(p.id)} className="inline-flex items-center gap-1 text-xs text-red-600 hover:underline"><Trash2 size={14} />删除</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Student: Exam (在线考试 · 真实接口) ──────────────────────────────────────────
+function StudentExam() {
+  const [tab, setTab] = useState<"pending" | "completed">("pending");
+  const [pendingExams, setPendingExams] = useState<ExamPaper[]>([]);
+  const [records, setRecords] = useState<StudentExamRecordVO[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [activeExam, setActiveExam] = useState<StudentExamVO | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [submittedResult, setSubmittedResult] = useState<SubmitExamResultDTO | null>(null);
+
+  const [reviewResult, setReviewResult] = useState<StudentExamResultVO | null>(null);
+
+  const [toast, setToast] = useState<string | null>(null);
+  const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
+
+  const load = () => {
+    setLoading(true);
+    Promise.all([getPendingExams(), getMyExamRecords()])
+      .then(([p, r]) => { setPendingExams(p || []); setRecords(r || []); })
+      .catch(() => { setPendingExams([]); setRecords([]); })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(load, []);
+
+  useEffect(() => {
+    if (!activeExam) return;
+    const timer = setInterval(() => setTimeLeft(t => (t > 0 ? t - 1 : 0)), 1000);
+    return () => clearInterval(timer);
+  }, [activeExam]);
+
+  const startExam = async (paper: ExamPaper) => {
+    try {
+      const vo = await getStudentExam(paper.id);
+      setActiveExam(vo);
+      setCurrentQuestion(0);
+      setAnswers({});
+      setSubmittedResult(null);
+      setReviewResult(null);
+      setTimeLeft((vo.durationMinutes || 60) * 60);
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "无法开始考试");
+    }
+  };
+
+  const exitExam = () => {
+    setActiveExam(null);
+    setSubmittedResult(null);
+    setReviewResult(null);
+    setShowConfirmModal(false);
+    load();
+  };
+
+  const handleSubmitExam = async () => {
+    if (!activeExam) return;
+    try {
+      const result = await submitExam(activeExam.paperId, answers);
+      setSubmittedResult(result);
+      setShowConfirmModal(false);
+      load();
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "交卷失败");
+    }
+  };
+
+  const openReview = async (record: StudentExamRecordVO) => {
+    try {
+      const r = await getMyExamResult(record.paperId);
+      setReviewResult(r);
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "无法加载作答详情");
+    }
+  };
+
+  const q = activeExam?.questions[currentQuestion];
+  const qType = q?.questionType || "";
+  const isMulti = qType === "MULTI";
+  const hasOptions = !!q?.options && q.options.length > 0;
+
+  const setOptionAnswer = (questionId: number, label: string) => {
+    setAnswers(prev => {
+      if (!isMulti) return { ...prev, [questionId]: label };
+      const cur = (prev[questionId] || "").split(",").filter(Boolean);
+      const idx = cur.indexOf(label);
+      if (idx >= 0) cur.splice(idx, 1); else cur.push(label);
+      return { ...prev, [questionId]: cur.join(",") };
+    });
+  };
+
+  const typeLabel = (t?: string) => {
+    const map: Record<string, string> = { SINGLE: "单选题", MULTI: "多选题", FILL: "填空题", SHORT: "简答题", COMPREHENSIVE: "综合题", TRUE_FALSE: "判断题" };
+    return map[t || ""] || "题目";
+  };
+
+  const isObjective = (t?: string) => ["SINGLE", "MULTI", "FILL", "TRUE_FALSE"].includes(t || "");
+
+  const fmtDate = (t?: string) => (t ? t.replace("T", " ").slice(0, 16) : "—");
+  const fmtClock = (s: number) => {
+    const mm = Math.floor(s / 60).toString().padStart(2, "0");
+    const ss = (s % 60).toString().padStart(2, "0");
+    return `${mm}:${ss}`;
+  };
+
+  // ===== 回看结果 =====
+  if (reviewResult) {
+    return (
+      <div className="space-y-5">
+        {toast && (
+          <div className="fixed top-20 right-6 z-50 px-4 py-3 bg-primary text-white text-sm rounded-lg shadow-lg animate-[fadeIn_0.2s_ease-out]">
+            <div className="flex items-center gap-2"><CheckCircle size={14} />{toast}</div>
+          </div>
+        )}
+        <button onClick={() => setReviewResult(null)} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ChevronLeft size={16} /> 返回
+        </button>
+        <div className="bg-card rounded-lg border border-border p-5">
+          <h2 className="text-lg font-semibold text-foreground">{reviewResult.paperName}</h2>
+          <div className="flex flex-wrap items-center gap-4 mt-3 text-sm">
+            <span>客观题得分：<span className="font-semibold">{reviewResult.objectiveScore ?? 0}</span></span>
+            <span>主观题待批：<span className="font-semibold">{reviewResult.subjectivePending ?? 0}</span> 题</span>
+            <span>总分：<span className="font-semibold">{reviewResult.myScore ?? 0}</span> / {reviewResult.totalScore ?? "—"}</span>
+            <span className="text-muted-foreground">交卷时间：{fmtDate(reviewResult.submitTime)}</span>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {reviewResult.answers.map(a => (
+            <div key={a.questionNo} className="bg-card rounded-lg border border-border p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">第{a.questionNo}题 · {typeLabel(a.questionType)}</span>
+                {isObjective(a.questionType) ? (
+                  a.isCorrect === 1 ? <Tag color="green">回答正确</Tag> : <Tag color="red">回答错误</Tag>
+                ) : (
+                  a.graded === 1 ? <Tag color="green">已批阅</Tag> : <Tag color="yellow">待批阅</Tag>
+                )}
+              </div>
+              <p className="text-sm mt-2 whitespace-pre-wrap">{a.stem}</p>
+              {a.options && a.options.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {a.options.map(o => <p key={o.label} className="text-sm text-muted-foreground">{o.label}. {o.text}</p>)}
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                <div className="rounded-md bg-muted/50 p-3">
+                  <p className="text-xs text-muted-foreground mb-1">我的答案</p>
+                  <p className="text-sm whitespace-pre-wrap">{a.studentAnswer || "（未作答）"}</p>
+                </div>
+                <div className="rounded-md bg-muted/50 p-3">
+                  <p className="text-xs text-muted-foreground mb-1">正确答案</p>
+                  <p className="text-sm whitespace-pre-wrap">{a.correctAnswer || "—"}</p>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-4 text-sm">
+                <span>得分：<span className="font-semibold">{a.score ?? 0}</span> / {a.maxScore ?? "—"}</span>
+                {!isObjective(a.questionType) && a.comment && (
+                  <span className="text-muted-foreground">评语：{a.comment}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ===== 交卷结果 =====
+  if (submittedResult) {
+    return (
+      <div className="space-y-5">
+        <div className="bg-card rounded-lg border border-border p-8 text-center">
+          <CheckCircle size={48} className="mx-auto text-emerald-500 mb-3" />
+          <h2 className="text-xl font-semibold text-foreground">交卷成功</h2>
+          <div className="flex items-center justify-center gap-6 mt-4">
+            <div>
+              <p className="text-3xl font-semibold text-primary">{submittedResult.objectiveScore ?? 0}</p>
+              <p className="text-sm text-muted-foreground mt-1">客观题得分</p>
+            </div>
+            <div className="w-px h-12 bg-border" />
+            <div>
+              <p className="text-3xl font-semibold text-foreground">{submittedResult.subjectiveCount ?? 0}</p>
+              <p className="text-sm text-muted-foreground mt-1">主观题待批阅</p>
+            </div>
+          </div>
+          <button onClick={exitExam} className="mt-6 px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">返回列表</button>
+        </div>
+      </div>
+    );
+  }
+
+  // ===== 考试作答 =====
+  if (activeExam) {
+    const total = activeExam.questions.length;
+    return (
+      <div className="space-y-5">
+        {toast && (
+          <div className="fixed top-20 right-6 z-50 px-4 py-3 bg-primary text-white text-sm rounded-lg shadow-lg animate-[fadeIn_0.2s_ease-out]">
+            <div className="flex items-center gap-2"><CheckCircle size={14} />{toast}</div>
+          </div>
+        )}
+        <div className="bg-card rounded-lg border border-border p-4 flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold text-foreground">{activeExam.paperName}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">共 {total} 题 · 满分 {activeExam.totalScore ?? "—"}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-lg font-semibold text-primary">{fmtClock(timeLeft)}</span>
+            <button onClick={() => setShowConfirmModal(true)} className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">交卷</button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>第 {currentQuestion + 1} / {total} 题</span>
+          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+            <div className="h-full bg-primary transition-all" style={{ width: `${total ? ((currentQuestion + 1) / total) * 100 : 0}%` }} />
+          </div>
+        </div>
+
+        <div className="bg-card rounded-lg border border-border p-5">
+          <div className="flex items-center justify-between mb-3">
+            <Tag color="blue">{typeLabel(q?.questionType)}</Tag>
+            <span className="text-sm text-muted-foreground">本题 {q?.score ?? "—"} 分</span>
+          </div>
+          <p className="text-base whitespace-pre-wrap">{q?.stem}</p>
+
+          <div className="mt-4 space-y-2">
+            {hasOptions ? (
+              q!.options!.map(o => {
+                const selected = isMulti
+                  ? (answers[q!.questionId] || "").split(",").filter(Boolean).includes(o.label)
+                  : answers[q!.questionId] === o.label;
+                return (
+                  <button
+                    key={o.label}
+                    onClick={() => setOptionAnswer(q!.questionId, o.label)}
+                    className={`w-full text-left px-4 py-2.5 rounded-md border text-sm transition-colors ${selected ? "border-primary bg-primary/10 text-foreground" : "border-border hover:border-primary/50"}`}
+                  >
+                    <span className="font-medium mr-2">{o.label}.</span>{o.text}
+                  </button>
+                );
+              })
+            ) : qType === "TRUE_FALSE" ? (
+              <div className="grid grid-cols-2 gap-3">
+                {["TRUE", "FALSE"].map(v => {
+                  const selected = answers[q!.questionId] === v;
+                  return (
+                    <button
+                      key={v}
+                      onClick={() => setAnswers(prev => ({ ...prev, [q!.questionId]: v }))}
+                      className={`px-4 py-2.5 rounded-md border text-sm transition-colors ${selected ? "border-primary bg-primary/10 text-foreground" : "border-border hover:border-primary/50"}`}
+                    >
+                      {v === "TRUE" ? "正确" : "错误"}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <textarea
+                value={answers[q!.questionId] || ""}
+                onChange={e => setAnswers(prev => ({ ...prev, [q!.questionId]: e.target.value }))}
+                rows={5}
+                placeholder="请输入你的答案…"
+                className="w-full px-3 py-2 border border-border rounded-md text-sm resize-none"
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <button onClick={() => setCurrentQuestion(i => Math.max(0, i - 1))} disabled={currentQuestion === 0} className="px-4 py-2 rounded-md text-sm border border-border hover:bg-accent/50 disabled:opacity-40">上一题</button>
+          <button onClick={() => setCurrentQuestion(i => Math.min(total - 1, i + 1))} disabled={currentQuestion >= total - 1} className="px-4 py-2 rounded-md text-sm border border-border hover:bg-accent/50 disabled:opacity-40">下一题</button>
+        </div>
+
+        {showConfirmModal && (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+            <div className="bg-card rounded-lg border border-border p-6 w-full max-w-sm space-y-4">
+              <h3 className="font-semibold text-foreground">确认交卷？</h3>
+              <p className="text-sm text-muted-foreground">已作答 {Object.keys(answers).length} / {total} 题，交卷后无法修改。</p>
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setShowConfirmModal(false)} className="px-4 py-2 rounded-md text-sm border border-border hover:bg-accent/50">再检查一下</button>
+                <button onClick={handleSubmitExam} className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">确认交卷</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ===== 列表视图 =====
+  return (
+    <div className="space-y-5">
+      {toast && (
+        <div className="fixed top-20 right-6 z-50 px-4 py-3 bg-primary text-white text-sm rounded-lg shadow-lg animate-[fadeIn_0.2s_ease-out]">
+          <div className="flex items-center gap-2"><CheckCircle size={14} />{toast}</div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
+        <button onClick={() => setTab("pending")} className={`px-4 py-1.5 rounded-md text-sm transition-colors ${tab === "pending" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>待考</button>
+        <button onClick={() => setTab("completed")} className={`px-4 py-1.5 rounded-md text-sm transition-colors ${tab === "completed" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>已完成</button>
+      </div>
+
+      {loading ? (
+        <div className="bg-card rounded-lg border border-border p-10 text-center text-sm text-muted-foreground">加载中…</div>
+      ) : tab === "pending" ? (
+        pendingExams.length === 0 ? (
+          <div className="bg-card rounded-lg border border-border p-10 text-center">
+            <FileText size={32} className="mx-auto text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">暂无待考考试</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {pendingExams.map(p => (
+              <div key={p.id} className="bg-card rounded-lg border border-border p-5">
+                <h3 className="font-semibold text-foreground">{p.paperName}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{p.courseName}</p>
+                <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                  <span>满分 {p.totalScore ?? "—"}</span>
+                  <span>时长 {p.durationMinutes ?? "—"} 分钟</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">截止：{fmtDate(p.endTime)}</p>
+                <button onClick={() => startExam(p)} className="mt-4 w-full px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">开始考试</button>
+              </div>
+            ))}
+          </div>
+        )
+      ) : (
+        records.length === 0 ? (
+          <div className="bg-card rounded-lg border border-border p-10 text-center">
+            <FileText size={32} className="mx-auto text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">暂无已完成考试</p>
+          </div>
+        ) : (
+          <div className="bg-card rounded-lg border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">试卷</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">课程</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">得分</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">状态</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">交卷时间</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {records.map(r => (
+                  <tr key={r.recordId} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
+                    <td className="px-4 py-3 font-medium">{r.paperName}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{r.courseName || "—"}</td>
+                    <td className="px-4 py-3 font-mono">{r.myScore ?? 0} / {r.totalScore ?? "—"}</td>
+                    <td className="px-4 py-3">{r.subjectivePending && r.subjectivePending > 0 ? <Tag color="yellow">待批阅</Tag> : <Tag color="green">已出分</Tag>}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{fmtDate(r.submitTime)}</td>
+                    <td className="px-4 py-3">
+                      <button onClick={() => openReview(r)} className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"><Eye size={14} />查看</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
 // ─── Page title map ───────────────────────────────────────────────────────────
 const pageMeta: Record<Page, { breadcrumb: string[] }> = {
   login: { breadcrumb: [] },
@@ -10565,7 +11752,7 @@ export default function App() {
         {page === "ta-dashboard" && <TeacherDashboard onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} />}
         {page === "ta-import" && <TeacherDataImport />}
         {page === "ta-profile" && <TeacherStudentProfile onNav={setPage} initialStudentId={selectedStudentId} initialCourseId={selectedCourseId} />}
-        {page === "ta-grading" && <TeacherExamManagement selectedQuizQuestions={selectedQuizQuestions} setSelectedQuizQuestions={setSelectedQuizQuestions} />}
+        {page === "ta-grading" && <TA_Grading />}
         {/* Student pages */}
         {page === "student-dashboard" && <StudentDashboard onNav={setPage} />}
         {page === "student-profile" && <StudentProfile />}

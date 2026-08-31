@@ -4,14 +4,23 @@ export interface QuestionBank {
   id: number;
   courseId?: number;
   questionType?: string;
+  /** 内容 JSON：{ stem, options, answer, analysis } */
+  content?: string;
+  knowledgePoints?: string;
+  aiGenerated?: number;
+  difficulty?: string;
+  status?: string;
+  usageCount?: number;
+  teacherId?: number;
+  createTime?: string;
+
+  // 旧字段（保留兼容，已废弃）
   questionContent?: string;
   options?: string;
   answer?: string;
-  difficulty?: string;
   topic?: string;
   sourceType?: string;
   isPostgraduate?: number;
-  createTime?: string;
 }
 
 export interface QuestionPage {

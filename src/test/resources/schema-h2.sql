@@ -5,6 +5,7 @@
 
 -- 先 DROP 所有表（子表优先，避免外键约束阻止删除）
 DROP TABLE IF EXISTS t_notification_recipient;
+DROP TABLE IF EXISTS t_exam_answer;
 DROP TABLE IF EXISTS t_exam_paper_question;
 DROP TABLE IF EXISTS t_exam_paper;
 DROP TABLE IF EXISTS t_operation_log;
@@ -220,6 +221,7 @@ CREATE TABLE t_knowledge_point (
 CREATE TABLE t_assessment (
     id                BIGINT AUTO_INCREMENT PRIMARY KEY,
     course_id         BIGINT       NOT NULL,
+    paper_id          BIGINT       DEFAULT NULL,
     assessment_name   VARCHAR(256) NOT NULL,
     assessment_type   VARCHAR(32)  NOT NULL,
     assessment_no     INT          DEFAULT NULL,
@@ -474,8 +476,37 @@ CREATE TABLE t_exam_paper_question (
     question_id   BIGINT       NOT NULL,
     question_no   INT          NOT NULL,
     score         DECIMAL(5,2) DEFAULT 0,
+    content_override TEXT,
     deleted       TINYINT      DEFAULT 0,
     FOREIGN KEY (paper_id)    REFERENCES t_exam_paper(id),
+    FOREIGN KEY (question_id) REFERENCES t_question_bank(id)
+);
+
+-- ============================================================
+-- 23. 学生考试逐题作答记录表
+-- ============================================================
+CREATE TABLE t_exam_answer (
+    id                BIGINT AUTO_INCREMENT PRIMARY KEY,
+    paper_id          BIGINT       NOT NULL,
+    assessment_id     BIGINT       NOT NULL,
+    record_id         BIGINT       NOT NULL,
+    student_id        BIGINT       NOT NULL,
+    question_id       BIGINT       NOT NULL,
+    question_no       INT          NOT NULL,
+    question_type     VARCHAR(32)  NOT NULL,
+    student_answer    TEXT         DEFAULT NULL,
+    correct_answer    VARCHAR(2048) DEFAULT NULL,
+    score             DECIMAL(5,2) DEFAULT NULL,
+    max_score         DECIMAL(5,2) DEFAULT NULL,
+    is_correct        TINYINT      DEFAULT NULL,
+    graded            TINYINT      DEFAULT 0,
+    grader_id         BIGINT       DEFAULT NULL,
+    comment           VARCHAR(1024) DEFAULT NULL,
+    create_time       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    deleted           TINYINT      DEFAULT 0,
+    UNIQUE (record_id, question_id),
+    FOREIGN KEY (record_id)   REFERENCES t_assessment_record(id),
+    FOREIGN KEY (student_id)  REFERENCES t_student(id),
     FOREIGN KEY (question_id) REFERENCES t_question_bank(id)
 );
 

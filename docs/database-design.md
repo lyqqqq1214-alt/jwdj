@@ -16,7 +16,7 @@
 | v2.0 | 2026-07-07 | 增加报告、仪表盘、导出相关设计 |
 | **v3.0** | **2026-07-09** | **系统重构：从评教转向教学分析评价** |
 
-> **v3.0 重大变更**：系统从"学生评教"重构为"教学分析评价"。4种用户角色（管理员/教师/助教/学生）全部建模。新增统一认证、知识点库、考核扣分追踪、学生画像、AI组卷考试、预警通知、题库错题本等核心表。移除旧评教相关表，简化为27张核心表。
+> **v3.0 重大变更**：系统从"学生评教"重构为"教学分析评价"。4种用户角色（管理员/教师/助教/学生）全部建模。新增统一认证、知识点库、考核扣分追踪、学生画像、AI组卷考试、预警通知、题库错题本等核心表。移除旧评教相关表，简化为28张核心表。
 
 ---
 
@@ -324,6 +324,7 @@
 |------|------|------|------|
 | `id` | BIGINT | PK, AUTO_INCREMENT | 主键 |
 | `course_id` | BIGINT | NOT NULL, **FK** → t_course.id, CASCADE | 所属课程 |
+| `paper_id` | BIGINT | — | 关联试卷ID（在线考试，一张试卷对应一条考核） |
 | `assessment_name` | VARCHAR(256) | NOT NULL | 考核名称 |
 | `assessment_type` | VARCHAR(32) | NOT NULL | HOMEWORK / QUIZ / EXPERIMENT / MIDTERM / FINAL |
 | `assessment_no` | INT | — | 第X次（作业的第几次、实验的第几次） |
@@ -343,7 +344,7 @@
 
 **外键**：`fk_assessment_course` → `t_course(id)` **ON DELETE CASCADE ON UPDATE CASCADE**
 
-**索引**：`uk_course_assessment`(UNIQUE), `idx_course_id`, `idx_assessment_type`, `idx_semester`, `idx_status`, `idx_course_semester`(course_id, semester)
+**索引**：`uk_course_assessment`(UNIQUE), `idx_course_id`, `idx_paper_id`, `idx_assessment_type`, `idx_semester`, `idx_status`, `idx_course_semester`(course_id, semester)
 
 ---
 
@@ -597,7 +598,43 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 
 ---
 
-#### 表 18：`t_student_wrong_question` — 错题本
+#### 表 18：`t_exam_answer` — 学生考试逐题作答记录
+
+学生交卷时对试卷中每道题写入一条作答记录。客观题在交卷时自动判分（`is_correct`/`score`），主观题交卷仅保存答案（`score=NULL, graded=0`），待教师逐题批阅后回填分数。
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | 主键 |
+| `paper_id` | BIGINT | NOT NULL | 试卷ID |
+| `assessment_id` | BIGINT | NOT NULL | 考核ID |
+| `record_id` | BIGINT | NOT NULL, **FK** → t_assessment_record.id, CASCADE | 成绩记录ID |
+| `student_id` | BIGINT | NOT NULL, **FK** → t_student.id, CASCADE | 学生ID |
+| `question_id` | BIGINT | NOT NULL, **FK** → t_question_bank.id, CASCADE | 题目ID |
+| `question_no` | INT | NOT NULL | 题号（在试卷中的排序） |
+| `question_type` | VARCHAR(32) | NOT NULL | 题型：SINGLE/MULTI/FILL/TRUE_FALSE/SHORT/COMPREHENSIVE |
+| `student_answer` | TEXT | — | 学生答案 |
+| `correct_answer` | VARCHAR(2048) | — | 正确答案快照 |
+| `score` | DECIMAL(5,2) | — | 得分（主观题批阅前为 NULL） |
+| `max_score` | DECIMAL(5,2) | — | 本题满分 |
+| `is_correct` | TINYINT | — | 客观题 1/0，主观题 NULL |
+| `graded` | TINYINT | DEFAULT 0 | 主观题是否已批（0=待批，1=已批） |
+| `grader_id` | BIGINT | — | 批阅教师ID |
+| `comment` | VARCHAR(1024) | — | 批阅评语 |
+| `create_time` | DATETIME | DEFAULT CURRENT_TIMESTAMP | 作答时间 |
+| `deleted` | TINYINT | DEFAULT 0 | 逻辑删除 |
+
+**唯一约束**：`uk_answer`(record_id, question_id) —— 一人一题一答
+
+**外键**：
+- `fk_answer_record` → `t_assessment_record(id)` **ON DELETE CASCADE ON UPDATE CASCADE**
+- `fk_answer_student` → `t_student(id)` **ON DELETE CASCADE ON UPDATE CASCADE**
+- `fk_answer_question` → `t_question_bank(id)` **ON DELETE CASCADE ON UPDATE CASCADE**
+
+**索引**：`uk_answer`(UNIQUE), `idx_paper_id`, `idx_record_id`, `idx_student_id`, `idx_graded`
+
+---
+
+#### 表 19：`t_student_wrong_question` — 错题本
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -628,7 +665,7 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 
 ---
 
-#### 表 19：`t_warning_rule` — 预警规则配置表
+#### 表 20：`t_warning_rule` — 预警规则配置表
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -653,7 +690,7 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 
 ---
 
-#### 表 20：`t_warning_record` — 预警记录表
+#### 表 21：`t_warning_record` — 预警记录表
 
 触发条件满足时自动生成。同一学生+同一类型24h内不重复生成。
 
@@ -682,7 +719,7 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 
 ---
 
-#### 表 21：`t_notification` — 通知主表
+#### 表 22：`t_notification` — 通知主表
 
 教师手动发送或系统自动生成的通知。
 
@@ -703,7 +740,7 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 
 ---
 
-#### 表 22：`t_notification_recipient` — 通知接收者表
+#### 表 23：`t_notification_recipient` — 通知接收者表
 
 记录每个接收者的已读状态。学生端铃铛的红点数字 = COUNT(is_read=0)。
 
@@ -730,7 +767,7 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 
 ---
 
-#### 表 23：`t_system_config` — 系统参数配置表
+#### 表 24：`t_system_config` — 系统参数配置表
 
 系统管理员面板2的配置项。
 
@@ -764,7 +801,7 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 
 ---
 
-#### 表 24：`t_operation_log` — 操作日志表
+#### 表 25：`t_operation_log` — 操作日志表
 
 记录用户操作、AI调用、系统错误。需求要求保留至少30天。
 
@@ -790,7 +827,7 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 
 ---
 
-#### 表 25：`t_data_source` — 数据源配置表
+#### 表 26：`t_data_source` — 数据源配置表
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -806,7 +843,7 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 
 ---
 
-#### 表 26：`t_data_import_log` — 数据导入日志表
+#### 表 27：`t_data_import_log` — 数据导入日志表
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -828,7 +865,7 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 
 ---
 
-#### 表 27：`t_ai_analysis_result` — AI分析结果表
+#### 表 28：`t_ai_analysis_result` — AI分析结果表
 
 多态关联，可指向学生/课程/报告/考核/考试。
 
@@ -886,6 +923,9 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 | 32 | `fk_nr_notification` | t_notification_recipient.notification_id | t_notification.id | CASCADE |
 | 33 | `fk_nr_recipient` | t_notification_recipient.recipient_id | t_user.id | CASCADE |
 | 34 | `fk_log_source` | t_data_import_log.source_id | t_data_source.id | SET NULL |
+| 35 | `fk_answer_record` | t_exam_answer.record_id | t_assessment_record.id | CASCADE |
+| 36 | `fk_answer_student` | t_exam_answer.student_id | t_student.id | CASCADE |
+| 37 | `fk_answer_question` | t_exam_answer.question_id | t_question_bank.id | CASCADE |
 
 ---
 
@@ -980,6 +1020,8 @@ class_avg_rate = AVG(同班级所有学生对该知识点的 mastery_rate)
 | t_exam_paper_question | `uk_paper_question` | (paper_id, question_id) | UNIQUE |
 | t_exam_paper_question | `idx_paper_id` / `idx_question_no` | - | NORMAL |
 | t_question_bank | `idx_course_id` / `idx_teacher_id` / `idx_type_diff` / `idx_status` / `idx_ai` | - | NORMAL |
+| t_exam_answer | `uk_answer` | (record_id, question_id) | UNIQUE |
+| t_exam_answer | `idx_paper_id` / `idx_record_id` / `idx_student_id` / `idx_graded` | - | NORMAL |
 | t_student_wrong_question | `idx_student_id` / `idx_course_id` / `idx_kp` / `idx_source` | - | NORMAL |
 | t_warning_record | `idx_student_id` / `idx_course_id` / `idx_severity` / `idx_time` / `idx_course_severity` | - | NORMAL |
 | t_notification | `idx_sender_id` / `idx_type` / `idx_time` / `idx_course_id` | - | NORMAL |

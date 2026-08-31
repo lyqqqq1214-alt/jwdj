@@ -35,8 +35,8 @@ aitaes:
     max-errors: 100
   ai:
     ollama:
-      base-url: ${AI_BASE_URL:https://api.deepseek.com}
-      api-key: ${AI_API_KEY:}
+      base-url: ${AI_BASE_URL:https://maas.nscc-cs.cn/external/api/v1}
+      api-key: ${AI_API_KEY:sk-CDenXwHI21wMKVliUuqXNGVxfw53uNzypwyUmNZwbIm2v3N7}
       model: ${AI_MODEL:deepseek-v4-pro}
       connect-timeout: ${OLLAMA_CONNECT_TIMEOUT:10s}
       read-timeout: ${OLLAMA_READ_TIMEOUT:300s}

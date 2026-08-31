@@ -29,6 +29,9 @@ public class ExamPaperQuestion {
     /** 本题在试卷中的分值 */
     private BigDecimal score;
 
+    /** 题目内容快照（编辑后覆盖题库原题，null 表示用题库原题） */
+    private String contentOverride;
+
     /** 逻辑删除（0=正常, 1=删除） */
     private Integer deleted;
 }

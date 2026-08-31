@@ -219,6 +219,7 @@ DROP TABLE IF EXISTS `t_assessment`;
 CREATE TABLE `t_assessment` (
     `id`                BIGINT         NOT NULL AUTO_INCREMENT,
     `course_id`         BIGINT         NOT NULL,
+    `paper_id`          BIGINT         DEFAULT NULL COMMENT '关联试卷ID(在线考试)',
     `assessment_name`   VARCHAR(256)   NOT NULL,
     `assessment_type`   VARCHAR(32)    NOT NULL COMMENT 'HOMEWORK/QUIZ/EXPERIMENT/MIDTERM/FINAL',
     `assessment_no`     INT            DEFAULT NULL COMMENT '第X次',
@@ -236,6 +237,7 @@ CREATE TABLE `t_assessment` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_course_assessment` (`course_id`, `assessment_name`),
     KEY `idx_course_id` (`course_id`),
+    KEY `idx_paper_id` (`paper_id`),
     KEY `idx_assessment_type` (`assessment_type`),
     KEY `idx_semester` (`semester`),
     KEY `idx_status` (`status`),
@@ -406,6 +408,7 @@ CREATE TABLE `t_exam_paper_question` (
     `question_id`   BIGINT         NOT NULL COMMENT '题库题目ID',
     `question_no`   INT            NOT NULL COMMENT '题号',
     `score`         DECIMAL(5,2)   NOT NULL COMMENT '本题分值',
+    `content_override` TEXT        NULL COMMENT '题目内容快照（编辑后覆盖题库原题）',
     `deleted`       TINYINT        DEFAULT 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_paper_question` (`paper_id`, `question_id`),
@@ -450,7 +453,41 @@ CREATE TABLE `t_question_bank` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='题库表';
 
 -- ============================================================
--- 18. 错题本
+-- 18. 学生考试逐题作答记录表
+-- ============================================================
+DROP TABLE IF EXISTS `t_exam_answer`;
+CREATE TABLE `t_exam_answer` (
+    `id`                BIGINT         NOT NULL AUTO_INCREMENT,
+    `paper_id`          BIGINT         NOT NULL COMMENT '试卷ID',
+    `assessment_id`     BIGINT         NOT NULL COMMENT '考核ID',
+    `record_id`         BIGINT         NOT NULL COMMENT '成绩记录ID',
+    `student_id`        BIGINT         NOT NULL COMMENT '学生ID',
+    `question_id`       BIGINT         NOT NULL COMMENT '题目ID',
+    `question_no`       INT            NOT NULL COMMENT '题号',
+    `question_type`     VARCHAR(32)    NOT NULL COMMENT 'SINGLE/MULTI/FILL/TRUE_FALSE/SHORT/COMPREHENSIVE',
+    `student_answer`    TEXT           DEFAULT NULL COMMENT '学生答案',
+    `correct_answer`    VARCHAR(2048)  DEFAULT NULL COMMENT '正确答案快照',
+    `score`             DECIMAL(5,2)   DEFAULT NULL COMMENT '得分(主观题批阅前为NULL)',
+    `max_score`         DECIMAL(5,2)   DEFAULT NULL COMMENT '满分',
+    `is_correct`        TINYINT        DEFAULT NULL COMMENT '客观题1/0，主观题NULL',
+    `graded`            TINYINT        DEFAULT 0 COMMENT '主观题是否已批',
+    `grader_id`         BIGINT         DEFAULT NULL COMMENT '批阅教师ID',
+    `comment`           VARCHAR(1024)  DEFAULT NULL COMMENT '批阅评语',
+    `create_time`       DATETIME       DEFAULT CURRENT_TIMESTAMP,
+    `deleted`           TINYINT        DEFAULT 0,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_answer` (`record_id`, `question_id`),
+    KEY `idx_paper_id` (`paper_id`),
+    KEY `idx_record_id` (`record_id`),
+    KEY `idx_student_id` (`student_id`),
+    KEY `idx_graded` (`graded`),
+    CONSTRAINT `fk_answer_record`     FOREIGN KEY (`record_id`)     REFERENCES `t_assessment_record` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `fk_answer_student`    FOREIGN KEY (`student_id`)    REFERENCES `t_student` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `fk_answer_question`   FOREIGN KEY (`question_id`)   REFERENCES `t_question_bank` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='学生考试逐题作答记录';
+
+-- ============================================================
+-- 19. 错题本
 -- ============================================================
 DROP TABLE IF EXISTS `t_student_wrong_question`;
 CREATE TABLE `t_student_wrong_question` (
@@ -478,7 +515,7 @@ CREATE TABLE `t_student_wrong_question` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='错题本';
 
 -- ============================================================
--- 19. 预警规则配置表
+-- 20. 预警规则配置表
 -- ============================================================
 DROP TABLE IF EXISTS `t_warning_rule`;
 CREATE TABLE `t_warning_rule` (
@@ -495,7 +532,7 @@ CREATE TABLE `t_warning_rule` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预警规则配置表';
 
 -- ============================================================
--- 20. 预警记录表
+-- 21. 预警记录表
 -- ============================================================
 DROP TABLE IF EXISTS `t_warning_record`;
 CREATE TABLE `t_warning_record` (
@@ -520,7 +557,7 @@ CREATE TABLE `t_warning_record` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预警记录表';
 
 -- ============================================================
--- 21. 通知主表
+-- 22. 通知主表
 -- ============================================================
 DROP TABLE IF EXISTS `t_notification`;
 CREATE TABLE `t_notification` (
@@ -542,7 +579,7 @@ CREATE TABLE `t_notification` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知主表';
 
 -- ============================================================
--- 22. 通知接收者表（每人独立已读状态）
+-- 23. 通知接收者表（每人独立已读状态）
 -- ============================================================
 DROP TABLE IF EXISTS `t_notification_recipient`;
 CREATE TABLE `t_notification_recipient` (
@@ -560,7 +597,7 @@ CREATE TABLE `t_notification_recipient` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知接收者表';
 
 -- ============================================================
--- 23. 系统参数配置表
+-- 24. 系统参数配置表
 -- ============================================================
 DROP TABLE IF EXISTS `t_system_config`;
 CREATE TABLE `t_system_config` (
@@ -576,7 +613,7 @@ CREATE TABLE `t_system_config` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统参数配置表';
 
 -- ============================================================
--- 24. 操作日志表
+-- 25. 操作日志表
 -- ============================================================
 DROP TABLE IF EXISTS `t_operation_log`;
 CREATE TABLE `t_operation_log` (

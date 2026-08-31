@@ -22,6 +22,9 @@ public class Assessment {
     /** 所属课程ID */
     private Long courseId;
 
+    /** 关联试卷ID（在线考试，一张试卷对应一条考核） */
+    private Long paperId;
+
     /** 考核名称（如"第3次作业-传输层"） */
     private String assessmentName;
 

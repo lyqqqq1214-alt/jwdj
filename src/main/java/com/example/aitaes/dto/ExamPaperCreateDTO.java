@@ -38,5 +38,7 @@ public class ExamPaperCreateDTO {
         private Long questionId;
         private Integer questionNo;
         private BigDecimal score;
+        /** 题目内容快照（完整 JSON，编辑后覆盖题库原题；为空则回退题库原题） */
+        private String content;
     }
 }

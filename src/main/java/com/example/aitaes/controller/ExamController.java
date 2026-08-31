@@ -5,6 +5,12 @@ import com.example.aitaes.annotation.RequireRole;
 import com.example.aitaes.common.Result;
 import com.example.aitaes.dto.ExamPaperCreateDTO;
 import com.example.aitaes.dto.ExamResultDTO;
+import com.example.aitaes.dto.GradeRequestDTO;
+import com.example.aitaes.dto.GradingItemVO;
+import com.example.aitaes.dto.StudentExamRecordVO;
+import com.example.aitaes.dto.StudentExamResultVO;
+import com.example.aitaes.dto.StudentExamVO;
+import com.example.aitaes.dto.SubmitExamResultDTO;
 import com.example.aitaes.entity.ExamPaper;
 import com.example.aitaes.service.ExamService;
 import jakarta.validation.Valid;
@@ -12,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -92,18 +97,17 @@ public class ExamController {
 
     @GetMapping("/grading/list")
     @RequireRole({"TEACHER", "ASSISTANT"})
-    public Result<List<Map<String, Object>>> gradingList(@RequestParam Long courseId) {
-        return Result.success(examService.getGradingList(courseId));
+    public Result<List<GradingItemVO>> gradingList(@RequestParam Long courseId,
+                                                    @RequestParam(required = false) Long paperId) {
+        return Result.success(examService.getGradingList(courseId, paperId));
     }
 
-    @PutMapping("/grading/{recordId}")
+    @PutMapping("/grading/{answerId}")
     @RequireRole({"TEACHER", "ASSISTANT"})
-    public Result<Void> submitGrade(@PathVariable Long recordId,
-                                     @RequestBody Map<String, Object> body) {
-        BigDecimal score = body.get("score") != null
-                ? new BigDecimal(body.get("score").toString()) : BigDecimal.ZERO;
-        String comment = (String) body.getOrDefault("comment", "");
-        examService.submitGrade(recordId, score, comment);
+    public Result<Void> submitGrade(@PathVariable Long answerId,
+                                     @RequestAttribute("userId") Long userId,
+                                     @Valid @RequestBody GradeRequestDTO dto) {
+        examService.submitGrade(answerId, userId, dto.getScore(), dto.getComment());
         return Result.success("批阅完成", null);
     }
 
@@ -117,17 +121,29 @@ public class ExamController {
 
     @GetMapping("/student/{paperId}")
     @RequireRole({"STUDENT"})
-    public Result<ExamPaper> getStudentExam(@PathVariable Long paperId,
-                                             @RequestAttribute("userId") Long userId) {
+    public Result<StudentExamVO> getStudentExam(@PathVariable Long paperId,
+                                                 @RequestAttribute("userId") Long userId) {
         return Result.success(examService.getExamForStudent(paperId, userId));
     }
 
     @PostMapping("/student/{paperId}/submit")
     @RequireRole({"STUDENT"})
-    public Result<Void> submitExam(@PathVariable Long paperId,
-                                    @RequestAttribute("userId") Long userId,
-                                    @RequestBody Map<Long, String> answers) {
-        examService.submitExam(paperId, userId, answers);
-        return Result.success("交卷成功", null);
+    public Result<SubmitExamResultDTO> submitExam(@PathVariable Long paperId,
+                                                  @RequestAttribute("userId") Long userId,
+                                                  @RequestBody Map<Long, String> answers) {
+        return Result.success("交卷成功", examService.submitExam(paperId, userId, answers));
+    }
+
+    @GetMapping("/student/records")
+    @RequireRole({"STUDENT"})
+    public Result<List<StudentExamRecordVO>> myExamRecords(@RequestAttribute("userId") Long userId) {
+        return Result.success(examService.getMyExamRecords(userId));
+    }
+
+    @GetMapping("/student/records/{paperId}")
+    @RequireRole({"STUDENT"})
+    public Result<StudentExamResultVO> myExamResult(@PathVariable Long paperId,
+                                                    @RequestAttribute("userId") Long userId) {
+        return Result.success(examService.getMyExamResult(paperId, userId));
     }
 }
