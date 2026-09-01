@@ -203,11 +203,38 @@ class ExamServiceImplTest {
                     }}));
             paper.setStatus("PUBLISHED");
             when(examPaperMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(paper));
+            when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
 
             List<ExamPaper> result = examService.getPendingExams(3L);
 
             assertEquals(1, result.size());
             assertEquals("PUBLISHED", result.get(0).getStatus());
+        }
+
+        @Test
+        @DisplayName("EX-34: 已交卷试卷应移出待考")
+        void shouldExcludeSubmittedPaperFromPending() {
+            paper.setStatus("PUBLISHED");
+            when(studentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(student);
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
+                    .thenReturn(List.of(new CourseStudent() {{
+                        setCourseId(1L); setStudentId(100L);
+                    }}));
+            when(examPaperMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(paper));
+
+            AssessmentRecord record = new AssessmentRecord();
+            record.setStudentId(100L);
+            record.setAssessmentId(1L);
+            when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(record));
+
+            Assessment assessment = new Assessment();
+            assessment.setId(1L);
+            assessment.setPaperId(1L);
+            when(assessmentMapper.selectBatchIds(any())).thenReturn(List.of(assessment));
+
+            List<ExamPaper> result = examService.getPendingExams(3L);
+
+            assertTrue(result.isEmpty());
         }
     }
 
@@ -674,6 +701,7 @@ class ExamServiceImplTest {
                         setCourseId(1L); setStudentId(100L);
                     }}));
             when(examPaperMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(paper));
+            when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
 
             List<ExamPaper> result = examService.getPendingExams(3L);
 
@@ -691,6 +719,7 @@ class ExamServiceImplTest {
                         setCourseId(1L); setStudentId(100L);
                     }}));
             when(examPaperMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(paper));
+            when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
 
             List<ExamPaper> result = examService.getPendingExams(3L);
 
@@ -858,6 +887,7 @@ class ExamServiceImplTest {
                         setCourseId(1L); setStudentId(100L);
                     }}));
             when(examPaperMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(paper));
+            when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
 
             List<ExamPaper> result = examService.getPendingExams(3L);
 
@@ -875,6 +905,7 @@ class ExamServiceImplTest {
                         setCourseId(1L); setStudentId(100L);
                     }}));
             when(examPaperMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(paper));
+            when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
 
             List<ExamPaper> result = examService.getPendingExams(3L);
 

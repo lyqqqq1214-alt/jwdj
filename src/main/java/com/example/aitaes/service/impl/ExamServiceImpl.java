@@ -96,6 +96,21 @@ public class ExamServiceImpl implements ExamService {
         return student.getId();
     }
 
+    private Set<Long> submittedPaperIds(Long studentId) {
+        List<AssessmentRecord> records = assessmentRecordMapper.selectList(
+                new LambdaQueryWrapper<AssessmentRecord>().eq(AssessmentRecord::getStudentId, studentId));
+        if (records.isEmpty()) return Collections.emptySet();
+        Set<Long> assessmentIds = records.stream()
+                .map(AssessmentRecord::getAssessmentId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (assessmentIds.isEmpty()) return Collections.emptySet();
+        return assessmentMapper.selectBatchIds(assessmentIds).stream()
+                .map(Assessment::getPaperId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
     // ===== 试卷管理 =====
 
     @Override
@@ -321,11 +336,13 @@ public class ExamServiceImpl implements ExamService {
     @Override
     public List<ExamPaper> getPendingExams(Long userId) {
         Long studentId = resolveStudentId(userId);
-        // 查找学生所在课程
         List<CourseStudent> csList = courseStudentMapper.selectList(
                 new LambdaQueryWrapper<CourseStudent>().eq(CourseStudent::getStudentId, studentId));
         if (csList.isEmpty()) return Collections.emptyList();
         Set<Long> enrolled = csList.stream().map(CourseStudent::getCourseId).collect(Collectors.toSet());
+
+        // 已交卷试卷集合（交卷后移出待考）
+        Set<Long> submittedPaperIds = submittedPaperIds(studentId);
 
         List<ExamPaper> papers = examPaperMapper.selectList(
                 new LambdaQueryWrapper<ExamPaper>()
@@ -336,6 +353,7 @@ public class ExamServiceImpl implements ExamService {
         return papers.stream()
                 .filter(p -> inTargetStudents(studentId, enrolled, p))
                 .filter(p -> p.getEndTime() == null || now.isBefore(p.getEndTime()))
+                .filter(p -> !submittedPaperIds.contains(p.getId()))
                 .collect(Collectors.toList());
     }
 
