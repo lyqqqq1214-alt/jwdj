@@ -93,13 +93,13 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化教师账号
      */
     private void initTeacherUsers() {
-        // 教师1: T001
+        // 教师1: T00001
         User teacher1User = userMapper.selectOne(new LambdaQueryWrapper<User>()
-                .eq(User::getUsername, "T001"));
+                .eq(User::getUsername, "T00001"));
         
         if (teacher1User == null) {
             teacher1User = new User();
-            teacher1User.setUsername("T001");
+            teacher1User.setUsername("T00001");
             teacher1User.setPassword(PasswordUtil.encode("123456"));
             teacher1User.setRole("TEACHER");
             teacher1User.setStatus("ACTIVE");
@@ -108,7 +108,7 @@ public class DataInitializer implements CommandLineRunner {
             
             Teacher teacher1 = new Teacher();
             teacher1.setUserId(teacher1User.getId());
-            teacher1.setTeacherNo("T001");
+            teacher1.setTeacherNo("T00001");
             teacher1.setName("张建国");
             teacher1.setGender("男");
             teacher1.setCollege("计算机学院");
@@ -117,22 +117,22 @@ public class DataInitializer implements CommandLineRunner {
             teacher1.setEmail("zjg@university.edu.cn");
             teacherMapper.insert(teacher1);
             
-            log.info("初始化教师账号: T001 / 123456 (张建国)");
+            log.info("初始化教师账号: T00001 / 123456 (张建国)");
             teacher1Id = teacher1.getId();
             log.info("教师1 ID: {}", teacher1Id);
         } else {
             teacher1Id = teacherMapper.selectOne(new LambdaQueryWrapper<Teacher>()
-                    .eq(Teacher::getTeacherNo, "T001")).getId();
-            log.debug("教师账号 T001 已存在，跳过初始化");
+                    .eq(Teacher::getTeacherNo, "T00001")).getId();
+            log.debug("教师账号 T00001 已存在，跳过初始化");
         }
 
-        // 教师2: T002
+        // 教师2: T00002
         User teacher2User = userMapper.selectOne(new LambdaQueryWrapper<User>()
-                .eq(User::getUsername, "T002"));
+                .eq(User::getUsername, "T00002"));
         
         if (teacher2User == null) {
             teacher2User = new User();
-            teacher2User.setUsername("T002");
+            teacher2User.setUsername("T00002");
             teacher2User.setPassword(PasswordUtil.encode("123456"));
             teacher2User.setRole("TEACHER");
             teacher2User.setStatus("ACTIVE");
@@ -141,7 +141,7 @@ public class DataInitializer implements CommandLineRunner {
             
             Teacher teacher2 = new Teacher();
             teacher2.setUserId(teacher2User.getId());
-            teacher2.setTeacherNo("T002");
+            teacher2.setTeacherNo("T00002");
             teacher2.setName("李美玲");
             teacher2.setGender("女");
             teacher2.setCollege("计算机学院");
@@ -150,12 +150,12 @@ public class DataInitializer implements CommandLineRunner {
             teacher2.setEmail("lml@university.edu.cn");
             teacherMapper.insert(teacher2);
             
-            log.info("初始化教师账号: T002 / 123456 (李美玲)");
+            log.info("初始化教师账号: T00002 / 123456 (李美玲)");
             teacher2Id = teacher2.getId();
         } else {
             teacher2Id = teacherMapper.selectOne(new LambdaQueryWrapper<Teacher>()
-                    .eq(Teacher::getTeacherNo, "T002")).getId();
-            log.debug("教师账号 T002 已存在，跳过初始化");
+                    .eq(Teacher::getTeacherNo, "T00002")).getId();
+            log.debug("教师账号 T00002 已存在，跳过初始化");
         }
     }
 
@@ -163,13 +163,13 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化学生账号
      */
     private void initStudentUsers() {
-        // 学生1: 2024001
+        // 学生1: 202426010101
         User student1User = userMapper.selectOne(new LambdaQueryWrapper<User>()
-                .eq(User::getUsername, "2024001"));
+                .eq(User::getUsername, "202426010101"));
         
         if (student1User == null) {
             student1User = new User();
-            student1User.setUsername("2024001");
+            student1User.setUsername("202426010101");
             student1User.setPassword(PasswordUtil.encode("123456"));
             student1User.setRole("STUDENT");
             student1User.setStatus("ACTIVE");
@@ -178,30 +178,31 @@ public class DataInitializer implements CommandLineRunner {
             
             Student student1 = new Student();
             student1.setUserId(student1User.getId());
-            student1.setStudentNo("2024001");
+            student1.setStudentNo("202426010101");
             student1.setName("张伟");
             student1.setGender("男");
             student1.setCollege("计算机学院");
             student1.setMajor("计算机科学与技术");
-            student1.setClassName("2024级1班");
-            student1.setEmail("2024001@student.edu.cn");
+            student1.setClassName("计科2401");
+            student1.setGrade("2024");
+            student1.setEmail("202426010101@student.edu.cn");
             studentMapper.insert(student1);
             
-            log.info("初始化学生账号: 2024001 / 123456 (张伟)");
+            log.info("初始化学生账号: 202426010101 / 123456 (张伟)");
             student1Id = student1.getId();
         } else {
             student1Id = studentMapper.selectOne(new LambdaQueryWrapper<Student>()
-                    .eq(Student::getStudentNo, "2024001")).getId();
-            log.debug("学生账号 2024001 已存在，跳过初始化");
+                    .eq(Student::getStudentNo, "202426010101")).getId();
+            log.debug("学生账号 202426010101 已存在，跳过初始化");
         }
 
-        // 学生2: 2024002
+        // 学生2: 202407010101
         User student2User = userMapper.selectOne(new LambdaQueryWrapper<User>()
-                .eq(User::getUsername, "2024002"));
+                .eq(User::getUsername, "202407010101"));
         
         if (student2User == null) {
             student2User = new User();
-            student2User.setUsername("2024002");
+            student2User.setUsername("202407010101");
             student2User.setPassword(PasswordUtil.encode("123456"));
             student2User.setRole("STUDENT");
             student2User.setStatus("ACTIVE");
@@ -210,21 +211,22 @@ public class DataInitializer implements CommandLineRunner {
             
             Student student2 = new Student();
             student2.setUserId(student2User.getId());
-            student2.setStudentNo("2024002");
+            student2.setStudentNo("202407010101");
             student2.setName("李娜");
             student2.setGender("女");
             student2.setCollege("数学学院");
             student2.setMajor("应用数学");
-            student2.setClassName("2024级2班");
-            student2.setEmail("2024002@student.edu.cn");
+            student2.setClassName("应数2401");
+            student2.setGrade("2024");
+            student2.setEmail("202407010101@student.edu.cn");
             studentMapper.insert(student2);
             
-            log.info("初始化学生账号: 2024002 / 123456 (李娜)");
+            log.info("初始化学生账号: 202407010101 / 123456 (李娜)");
             student2Id = student2.getId();
         } else {
             student2Id = studentMapper.selectOne(new LambdaQueryWrapper<Student>()
-                    .eq(Student::getStudentNo, "2024002")).getId();
-            log.debug("学生账号 2024002 已存在，跳过初始化");
+                    .eq(Student::getStudentNo, "202407010101")).getId();
+            log.debug("学生账号 202407010101 已存在，跳过初始化");
         }
     }
 
@@ -233,17 +235,17 @@ public class DataInitializer implements CommandLineRunner {
      */
     private void initCourses() {
         Course cs101 = courseMapper.selectOne(new LambdaQueryWrapper<Course>()
-                .eq(Course::getCourseNo, "CS101"));
+                .eq(Course::getCourseNo, "CS05101"));
         if (cs101 != null) {
             course1Id = cs101.getId();
             Course cs102 = courseMapper.selectOne(new LambdaQueryWrapper<Course>()
-                    .eq(Course::getCourseNo, "CS102"));
+                    .eq(Course::getCourseNo, "CS05102"));
             course2Id = cs102 != null ? cs102.getId() : null;
             log.debug("课程测试数据已存在，course1Id={}, course2Id={}", course1Id, course2Id);
             return;
         }
         Course course1 = new Course();
-        course1.setCourseNo("CS101");
+        course1.setCourseNo("CS05101");
         course1.setCourseName("数据结构与算法");
         course1.setTeacherId(teacher1Id);
         course1.setCredit(new BigDecimal("4.0"));
@@ -255,7 +257,7 @@ public class DataInitializer implements CommandLineRunner {
         log.info("创建课程: {} (ID={})", course1.getCourseName(), course1Id);
 
         Course course2 = new Course();
-        course2.setCourseNo("CS102");
+        course2.setCourseNo("CS05102");
         course2.setCourseName("计算机网络");
         course2.setTeacherId(teacher1Id);
         course2.setCredit(new BigDecimal("3.0"));
@@ -277,8 +279,8 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
         for (Long courseId : new Long[]{course1Id, course2Id}) {
-            courseStudentMapper.insert(buildCourseStudent(courseId, student1Id, "2024级1班"));
-            courseStudentMapper.insert(buildCourseStudent(courseId, student2Id, "2024级1班"));
+            courseStudentMapper.insert(buildCourseStudent(courseId, student1Id, "计科2401"));
+            courseStudentMapper.insert(buildCourseStudent(courseId, student2Id, "应数2401"));
         }
         log.info("创建选课关联: 2门课程 × 2名学生");
     }

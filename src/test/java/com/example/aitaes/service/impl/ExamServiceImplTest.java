@@ -5,6 +5,8 @@ import com.example.aitaes.common.BusinessException;
 import com.example.aitaes.dto.ExamPaperCreateDTO;
 import com.example.aitaes.dto.ExamResultDTO;
 import com.example.aitaes.dto.GradingItemVO;
+import com.example.aitaes.dto.PaperGradingVO;
+import com.example.aitaes.dto.PaperQuestionEditVO;
 import com.example.aitaes.dto.StudentExamRecordVO;
 import com.example.aitaes.dto.StudentExamResultVO;
 import com.example.aitaes.dto.SubmitExamResultDTO;
@@ -219,7 +221,10 @@ class ExamServiceImplTest {
             paper.setStatus("PUBLISHED");
             when(studentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(student);
             when(examPaperMapper.selectById(1L)).thenReturn(paper);
-            when(courseStudentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(new CourseStudent());
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
+                    .thenReturn(List.of(new CourseStudent() {{
+                        setCourseId(1L); setStudentId(100L);
+                    }}));
             ExamPaperQuestion epq = new ExamPaperQuestion();
             epq.setQuestionId(10L); epq.setQuestionNo(1); epq.setScore(new BigDecimal("5"));
             when(examPaperQuestionMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(epq));
@@ -238,7 +243,10 @@ class ExamServiceImplTest {
             paper.setStatus("PUBLISHED");
             when(studentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(student);
             when(examPaperMapper.selectById(1L)).thenReturn(paper);
-            when(courseStudentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(new CourseStudent());
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
+                    .thenReturn(List.of(new CourseStudent() {{
+                        setCourseId(1L); setStudentId(100L);
+                    }}));
             ExamPaperQuestion epq = new ExamPaperQuestion();
             epq.setQuestionId(10L); epq.setQuestionNo(1); epq.setScore(new BigDecimal("5"));
             epq.setContentOverride("{\"stem\":\"编辑后的题干\",\"options\":[{\"label\":\"A\",\"text\":\"1\"}]}");
@@ -423,7 +431,7 @@ class ExamServiceImplTest {
             r2.setStudentId(101L); r2.setTotalScore(new BigDecimal("70"));
             when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class)))
                     .thenReturn(List.of(r1, r2));
-            when(courseStudentMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(2L);
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
             when(studentMapper.selectBatchIds(any())).thenReturn(List.of());
 
             ExamResultDTO result = examService.getExamResults(1L);
@@ -648,6 +656,254 @@ class ExamServiceImplTest {
             when(assessmentRecordMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(null);
 
             assertThrows(BusinessException.class, () -> examService.getMyExamResult(1L, 3L));
+        }
+    }
+
+    @Nested
+    @DisplayName("getPendingExams — 班级可见性")
+    class PendingExamsVisibility {
+
+        @Test
+        @DisplayName("EX-24: 学生不在目标班级应看不到考试")
+        void shouldHideExamWhenNotInTargetClass() {
+            paper.setStatus("PUBLISHED");
+            paper.setTargetClasses("2,3");
+            when(studentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(student);
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
+                    .thenReturn(List.of(new CourseStudent() {{
+                        setCourseId(1L); setStudentId(100L);
+                    }}));
+            when(examPaperMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(paper));
+
+            List<ExamPaper> result = examService.getPendingExams(3L);
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("EX-25: 学生在目标班级应看到考试")
+        void shouldShowExamWhenInTargetClass() {
+            paper.setStatus("PUBLISHED");
+            paper.setTargetClasses("1,2");
+            when(studentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(student);
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
+                    .thenReturn(List.of(new CourseStudent() {{
+                        setCourseId(1L); setStudentId(100L);
+                    }}));
+            when(examPaperMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(paper));
+
+            List<ExamPaper> result = examService.getPendingExams(3L);
+
+            assertEquals(1, result.size());
+        }
+    }
+
+    @Nested
+    @DisplayName("getExamResults — 及格线与花名册")
+    class ExamResultsPassAndRoster {
+
+        @Test
+        @DisplayName("EX-26: 及格率按总分60%且含未交卷学生")
+        void shouldUsePercentPassAndIncludeAbsent() {
+            paper.setTotalScore(new BigDecimal("100.00"));
+            when(examPaperMapper.selectById(1L)).thenReturn(paper);
+            Assessment assessment = new Assessment();
+            assessment.setId(1L);
+            when(assessmentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(assessment);
+
+            AssessmentRecord r1 = new AssessmentRecord();
+            r1.setStudentId(100L); r1.setTotalScore(new BigDecimal("59.99"));
+            when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(r1));
+
+            CourseStudent cs1 = new CourseStudent();
+            cs1.setCourseId(1L); cs1.setStudentId(100L);
+            CourseStudent cs2 = new CourseStudent();
+            cs2.setCourseId(1L); cs2.setStudentId(101L);
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(cs1, cs2));
+
+            Student s1 = new Student();
+            s1.setId(100L); s1.setStudentNo("S001"); s1.setName("甲");
+            Student s2 = new Student();
+            s2.setId(101L); s2.setStudentNo("S002"); s2.setName("乙");
+            when(studentMapper.selectBatchIds(any())).thenReturn(List.of(s1, s2));
+
+            ExamResultDTO result = examService.getExamResults(1L);
+
+            assertEquals(2, result.getTotalStudents());
+            assertEquals(1, result.getSubmittedCount());
+            assertEquals(0, result.getPassRate().compareTo(new BigDecimal("0.0")));
+            ExamResultDTO.StudentScoreItem absent = result.getStudentScores().stream()
+                    .filter(x -> x.getStudentId() == 101L).findFirst().orElse(null);
+            assertNotNull(absent);
+            assertEquals(BigDecimal.ZERO, absent.getTotalScore());
+            assertEquals("ABSENT", absent.getSubmitStatus());
+        }
+    }
+
+    @Nested
+    @DisplayName("getPaperGrading — 按学生整卷批阅")
+    class GetPaperGrading {
+
+        @Test
+        @DisplayName("EX-27: 应按学生分组返回整卷批阅数据")
+        void shouldReturnGroupedGrading() {
+            when(examPaperMapper.selectById(1L)).thenReturn(paper);
+            Assessment assessment = new Assessment();
+            assessment.setId(1L);
+            when(assessmentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(assessment);
+
+            AssessmentRecord record = new AssessmentRecord();
+            record.setId(9L); record.setStudentId(100L); record.setTotalScore(BigDecimal.ZERO);
+            when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(record));
+            when(studentMapper.selectBatchIds(any())).thenReturn(List.of(student));
+
+            ExamAnswer subjective = new ExamAnswer();
+            subjective.setId(1L); subjective.setRecordId(9L); subjective.setQuestionId(30L);
+            subjective.setQuestionNo(1); subjective.setQuestionType("SHORT");
+            subjective.setStudentAnswer("握手"); subjective.setGraded(0);
+            when(examAnswerMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(subjective));
+
+            QuestionBank shortQ = new QuestionBank();
+            shortQ.setId(30L);
+            shortQ.setContent("{\"stem\":\"简述TCP\",\"answer\":\"参考\"}");
+            when(questionBankMapper.selectBatchIds(any())).thenReturn(List.of(shortQ));
+            when(examPaperQuestionMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
+
+            PaperGradingVO result = examService.getPaperGrading(1L, 2L);
+
+            assertEquals(1, result.getStudents().size());
+            assertEquals(1, result.getStudents().get(0).getPendingCount());
+            assertEquals("握手", result.getStudents().get(0).getQuestions().get(0).getStudentAnswer());
+        }
+    }
+
+    @Nested
+    @DisplayName("getPaperQuestions — 试卷题目编辑")
+    class GetPaperQuestions {
+
+        @Test
+        @DisplayName("EX-28: 应返回试卷题目编辑内容")
+        void shouldReturnPaperQuestions() {
+            when(examPaperMapper.selectById(1L)).thenReturn(paper);
+            ExamPaperQuestion epq = new ExamPaperQuestion();
+            epq.setQuestionId(10L); epq.setQuestionNo(1); epq.setScore(new BigDecimal("5"));
+            epq.setContentOverride("{\"stem\":\"编辑题干\",\"options\":[{\"label\":\"A\",\"text\":\"1\"}],\"answer\":\"A\",\"analysis\":\"解析\"}");
+            when(examPaperQuestionMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(epq));
+            when(questionBankMapper.selectBatchIds(any())).thenReturn(List.of(question));
+
+            List<PaperQuestionEditVO> result = examService.getPaperQuestions(1L);
+
+            assertEquals(1, result.size());
+            assertEquals("编辑题干", result.get(0).getStem());
+            assertEquals("A", result.get(0).getAnswer());
+        }
+    }
+
+    @Nested
+    @DisplayName("getPaperById — 惰性结束")
+    class AutoEndPaper {
+
+        @Test
+        @DisplayName("EX-29: 过期已发布试卷自动转为结束")
+        void shouldAutoEndExpiredPaper() {
+            paper.setStatus("PUBLISHED");
+            paper.setEndTime(LocalDateTime.now().minusMinutes(1));
+            when(examPaperMapper.selectById(1L)).thenReturn(paper);
+            when(assessmentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(null);
+
+            ExamPaper result = examService.getPaperById(1L);
+
+            assertEquals("ENDED", result.getStatus());
+            verify(examPaperMapper).updateById(paper);
+        }
+    }
+
+    @Nested
+    @DisplayName("updatePaper — 编辑试卷")
+    class UpdatePaper {
+
+        @Test
+        @DisplayName("EX-30: 应物理删除旧题目再重建，避免唯一键冲突")
+        void shouldPhysicallyDeleteOldQuestionsThenReinsert() {
+            when(examPaperMapper.selectById(1L)).thenReturn(paper);
+
+            ExamPaperCreateDTO dto = new ExamPaperCreateDTO();
+            dto.setPaperName("期中考试（改）");
+            dto.setCourseId(1L);
+            ExamPaperCreateDTO.QuestionItem qi = new ExamPaperCreateDTO.QuestionItem();
+            qi.setQuestionId(10L); qi.setQuestionNo(1); qi.setScore(new BigDecimal("5"));
+            dto.setQuestions(List.of(qi));
+
+            ExamPaper result = examService.updatePaper(1L, dto);
+
+            assertEquals("期中考试（改）", result.getPaperName());
+            verify(examPaperMapper).updateById(paper);
+            verify(examPaperQuestionMapper).physicalDeleteByPaperId(1L);
+            verify(examPaperQuestionMapper).insert(any(ExamPaperQuestion.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("targetStudents — 按学生分配考试")
+    class TargetStudents {
+
+        @Test
+        @DisplayName("EX-31: targetStudents 非空时仅目标学生可见待考")
+        void shouldShowExamOnlyForTargetStudents() {
+            paper.setStatus("PUBLISHED");
+            paper.setTargetStudents("100");
+            when(studentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(student);
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
+                    .thenReturn(List.of(new CourseStudent() {{
+                        setCourseId(1L); setStudentId(100L);
+                    }}));
+            when(examPaperMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(paper));
+
+            List<ExamPaper> result = examService.getPendingExams(3L);
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        @DisplayName("EX-32: targetStudents 未包含学生应不可见")
+        void shouldHideExamWhenNotInTargetStudents() {
+            paper.setStatus("PUBLISHED");
+            paper.setTargetStudents("101,102");
+            when(studentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(student);
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
+                    .thenReturn(List.of(new CourseStudent() {{
+                        setCourseId(1L); setStudentId(100L);
+                    }}));
+            when(examPaperMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(paper));
+
+            List<ExamPaper> result = examService.getPendingExams(3L);
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("EX-33: getExamResults 花名册直接取 targetStudents")
+        void shouldUseTargetStudentsForRoster() {
+            paper.setTargetStudents("100,101");
+            when(examPaperMapper.selectById(1L)).thenReturn(paper);
+            Assessment assessment = new Assessment();
+            assessment.setId(1L);
+            when(assessmentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(assessment);
+
+            AssessmentRecord r1 = new AssessmentRecord();
+            r1.setStudentId(100L); r1.setTotalScore(new BigDecimal("80"));
+            when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(r1));
+
+            Student s1 = new Student();
+            s1.setId(100L); s1.setStudentNo("S001"); s1.setName("甲");
+            Student s2 = new Student();
+            s2.setId(101L); s2.setStudentNo("S002"); s2.setName("乙");
+            when(studentMapper.selectBatchIds(any())).thenReturn(List.of(s1, s2));
+
+            ExamResultDTO result = examService.getExamResults(1L);
+
+            assertEquals(2, result.getTotalStudents());
+            verify(courseStudentMapper, never()).selectList(any(LambdaQueryWrapper.class));
         }
     }
 }

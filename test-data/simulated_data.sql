@@ -1,7 +1,7 @@
 -- ============================================================
 -- AITAES v3.0 模拟数据脚本
--- 课程：计算机网络（CS301）
--- 教师：张建国（T001）
+-- 课程：计算机网络（CS05102）
+-- 教师：张建国（T00001）
 -- 学期：2025-2026-1
 -- 班级：计科1801（25人）、计科1802（21人）、计科1803（22人）
 -- 包含：知识点、5次作业+期中期末、每题扣分知识点明细、考勤、实验
@@ -16,17 +16,17 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- 确保课程存在
 INSERT IGNORE INTO t_course (course_no, course_name, teacher_id, credit, course_type, semester, description) VALUES
-('CS101', '数据结构与算法', 2, 4.0, '必修', '2025-2026-1', '计算机专业核心基础课程，涵盖线性表、树、图、查找与排序等'),
-('CS201', '计算机网络', 3, 3.5, '必修', '2025-2026-1', '网络原理与应用'),
-('CS301', '计算机网络', 2, 4.0, '必修', '2025-2026-1', '计算机专业核心基础课程，涵盖OSI模型、TCP/IP协议栈、网络层、传输层、应用层等');
+('CS05101', '数据结构与算法', 2, 4.0, '必修', '2025-2026-1', '计算机专业核心基础课程，涵盖线性表、树、图、查找与排序等'),
+('CS05103', '计算机网络', 3, 3.5, '必修', '2025-2026-1', '网络原理与应用'),
+('CS05102', '计算机网络', 2, 4.0, '必修', '2025-2026-1', '计算机专业核心基础课程，涵盖OSI模型、TCP/IP协议栈、网络层、传输层、应用层等');
 
 -- 获取课程ID
-SET @course_id = (SELECT id FROM t_course WHERE course_no = 'CS301');
+SET @course_id = (SELECT id FROM t_course WHERE course_no = 'CS05102');
 
 -- 先创建学生用户账号（FOREIGN_KEY_CHECKS=0，用student_no作为username）
 INSERT IGNORE INTO t_user (username, password, role) VALUES
-('201726010101', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
-('201803030311', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
+('201826010101', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
+('201826010107', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
 ('201826010102', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
 ('201826010103', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
 ('201826010104', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
@@ -49,12 +49,12 @@ INSERT IGNORE INTO t_user (username, password, role) VALUES
 ('201826010128', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
 ('201826010129', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
 ('201826010130', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
-('201829010201', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT');
+('201826010125', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT');
 
 -- 补充学生（计科1801班25人，来自模板）
 INSERT IGNORE INTO t_student (user_id, student_no, name, gender, college, major, class_name, grade) VALUES
-((SELECT id FROM t_user WHERE username = '201726010101'), '201726010101', '李志强', '男', '计算机学院', '计算机科学与技术', '计科1801', '2018'),
-((SELECT id FROM t_user WHERE username = '201803030311'), '201803030311', '潘伯迈', '男', '计算机学院', '计算机科学与技术', '计科1801', '2018'),
+((SELECT id FROM t_user WHERE username = '201826010101'), '201826010101', '李志强', '男', '计算机学院', '计算机科学与技术', '计科1801', '2018'),
+((SELECT id FROM t_user WHERE username = '201826010107'), '201826010107', '潘伯迈', '男', '计算机学院', '计算机科学与技术', '计科1801', '2018'),
 ((SELECT id FROM t_user WHERE username = '201826010102'), '201826010102', '刘颖', '女', '计算机学院', '计算机科学与技术', '计科1801', '2018'),
 ((SELECT id FROM t_user WHERE username = '201826010103'), '201826010103', '吴志豪', '男', '计算机学院', '计算机科学与技术', '计科1801', '2018'),
 ((SELECT id FROM t_user WHERE username = '201826010104'), '201826010104', '陈嘉伟', '男', '计算机学院', '计算机科学与技术', '计科1801', '2018'),
@@ -77,13 +77,13 @@ INSERT IGNORE INTO t_student (user_id, student_no, name, gender, college, major,
 ((SELECT id FROM t_user WHERE username = '201826010128'), '201826010128', '徐静怡', '女', '计算机学院', '计算机科学与技术', '计科1801', '2018'),
 ((SELECT id FROM t_user WHERE username = '201826010129'), '201826010129', '钱程', '男', '计算机学院', '计算机科学与技术', '计科1801', '2018'),
 ((SELECT id FROM t_user WHERE username = '201826010130'), '201826010130', '艾孜买提·艾力木', '男', '计算机学院', '计算机科学与技术', '计科1801', '2018'),
-((SELECT id FROM t_user WHERE username = '201829010201'), '201829010201', '焦彦博', '男', '计算机学院', '计算机科学与技术', '计科1801', '2018');
+((SELECT id FROM t_user WHERE username = '201826010125'), '201826010125', '焦彦博', '男', '计算机学院', '计算机科学与技术', '计科1801', '2018');
 
 -- 计科1802班学生用户
 INSERT IGNORE INTO t_user (username, password, role) VALUES
-('201713010118', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
-('201804050215', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
-('201804061214', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
+('201826010202', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
+('201826010205', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
+('201826010208', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
 ('201826010201', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
 ('201826010203', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
 ('201826010204', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
@@ -105,9 +105,9 @@ INSERT IGNORE INTO t_user (username, password, role) VALUES
 
 -- 计科1802班（21人）
 INSERT IGNORE INTO t_student (user_id, student_no, name, gender, college, major, class_name, grade) VALUES
-((SELECT id FROM t_user WHERE username = '201713010118'), '201713010118', '单晓婷', '女', '计算机学院', '计算机科学与技术', '计科1802', '2018'),
-((SELECT id FROM t_user WHERE username = '201804050215'), '201804050215', '潘钰婷', '女', '计算机学院', '计算机科学与技术', '计科1802', '2018'),
-((SELECT id FROM t_user WHERE username = '201804061214'), '201804061214', '孙心怡', '女', '计算机学院', '计算机科学与技术', '计科1802', '2018'),
+((SELECT id FROM t_user WHERE username = '201826010202'), '201826010202', '单晓婷', '女', '计算机学院', '计算机科学与技术', '计科1802', '2018'),
+((SELECT id FROM t_user WHERE username = '201826010205'), '201826010205', '潘钰婷', '女', '计算机学院', '计算机科学与技术', '计科1802', '2018'),
+((SELECT id FROM t_user WHERE username = '201826010208'), '201826010208', '孙心怡', '女', '计算机学院', '计算机科学与技术', '计科1802', '2018'),
 ((SELECT id FROM t_user WHERE username = '201826010201'), '201826010201', '任智超', '男', '计算机学院', '计算机科学与技术', '计科1802', '2018'),
 ((SELECT id FROM t_user WHERE username = '201826010203'), '201826010203', '郑耀华', '男', '计算机学院', '计算机科学与技术', '计科1802', '2018'),
 ((SELECT id FROM t_user WHERE username = '201826010204'), '201826010204', '谢峰', '男', '计算机学院', '计算机科学与技术', '计科1802', '2018'),
@@ -129,8 +129,8 @@ INSERT IGNORE INTO t_student (user_id, student_no, name, gender, college, major,
 
 -- 计科1803班学生用户
 INSERT IGNORE INTO t_user (username, password, role) VALUES
-('201808030406', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
-('201808030408', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
+('201826010301', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
+('201826010309', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
 ('201826010302', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
 ('201826010303', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
 ('201826010304', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'STUDENT'),
@@ -154,8 +154,8 @@ INSERT IGNORE INTO t_user (username, password, role) VALUES
 
 -- 计科1803班（22人）
 INSERT IGNORE INTO t_student (user_id, student_no, name, gender, college, major, class_name, grade) VALUES
-((SELECT id FROM t_user WHERE username = '201808030406'), '201808030406', '陶双宇', '男', '计算机学院', '计算机科学与技术', '计科1803', '2018'),
-((SELECT id FROM t_user WHERE username = '201808030408'), '201808030408', '吴兆基', '男', '计算机学院', '计算机科学与技术', '计科1803', '2018'),
+((SELECT id FROM t_user WHERE username = '201826010301'), '201826010301', '陶双宇', '男', '计算机学院', '计算机科学与技术', '计科1803', '2018'),
+((SELECT id FROM t_user WHERE username = '201826010309'), '201826010309', '吴兆基', '男', '计算机学院', '计算机科学与技术', '计科1803', '2018'),
 ((SELECT id FROM t_user WHERE username = '201826010302'), '201826010302', '张加帅', '男', '计算机学院', '计算机科学与技术', '计科1803', '2018'),
 ((SELECT id FROM t_user WHERE username = '201826010303'), '201826010303', '徐元杰', '男', '计算机学院', '计算机科学与技术', '计科1803', '2018'),
 ((SELECT id FROM t_user WHERE username = '201826010304'), '201826010304', '栾博雄', '男', '计算机学院', '计算机科学与技术', '计科1803', '2018'),
@@ -249,7 +249,7 @@ INSERT IGNORE INTO t_assessment (id, course_id, assessment_name, assessment_type
 INSERT IGNORE INTO t_assessment_record (id, assessment_id, student_id, total_score, weakest_kp)
 SELECT 30000 + s.id, 2001, s.id,
   CASE s.student_no
-    WHEN '201726010101' THEN 88 WHEN '201803030311' THEN 83
+    WHEN '201826010101' THEN 88 WHEN '201826010107' THEN 83
     WHEN '201826010102' THEN 87 WHEN '201826010103' THEN 76
     WHEN '201826010104' THEN 89 WHEN '201826010105' THEN 85
     WHEN '201826010106' THEN 89 WHEN '201826010109' THEN 87
@@ -261,10 +261,10 @@ SELECT 30000 + s.id, 2001, s.id,
     WHEN '201826010124' THEN 91 WHEN '201826010126' THEN 84
     WHEN '201826010127' THEN 77 WHEN '201826010128' THEN 96
     WHEN '201826010129' THEN 95 WHEN '201826010130' THEN 42
-    WHEN '201829010201' THEN 43 ELSE 80
+    WHEN '201826010125' THEN 43 ELSE 80
   END,
   CASE s.student_no
-    WHEN '201726010101' THEN '路由算法' WHEN '201803030311' THEN '无连接的传输协议'
+    WHEN '201826010101' THEN '路由算法' WHEN '201826010107' THEN '无连接的传输协议'
     WHEN '201826010102' THEN '信道复用技术' WHEN '201826010103' THEN '校验和计算'
     WHEN '201826010104' THEN 'IP数据报分片' WHEN '201826010105' THEN 'TCP/UDP协议'
     WHEN '201826010106' THEN '子网划分与路由算法' WHEN '201826010109' THEN 'CRC校验'
@@ -276,7 +276,7 @@ SELECT 30000 + s.id, 2001, s.id,
     WHEN '201826010124' THEN 'ICMP协议' WHEN '201826010126' THEN ''
     WHEN '201826010127' THEN 'SDN网络' WHEN '201826010128' THEN 'TCP协议连接建立和释放'
     WHEN '201826010129' THEN 'IP地址与MAC地址' WHEN '201826010130' THEN '可靠传输技术'
-    WHEN '201829010201' THEN '' ELSE NULL
+    WHEN '201826010125' THEN '' ELSE NULL
   END
 FROM t_student s
 WHERE s.class_name = '计科1801'
@@ -284,10 +284,10 @@ WHERE s.class_name = '计科1801'
   AND NOT EXISTS (SELECT 1 FROM t_assessment_record r WHERE r.assessment_id = 2001 AND r.student_id = s.id);
 
 -- 第1次作业 - 扣分知识点明细（从模板逐题导入）
--- 以李志强(201726010101)为例：每题得分和扣分知识点
+-- 以李志强(201826010101)为例：每题得分和扣分知识点
 SET @record_id = (SELECT r.id FROM t_assessment_record r
   JOIN t_student s ON r.student_id = s.id
-  WHERE s.student_no = '201726010101' AND r.assessment_id = 2001);
+  WHERE s.student_no = '201826010101' AND r.assessment_id = 2001);
 INSERT IGNORE INTO t_record_kp_deduction (record_id, question_no, question_score, max_score, deduction_kp, deduction_aspect) VALUES
 (@record_id, 1, 15, 20, 'IP数据报分片', '分片偏移量计算错误'),
 (@record_id, 2, 12, 20, 'GBN协议', '协议机制理解不清'),
@@ -295,10 +295,10 @@ INSERT IGNORE INTO t_record_kp_deduction (record_id, question_no, question_score
 (@record_id, 4, 20, 20, '', ''),
 (@record_id, 5, 23, 20, 'ARP协议', '协议工作原理混淆');
 
--- 潘伯迈(201803030311)
+-- 潘伯迈(201826010107)
 SET @record_id = (SELECT r.id FROM t_assessment_record r
   JOIN t_student s ON r.student_id = s.id
-  WHERE s.student_no = '201803030311' AND r.assessment_id = 2001);
+  WHERE s.student_no = '201826010107' AND r.assessment_id = 2001);
 INSERT IGNORE INTO t_record_kp_deduction (record_id, question_no, question_score, max_score, deduction_kp, deduction_aspect) VALUES
 (@record_id, 1, 10, 20, '网络时延,TCP/UDP协议', '时延计算错误,传输层协议选择错误'),
 (@record_id, 2, 20, 20, '', ''),
@@ -349,8 +349,8 @@ SELECT @course_id, s.id, DATE_ADD('2025-09-01', INTERVAL (w.n-1)*7 DAY),
   CASE
     WHEN s.student_no = '201826010123' AND w.n IN (3,5,8,10,12) THEN 'ABSENT'  -- 王小明缺勤5次→高危预警
     WHEN s.student_no = '201826010130' AND w.n IN (2,4,7,11) THEN 'ABSENT'      -- 艾孜买提缺勤4次→高危预警
-    WHEN s.student_no = '201829010201' AND w.n IN (1,3,6) THEN 'ABSENT'          -- 焦彦博缺勤3次→预警
-    WHEN s.student_no = '201803030311' AND w.n IN (5,9) THEN 'LATE'              -- 潘伯迈迟到2次
+    WHEN s.student_no = '201826010125' AND w.n IN (1,3,6) THEN 'ABSENT'          -- 焦彦博缺勤3次→预警
+    WHEN s.student_no = '201826010107' AND w.n IN (5,9) THEN 'LATE'              -- 潘伯迈迟到2次
     WHEN s.student_no = '201826010114' AND w.n = 6 THEN 'LEAVE'                   -- 冯婉婷请假1次
     ELSE 'PRESENT'
   END,
@@ -441,14 +441,14 @@ INSERT IGNORE INTO t_warning_record (student_id, course_id, rule_id, warning_typ
 SELECT s.id, @course_id, wr.id, wr.rule_type, 'MEDIUM',
   CONCAT('[预警] ', s.name, '同学已缺勤3次，建议关注')
 FROM t_student s, t_warning_rule wr
-WHERE s.student_no = '201829010201' AND wr.rule_type = 'ATTENDANCE';
+WHERE s.student_no = '201826010125' AND wr.rule_type = 'ATTENDANCE';
 
 -- 潘伯迈：知识点薄弱预警（无连接的传输协议）
 INSERT IGNORE INTO t_warning_record (student_id, course_id, rule_id, warning_type, severity, warning_msg)
 SELECT s.id, @course_id, wr.id, wr.rule_type, 'LOW',
   CONCAT('[预警] ', s.name, '同学在"无连接的传输协议"知识点上掌握率低于30%')
 FROM t_student s, t_warning_rule wr
-WHERE s.student_no = '201803030311' AND wr.rule_type = 'KP_WEAK';
+WHERE s.student_no = '201826010107' AND wr.rule_type = 'KP_WEAK';
 
 -- ============================================================
 -- Part 8: 通知数据（教师发送 + 系统预警通知）
@@ -484,33 +484,33 @@ SELECT @notif2_id, u.id FROM t_user u WHERE u.username = '201826010130';
 -- Part 9: 助教权限配置（助教用户账号在 init.sql 中创建）
 -- ============================================================
 
--- 陈明 → CS301 计算机网络：完整权限（查看数据 + 导入 + 批阅 + 画像）
+-- 陈明 → CS05102 计算机网络：完整权限（查看数据 + 导入 + 批阅 + 画像）
 INSERT IGNORE INTO t_assistant_permission (assistant_id, course_id, can_view_data, can_import_data, can_grade, can_view_portrait)
 SELECT ta.id, c.id, 1, 1, 1, 1
 FROM t_teaching_assistant ta, t_course c
-WHERE ta.user_id = (SELECT id FROM t_user WHERE username = 'A001')
-  AND c.course_no = 'CS301';
+WHERE ta.user_id = (SELECT id FROM t_user WHERE username = 'A00001')
+  AND c.course_no = 'CS05102';
 
--- 赵丽 → CS101 数据结构与算法：仅查看数据和画像
+-- 赵丽 → CS05101 数据结构与算法：仅查看数据和画像
 INSERT IGNORE INTO t_assistant_permission (assistant_id, course_id, can_view_data, can_import_data, can_grade, can_view_portrait)
 SELECT ta.id, c.id, 1, 0, 0, 1
 FROM t_teaching_assistant ta, t_course c
-WHERE ta.user_id = (SELECT id FROM t_user WHERE username = 'A002')
-  AND c.course_no = 'CS101';
+WHERE ta.user_id = (SELECT id FROM t_user WHERE username = 'A00002')
+  AND c.course_no = 'CS05101';
 
--- 赵丽 → CS301 计算机网络：仅查看数据和画像
+-- 赵丽 → CS05102 计算机网络：仅查看数据和画像
 INSERT IGNORE INTO t_assistant_permission (assistant_id, course_id, can_view_data, can_import_data, can_grade, can_view_portrait)
 SELECT ta.id, c.id, 1, 0, 0, 1
 FROM t_teaching_assistant ta, t_course c
-WHERE ta.user_id = (SELECT id FROM t_user WHERE username = 'A002')
-  AND c.course_no = 'CS301';
+WHERE ta.user_id = (SELECT id FROM t_user WHERE username = 'A00002')
+  AND c.course_no = 'CS05102';
 
--- 王磊 → CS201 计算机网络：可查看数据 + 导入数据
+-- 王磊 → CS05103 计算机网络：可查看数据 + 导入数据
 INSERT IGNORE INTO t_assistant_permission (assistant_id, course_id, can_view_data, can_import_data, can_grade, can_view_portrait)
 SELECT ta.id, c.id, 1, 1, 0, 0
 FROM t_teaching_assistant ta, t_course c
-WHERE ta.user_id = (SELECT id FROM t_user WHERE username = 'A003')
-  AND c.course_no = 'CS201';
+WHERE ta.user_id = (SELECT id FROM t_user WHERE username = 'A00003')
+  AND c.course_no = 'CS05103';
 
 -- 恢复外键检查
 SET FOREIGN_KEY_CHECKS = 1;

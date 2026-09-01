@@ -22,7 +22,7 @@ import { getTeacherList, createTeacher, updateTeacher, deleteTeacher, updateTeac
 import { getStudentOverview, getStudentTrends, getStudentWrongQuestions, getStudentCourses, StudentOverview, StudentCourse } from "../services/studentService";
 import { getStudentProfile, toggleFocusStudent, generateAiEvaluation, generateAiSuggestions, getMyPortrait, generateMyAiSuggestions, StudentProfile as StudentProfileData, LearningSuggestion } from "../services/portraitService";
 import { getMyClasses, getClassStudents, createClass, addStudentToClass, removeStudentFromClass, ClassVO as ClsVO, StudentVO } from "../services/classService";
-import { getPendingExams, getExamPapers, createExamPaper, deleteExamPaper, publishExamPaper, closeExamPaper, getExamResults, submitExam, getStudentExam, getMyExamRecords, getMyExamResult, getGradingList, submitGrade, ExamPaper, ExamResultDTO, StudentExamVO, SubmitExamResultDTO, StudentExamRecordVO, StudentExamResultVO, GradingItemVO } from "../services/examService";
+import { getPendingExams, getExamPapers, getExamPaperById, createExamPaper, updateExamPaper, deleteExamPaper, publishExamPaper, closeExamPaper, getExamResults, submitExam, getStudentExam, getMyExamRecords, getMyExamResult, getGradingList, submitGrade, getPaperQuestions, getPaperGrading, submitStudentGrade, ExamPaper, ExamResultDTO, StudentExamVO, SubmitExamResultDTO, StudentExamRecordVO, StudentExamResultVO, GradingItemVO, PaperGradingVO, PaperQuestionEditVO, StudentGradeItem } from "../services/examService";
 import { sendNotification, getMyNotifications, Notification as NotifItem } from "../services/notificationService";
 import { getOperationLogs, OperationLog } from "../services/logService";
 import { getAllConfigs, batchUpdateConfigs, SystemConfig } from "../services/configService";
@@ -4568,6 +4568,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [showTAConfigModal, setShowTAConfigModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [classFilter, setClassFilter] = useState("");
   const [newClass, setNewClass] = useState({ name: "", course: "", semester: "" });
   const [newStudent, setNewStudent] = useState({ studentNo: "", name: "", password: "" });
   const [selectedTA, setSelectedTA] = useState<string>("");
@@ -4602,7 +4603,11 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
   }, [selectedClassId]);
 
   const students = studentList;
-  const filteredStudents = studentList.filter(s => s.studentNo?.includes(searchQuery) || s.name?.includes(searchQuery));
+  const classOptions = Array.from(new Set(studentList.map(s => s.className).filter((c): c is string => !!c)));
+  const filteredStudents = studentList.filter(s =>
+    (s.studentNo?.includes(searchQuery) || s.name?.includes(searchQuery)) &&
+    (!classFilter || s.className === classFilter)
+  );
 
   const classTAs = teachingAssistants.filter(ta => {
     const perms = taPermissions[ta.staffId];
@@ -4687,8 +4692,8 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
                 <div key={c.id} onClick={() => setSelectedClassId(c.id)} className="bg-card rounded-lg border border-border p-5 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="font-semibold">{c.className}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{c.courseName}</p>
+                      <p className="font-semibold">{c.courseName || c.className}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{c.courseNo || c.semester || ""}</p>
                     </div>
                     <Users size={18} className="text-muted-foreground" />
                   </div>
@@ -4717,6 +4722,13 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
               <ChevronRight size={14} />返回班级列表
             </button>
             <div className="flex items-center gap-3">
+              <select value={classFilter} onChange={e => setClassFilter(e.target.value)}
+                className="px-3 py-2 bg-card border border-border rounded-md text-sm">
+                <option value="">全部班级</option>
+                {classOptions.map(cls => (
+                  <option key={cls} value={cls}>{cls}</option>
+                ))}
+              </select>
               <div className="relative">
                 <Search size={14} className="absolute left-3 top-2.5 text-muted-foreground" />
                 <input type="text" placeholder="搜索学号或姓名..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
@@ -4733,7 +4745,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
 
           <div className="bg-card rounded-lg border border-border overflow-hidden">
             <div className="px-4 py-3 border-b border-border">
-              <h3 className="font-medium text-sm">{classList.find(c => c.id === selectedClassId)?.className} · {classList.find(c => c.id === selectedClassId)?.courseName}</h3>
+              <h3 className="font-medium text-sm">{classList.find(c => c.id === selectedClassId)?.courseName || classList.find(c => c.id === selectedClassId)?.className}</h3>
               <p className="text-xs text-muted-foreground mt-0.5">共 {students.length} 名学生</p>
             </div>
             {loadingStudents ? (
@@ -4745,7 +4757,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
-                    {["学号", "姓名", "性别", "已导入数据", "操作"].map(h => (
+                    {["学号", "姓名", "班级", "性别", "已导入数据", "操作"].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{h}</th>
                     ))}
                   </tr>
@@ -4755,6 +4767,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
                     <tr key={s.studentNo} className="border-b border-border last:border-0 hover:bg-accent/30">
                       <td className="px-4 py-3 font-mono text-xs">{s.studentNo}</td>
                       <td className="px-4 py-3">{s.name}</td>
+                      <td className="px-4 py-3">{s.className || "—"}</td>
                       <td className="px-4 py-3"><Tag color="gray">{s.gender || "—"}</Tag></td>
                       <td className="px-4 py-3">
                         <span className="text-xs text-muted-foreground">{s.college || "—"} · {s.major || "—"}</span>
@@ -4767,7 +4780,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
                   ))}
                   {filteredStudents.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">暂无学生</td>
+                      <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">暂无学生</td>
                     </tr>
                   )}
                 </tbody>
@@ -10458,8 +10471,11 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
   const [createStep, setCreateStep] = useState(1);
   const [examInfo, setExamInfo] = useState({ name: "", courseId: null as number | null, startTime: "", endTime: "" });
   const [courses, setCourses] = useState<ClassVO[]>([]);
-  const [myClasses, setMyClasses] = useState<ClsVO[]>([]);
-  const [selectedClassIds, setSelectedClassIds] = useState<number[]>([]);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
+  const [students, setStudents] = useState<StudentVO[]>([]);
+  const [studentsLoading, setStudentsLoading] = useState(false);
+  const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
+  const editStudentIdsRef = useRef<number[] | null>(null);
   const [bankQuestions, setBankQuestions] = useState<QuestionBank[]>([]);
   const [knowledgeTree, setKnowledgeTree] = useState<KnowledgePoint[]>([]);
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<number[]>([]);
@@ -10468,7 +10484,6 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
   // Step 2 筛选条件
   const [filterType, setFilterType] = useState<string | null>(null);
   const [filterDifficulty, setFilterDifficulty] = useState<string | null>(null);
-  const [filterSource, setFilterSource] = useState<string | null>(null); // "AI" | "MANUAL"
   const [filterKnowledge, setFilterKnowledge] = useState<string | null>(null);
 
   // Step 3 可编辑题目快照
@@ -10477,6 +10492,20 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
   const [selectedExam, setSelectedExam] = useState<number | null>(null);
   const [results, setResults] = useState<ExamResultDTO | null>(null);
   const [loadingResults, setLoadingResults] = useState(false);
+
+  // 编辑模式
+  const [editingPaperId, setEditingPaperId] = useState<number | null>(null);
+
+  // 批阅模式
+  const [gradingPaperId, setGradingPaperId] = useState<number | null>(null);
+  const [gradingPaper, setGradingPaper] = useState<PaperGradingVO | null>(null);
+  const [gradingLoading, setGradingLoading] = useState(false);
+  const [activeStudentIdx, setActiveStudentIdx] = useState(0);
+  const [gradeInputs, setGradeInputs] = useState<Record<number, { score: string; comment: string }>>({});
+
+  // 结果排序
+  const [sortKey, setSortKey] = useState<"score" | "studentNo" | "submitTime" | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const [toast, setToast] = useState<string | null>(null);
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
@@ -10491,7 +10520,6 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
 
   useEffect(loadPapers, []);
   useEffect(() => { getMyCourses().then(data => setCourses(data || [])).catch(() => setCourses([])); }, []);
-  useEffect(() => { getMyClasses().then(data => setMyClasses(data || [])).catch(() => setMyClasses([])); }, []);
 
   useEffect(() => {
     if (!examInfo.courseId) { setBankQuestions([]); setKnowledgeTree([]); return; }
@@ -10503,6 +10531,24 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
     getKnowledgeTree(examInfo.courseId)
       .then(data => setKnowledgeTree(data || []))
       .catch(() => setKnowledgeTree([]));
+  }, [examInfo.courseId]);
+
+  useEffect(() => {
+    if (!examInfo.courseId) { setStudents([]); setSelectedStudentIds([]); return; }
+    setStudentsLoading(true);
+    getClassStudents(examInfo.courseId)
+      .then(data => {
+        const list = data || [];
+        setStudents(list);
+        if (editStudentIdsRef.current !== null) {
+          setSelectedStudentIds(editStudentIdsRef.current);
+          editStudentIdsRef.current = null;
+        } else {
+          setSelectedStudentIds(list.map(s => s.studentId));
+        }
+      })
+      .catch(() => { setStudents([]); setSelectedStudentIds([]); })
+      .finally(() => setStudentsLoading(false));
   }, [examInfo.courseId]);
 
   const stemOf = (q: QuestionBank): string => {
@@ -10549,12 +10595,12 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
   const knowledgeOptions = flattenKnowledge(knowledgeTree);
 
   const questionTypes = [
-    { value: "SINGLE", label: "单选" },
-    { value: "MULTI", label: "多选" },
-    { value: "FILL", label: "填空" },
-    { value: "SHORT", label: "简答" },
-    { value: "COMPREHENSIVE", label: "综合" },
-    { value: "TRUE_FALSE", label: "判断" },
+    { value: "SINGLE", label: "单选题" },
+    { value: "MULTI", label: "多选题" },
+    { value: "TRUE_FALSE", label: "判断题" },
+    { value: "FILL", label: "填空题" },
+    { value: "SHORT", label: "简答题" },
+    { value: "COMPREHENSIVE", label: "综合题" },
   ];
   const difficulties = [
     { value: "EASY", label: "简单" },
@@ -10565,11 +10611,6 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
   const filteredQuestions = bankQuestions.filter(q => {
     if (filterType && q.questionType !== filterType) return false;
     if (filterDifficulty && q.difficulty !== filterDifficulty) return false;
-    if (filterSource) {
-      const ai = q.aiGenerated === 1 ? 1 : 0;
-      if (filterSource === "AI" && ai !== 1) return false;
-      if (filterSource === "MANUAL" && ai !== 0) return false;
-    }
     if (filterKnowledge) {
       const kps = (q.knowledgePoints || "").split(/[,，、]/).map(s => s.trim()).filter(Boolean);
       if (!kps.includes(filterKnowledge)) return false;
@@ -10577,9 +10618,12 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
     return true;
   });
 
-  const toggleClass = (id: number) => {
-    setSelectedClassIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleStudent = (id: number) => {
+    setSelectedStudentIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
+
+  const selectAllStudents = () => setSelectedStudentIds(students.map(s => s.studentId));
+  const clearStudents = () => setSelectedStudentIds([]);
 
   const buildEditable = (ids: number[]) => {
     const list = ids
@@ -10622,10 +10666,28 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
       : q)));
   };
 
+  const relabelOptions = (options: { label: string; text: string }[]) =>
+    options.map((o, i) => ({ ...o, label: String.fromCharCode(65 + i) }));
+
+  const addOption = (qIdx: number) => {
+    setEditable(prev => prev.map((q, i) => (i === qIdx
+      ? { ...q, options: relabelOptions([...q.options, { label: "", text: "" }]) }
+      : q)));
+  };
+
+  const removeOption = (qIdx: number, optIdx: number) => {
+    setEditable(prev => prev.map((q, i) => (i === qIdx
+      ? { ...q, options: relabelOptions(q.options.filter((_, j) => j !== optIdx)) }
+      : q)));
+  };
+
   const typeLabel = (t?: string) => {
-    const map: Record<string, string> = { SINGLE: "单选", MULTI: "多选", FILL: "填空", SHORT: "简答", COMPREHENSIVE: "综合", TRUE_FALSE: "判断" };
+    const map: Record<string, string> = { SINGLE: "单选题", MULTI: "多选题", TRUE_FALSE: "判断题", FILL: "填空题", SHORT: "简答题", COMPREHENSIVE: "综合题" };
     return map[t || ""] || t || "未知";
   };
+
+  const isChoiceType = (t?: string) => ["SINGLE", "MULTI", "TRUE_FALSE"].includes(t || "");
+  const isObjectiveType = (t?: string) => ["SINGLE", "MULTI", "FILL", "TRUE_FALSE"].includes(t || "");
 
   const diffTag = (d?: string) => {
     if (d === "EASY") return <Tag color="green">简单</Tag>;
@@ -10635,7 +10697,7 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
 
   const statusTag = (s?: string) => {
     if (s === "PUBLISHED") return <Tag color="green">已发布</Tag>;
-    if (s === "CLOSED") return <Tag color="gray">已结束</Tag>;
+    if (s === "ENDED") return <Tag color="gray">已结束</Tag>;
     return <Tag color="yellow">草稿</Tag>;
   };
 
@@ -10644,11 +10706,13 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
   };
 
   const openWizard = () => {
+    setEditingPaperId(null);
     setSelectedQuestionIds([...selectedQuizQuestions]);
-    setSelectedClassIds([]);
+    setSelectedStudentIds([]);
+    setStudents([]);
+    editStudentIdsRef.current = null;
     setFilterType(null);
     setFilterDifficulty(null);
-    setFilterSource(null);
     setFilterKnowledge(null);
     setEditable([]);
     setShowCreateWizard(true);
@@ -10658,12 +10722,14 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
   const resetWizard = () => {
     setShowCreateWizard(false);
     setCreateStep(1);
+    setEditingPaperId(null);
     setExamInfo({ name: "", courseId: null, startTime: "", endTime: "" });
     setSelectedQuestionIds([]);
-    setSelectedClassIds([]);
+    setSelectedStudentIds([]);
+    setStudents([]);
+    editStudentIdsRef.current = null;
     setFilterType(null);
     setFilterDifficulty(null);
-    setFilterSource(null);
     setFilterKnowledge(null);
     setEditable([]);
     setBankQuestions([]);
@@ -10677,7 +10743,7 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
       if (!examInfo.courseId) { showToastMsg("请选择课程"); return; }
       if (!examInfo.startTime || !examInfo.endTime) { showToastMsg("请设置开始与结束时间"); return; }
       setCreateStep(2);
-    } else if (createStep === 2) {
+    } else if (createStep === 2 && !editingPaperId) {
       if (selectedQuestionIds.length === 0) { showToastMsg("请至少选择一道题目"); return; }
       buildEditable(selectedQuestionIds);
       setCreateStep(3);
@@ -10693,10 +10759,7 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
     const end = new Date(examInfo.endTime).getTime();
     const durationMinutes = Math.max(1, Math.round((end - start) / 60000));
     const totalScore = editable.reduce((sum, q) => sum + (q.score || 0), 0);
-    const targetClasses = selectedClassIds
-      .map(id => myClasses.find(c => c.id === id)?.className)
-      .filter(Boolean)
-      .join(",");
+    const targetStudents = selectedStudentIds.join(",");
     const questions = editable.map((q, idx) => {
       const contentObj: Record<string, unknown> = { stem: q.stem };
       if (q.options.length > 0) contentObj.options = q.options.map(o => ({ label: o.label, text: o.text }));
@@ -10717,7 +10780,7 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
         durationMinutes,
         startTime: examInfo.startTime,
         endTime: examInfo.endTime,
-        targetClasses: targetClasses || undefined,
+        targetStudents: targetStudents || undefined,
         questions,
       });
       showToastMsg("试卷创建成功");
@@ -10725,6 +10788,86 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
       loadPapers();
     } catch (e) {
       showToastMsg(e instanceof Error ? e.message : "创建失败");
+    }
+  };
+
+  const openEdit = async (id: number) => {
+    setEditingPaperId(id);
+    setSelectedQuestionIds([]);
+    setFilterType(null);
+    setFilterDifficulty(null);
+    setFilterKnowledge(null);
+    try {
+      const paper = await getExamPaperById(id);
+      setExamInfo({
+        name: paper.paperName || "",
+        courseId: paper.courseId ?? null,
+        startTime: paper.startTime ? paper.startTime.slice(0, 16) : "",
+        endTime: paper.endTime ? paper.endTime.slice(0, 16) : "",
+      });
+      editStudentIdsRef.current = paper.targetStudents
+        ? paper.targetStudents.split(",").map(s => s.trim()).filter(Boolean).map(Number)
+        : null;
+      const qs = await getPaperQuestions(id);
+      setEditable(qs.map(q => ({
+        questionId: q.questionId,
+        questionType: q.questionType || "",
+        score: Number(q.score) || 0,
+        stem: q.stem || "",
+        options: (q.options && q.options.length > 0)
+          ? q.options.map(o => ({ label: o.label, text: o.text }))
+          : (isChoiceType(q.questionType) ? [{ label: "A", text: "" }, { label: "B", text: "" }, { label: "C", text: "" }, { label: "D", text: "" }] : []),
+        answer: q.answer || "",
+        analysis: q.analysis || "",
+        knowledgePoints: q.knowledgePoints,
+      })));
+      setShowCreateWizard(true);
+      setCreateStep(1);
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "加载试卷失败");
+      setEditingPaperId(null);
+    }
+  };
+
+  const handleUpdateExam = async () => {
+    if (!examInfo.name.trim()) { showToastMsg("请输入试卷名称"); return; }
+    if (!examInfo.courseId) { showToastMsg("请选择课程"); return; }
+    if (!examInfo.startTime || !examInfo.endTime) { showToastMsg("请设置开始与结束时间"); return; }
+    if (editable.length === 0) { showToastMsg("试卷至少需要一道题目"); return; }
+    const start = new Date(examInfo.startTime).getTime();
+    const end = new Date(examInfo.endTime).getTime();
+    const durationMinutes = Math.max(1, Math.round((end - start) / 60000));
+    const totalScore = editable.reduce((sum, q) => sum + (q.score || 0), 0);
+    const targetStudents = selectedStudentIds.join(",");
+    const questions = editable.map((q, idx) => {
+      const contentObj: Record<string, unknown> = { stem: q.stem };
+      if (q.options.length > 0) contentObj.options = q.options.map(o => ({ label: o.label, text: o.text }));
+      contentObj.answer = q.answer;
+      if (q.analysis) contentObj.analysis = q.analysis;
+      return {
+        questionId: q.questionId,
+        questionNo: idx + 1,
+        score: q.score || 0,
+        content: JSON.stringify(contentObj),
+      };
+    });
+    try {
+      await updateExamPaper(editingPaperId!, {
+        paperName: examInfo.name.trim(),
+        courseId: examInfo.courseId,
+        totalScore,
+        durationMinutes,
+        startTime: examInfo.startTime,
+        endTime: examInfo.endTime,
+        targetStudents: targetStudents || undefined,
+        questions,
+      });
+      showToastMsg("试卷已保存");
+      setEditingPaperId(null);
+      resetWizard();
+      loadPapers();
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "保存失败");
     }
   };
 
@@ -10752,10 +10895,251 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
     catch (e) { showToastMsg(e instanceof Error ? e.message : "删除失败"); }
   };
 
+  const openGrading = (id: number) => {
+    setGradingPaperId(id);
+    setGradingPaper(null);
+    setGradingLoading(true);
+    setActiveStudentIdx(0);
+    setGradeInputs({});
+    getPaperGrading(id)
+      .then(data => setGradingPaper(data))
+      .catch(e => showToastMsg(e instanceof Error ? e.message : "加载批阅失败"))
+      .finally(() => setGradingLoading(false));
+  };
+
+  const closeGrading = () => { setGradingPaperId(null); setGradingPaper(null); };
+
+  const selectGradingStudent = (idx: number) => { setActiveStudentIdx(idx); setGradeInputs({}); };
+
+  const updateGradeInput = (answerId: number, patch: Partial<{ score: string; comment: string }>) => {
+    setGradeInputs(prev => ({ ...prev, [answerId]: { score: "", comment: "", ...(prev[answerId] || {}), ...patch } }));
+  };
+
+  const submitGrading = async (recordId: number) => {
+    const grades: StudentGradeItem[] = Object.entries(gradeInputs)
+      .filter(([, v]) => v.score !== "" && !Number.isNaN(Number(v.score)))
+      .map(([answerId, v]) => ({ answerId: Number(answerId), score: Number(v.score), comment: v.comment || undefined }));
+    if (grades.length === 0) { showToastMsg("请先对主观题评分"); return; }
+    try {
+      const total = await submitStudentGrade(recordId, grades);
+      showToastMsg(`批阅完成，该生总分 ${total}`);
+      setGradeInputs({});
+      setGradingLoading(true);
+      const data = await getPaperGrading(gradingPaperId!);
+      setGradingPaper(data);
+      setGradingLoading(false);
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "提交失败");
+    }
+  };
+
+  const toggleSort = (key: "score" | "studentNo" | "submitTime") => {
+    if (sortKey === key) setSortDir(d => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("desc"); }
+  };
+
+  const sortIndicator = (key: "score" | "studentNo" | "submitTime") => {
+    if (sortKey !== key) return null;
+    return sortDir === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />;
+  };
+
   const fmtTime = (t?: string) => (t ? t.replace("T", " ").slice(0, 16) : "—");
+
+  const durationLabel = (start?: string, end?: string): string => {
+    if (!start || !end) return "";
+    const ms = new Date(end).getTime() - new Date(start).getTime();
+    if (ms <= 0) return "";
+    const minutes = Math.round(ms / 60000);
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h > 0 && m > 0) return `（${h}小时${m}分钟）`;
+    if (h > 0) return `（${h}小时）`;
+    return `（${m}分钟）`;
+  };
+
+  const courseCell = (p: ExamPaper) => {
+    const c = courses.find(x => x.id === p.courseId);
+    const name = c?.courseName || c?.className || p.courseName;
+    if (!name) return "—";
+    return (
+      <>
+        {name}
+        {c?.semester && <span className="ml-1.5 text-xs text-muted-foreground">{c.semester}</span>}
+      </>
+    );
+  };
+
+  const selectedCourse = courses.find(c => c.id === examInfo.courseId);
+
+  const renderPapers = (list: ExamPaper[]) => (
+    <div className="bg-card rounded-lg border border-border overflow-hidden">
+      {list.length === 0 ? (
+        <div className="p-8 text-center text-sm text-muted-foreground">暂无</div>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/50">
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">试卷名称</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">课程</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">起止时间</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">状态</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.map(p => (
+              <tr key={p.id} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
+                <td className="px-4 py-3 font-medium">{p.paperName}</td>
+                <td className="px-4 py-3 text-muted-foreground">{courseCell(p)}</td>
+                <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{fmtTime(p.startTime)} ~ {fmtTime(p.endTime)}{durationLabel(p.startTime, p.endTime)}</td>
+                <td className="px-4 py-3">{statusTag(p.status)}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {p.status === "DRAFT" && (
+                      <>
+                        <button onClick={() => openEdit(p.id)} className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"><Edit2 size={14} />编辑</button>
+                        <button onClick={() => handlePublish(p.id)} className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:underline"><Play size={14} />发布</button>
+                        <button onClick={() => handleDelete(p.id)} className="inline-flex items-center gap-1 text-xs text-red-600 hover:underline"><Trash2 size={14} />删除</button>
+                      </>
+                    )}
+                    {p.status === "PUBLISHED" && (
+                      <button onClick={() => handleClose(p.id)} className="inline-flex items-center gap-1 text-xs text-orange-600 hover:underline"><Clock size={14} />结束</button>
+                    )}
+                    {p.status === "ENDED" && (
+                      <>
+                        <button onClick={() => openGrading(p.id)} className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"><FileSearch size={14} />批阅({p.ungradedCount ?? 0})</button>
+                        <button onClick={() => openResults(p.id)} className="inline-flex items-center gap-1 text-xs text-purple-600 hover:underline"><Eye size={14} />结果</button>
+                        <button onClick={() => handleDelete(p.id)} className="inline-flex items-center gap-1 text-xs text-red-600 hover:underline"><Trash2 size={14} />删除</button>
+                      </>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+
+  // ===== 批阅视图 =====
+  if (gradingPaperId !== null) {
+    const students = gradingPaper?.students || [];
+    const active = students[activeStudentIdx];
+    return (
+      <div className="space-y-5">
+        {toast && (
+          <div className="fixed top-20 right-6 z-50 px-4 py-3 bg-primary text-white text-sm rounded-lg shadow-lg animate-[fadeIn_0.2s_ease-out]">
+            <div className="flex items-center gap-2"><CheckCircle size={14} />{toast}</div>
+          </div>
+        )}
+        <button onClick={closeGrading} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ChevronLeft size={16} /> 返回试卷列表
+        </button>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">{gradingPaper?.paperName || "批阅"} · 批阅</h2>
+          <span className="text-sm text-muted-foreground">满分 {gradingPaper?.totalScore ?? 0}</span>
+        </div>
+        {gradingLoading ? (
+          <div className="bg-card rounded-lg border border-border p-10 text-center text-sm text-muted-foreground">加载中…</div>
+        ) : students.length === 0 ? (
+          <div className="bg-card rounded-lg border border-border p-10 text-center text-sm text-muted-foreground">暂无学生交卷</div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div className="lg:col-span-1 bg-card rounded-lg border border-border p-2 space-y-1 max-h-[70vh] overflow-y-auto">
+              {students.map((s, i) => (
+                <button key={s.recordId} onClick={() => selectGradingStudent(i)} className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${i === activeStudentIdx ? "bg-primary/10 border border-primary/30" : "hover:bg-accent/50 border border-transparent"}`}>
+                  <div className="font-medium">{s.studentName || `学生${s.studentId}`}</div>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="text-xs text-muted-foreground font-mono">{s.studentNo || "—"}</span>
+                    {s.pendingCount > 0 ? <Tag color="orange">未批 {s.pendingCount}</Tag> : <Tag color="green">已批</Tag>}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="lg:col-span-3 space-y-3">
+              {active ? (
+                <>
+                  <div className="bg-card rounded-lg border border-border p-4 flex items-center gap-4 flex-wrap">
+                    <div>
+                      <span className="text-sm font-semibold">{active.studentName}</span>
+                      <span className="text-xs text-muted-foreground font-mono ml-2">{active.studentNo || "—"}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">客观题得分 <span className="font-mono text-foreground">{active.objectiveScore ?? 0}</span></div>
+                    <div className="text-xs text-muted-foreground">当前总分 <span className="font-mono text-foreground">{active.totalScore ?? 0}</span></div>
+                    <div className="text-xs text-muted-foreground">交卷时间 <span className="font-mono">{fmtTime(active.submitTime)}</span></div>
+                  </div>
+                  {active.questions.map(q => {
+                    const objective = isObjectiveType(q.questionType);
+                    const graded = q.graded === 1;
+                    const g = gradeInputs[q.answerId];
+                    return (
+                      <div key={q.answerId} className="bg-card rounded-lg border border-border p-4 space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold">第 {q.questionNo} 题</span>
+                          <Tag color="blue">{typeLabel(q.questionType)}</Tag>
+                          <span className="text-xs text-muted-foreground">满分 {q.maxScore ?? 0}</span>
+                          {graded && <Tag color="green">已批</Tag>}
+                        </div>
+                        <p className="text-sm">{q.stem}</p>
+                        {(q.options || []).length > 0 && (
+                          <div className="space-y-0.5">
+                            {(q.options || []).map(o => (
+                              <p key={o.label} className="text-xs text-muted-foreground">{o.label}. {o.text}</p>
+                            ))}
+                          </div>
+                        )}
+                        <div className="text-xs">
+                          <span className="text-muted-foreground">学生答案：</span>
+                          <span className="font-medium">{q.studentAnswer || "（未作答）"}</span>
+                        </div>
+                        {objective ? (
+                          <>
+                            <div className="text-xs"><span className="text-muted-foreground">正确答案：</span><span className="font-medium text-green-600">{q.correctAnswer || "—"}</span></div>
+                            <div className="text-xs"><span className="text-muted-foreground">得分：</span><span className="font-medium">{q.score ?? 0}</span></div>
+                          </>
+                        ) : graded ? (
+                          <div className="text-xs space-y-1">
+                            <div><span className="text-muted-foreground">已评分数：</span><span className="font-medium">{q.score ?? 0}</span></div>
+                            {q.comment && <div><span className="text-muted-foreground">评语：</span><span>{q.comment}</span></div>}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3 pt-1 flex-wrap">
+                            <label className="text-xs text-muted-foreground whitespace-nowrap">评分（0~{q.maxScore ?? 0}）</label>
+                            <input type="number" min={0} max={q.maxScore ?? undefined} value={g?.score ?? ""} onChange={e => updateGradeInput(q.answerId, { score: e.target.value })} className="w-24 px-2 py-1 border border-border rounded-md text-sm" />
+                            <input placeholder="评语（可选）" value={g?.comment ?? ""} onChange={e => updateGradeInput(q.answerId, { comment: e.target.value })} className="flex-1 min-w-[160px] px-2 py-1 border border-border rounded-md text-sm" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {active.pendingCount > 0 && (
+                    <div className="flex justify-end">
+                      <button onClick={() => submitGrading(active.recordId)} className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">确认完成（汇总总分）</button>
+                    </div>
+                  )}
+                </>
+              ) : null}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // ===== 结果视图 =====
   if (selectedExam !== null) {
+    const sortedStudents = [...(results?.studentScores || [])].sort((a, b) => {
+      if (!sortKey) return 0;
+      const dir = sortDir === "asc" ? 1 : -1;
+      if (sortKey === "studentNo") return (a.studentNo || "").localeCompare(b.studentNo || "") * dir;
+      if (sortKey === "submitTime") {
+        const ta = a.submitTime ? new Date(a.submitTime).getTime() : -Infinity;
+        const tb = b.submitTime ? new Date(b.submitTime).getTime() : -Infinity;
+        return (ta - tb) * dir;
+      }
+      return ((a.totalScore ?? 0) - (b.totalScore ?? 0)) * dir;
+    });
     return (
       <div className="space-y-5">
         {toast && (
@@ -10784,22 +11168,28 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
-                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">学号</th>
+                    <th onClick={() => toggleSort("studentNo")} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground">
+                      <span className="inline-flex items-center gap-1">学号{sortIndicator("studentNo")}</span>
+                    </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">姓名</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">总分</th>
+                    <th onClick={() => toggleSort("score")} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground">
+                      <span className="inline-flex items-center gap-1">分数{sortIndicator("score")}</span>
+                    </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">状态</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">交卷时间</th>
+                    <th onClick={() => toggleSort("submitTime")} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground">
+                      <span className="inline-flex items-center gap-1">交卷时间{sortIndicator("submitTime")}</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {(results.studentScores || []).length === 0 ? (
-                    <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">暂无学生交卷</td></tr>
+                  {sortedStudents.length === 0 ? (
+                    <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">暂无学生</td></tr>
                   ) : (
-                    (results.studentScores || []).map(s => (
+                    sortedStudents.map(s => (
                       <tr key={s.studentId} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
                         <td className="px-4 py-3 font-mono text-xs">{s.studentNo || "—"}</td>
                         <td className="px-4 py-3 font-medium">{s.name || `学生${s.studentId}`}</td>
-                        <td className="px-4 py-3 font-mono">{s.totalScore ?? "—"}</td>
+                        <td className="px-4 py-3 font-mono">{s.submitStatus === "SUBMITTED" ? (s.totalScore ?? 0) : 0}</td>
                         <td className="px-4 py-3">{s.submitStatus === "SUBMITTED" ? <Tag color="green">已交卷</Tag> : <Tag color="gray">未交卷</Tag>}</td>
                         <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{fmtTime(s.submitTime)}</td>
                       </tr>
@@ -10833,13 +11223,14 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
       {showCreateWizard && (
         <div className="bg-card rounded-lg border border-border p-5 space-y-4">
           <div className="flex items-center gap-2">
-            {["基本信息", "选择题目", "确认发布"].map((label, idx) => {
+            {(editingPaperId ? ["基本信息", "编辑试卷"] : ["基本信息", "选择题目", "确认发布"]).map((label, idx) => {
               const step = idx + 1;
+              const total = editingPaperId ? 2 : 3;
               return (
                 <div key={label} className="flex items-center gap-2">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${createStep >= step ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}>{step}</div>
                   <span className={`text-sm ${createStep >= step ? "text-foreground font-medium" : "text-muted-foreground"}`}>{label}</span>
-                  {step < 3 && <div className="w-8 h-px bg-border" />}
+                  {step < total && <div className="w-8 h-px bg-border" />}
                 </div>
               );
             })}
@@ -10853,10 +11244,33 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
               </div>
               <div>
                 <label className="text-sm font-medium block mb-1">选择课程</label>
-                <select value={examInfo.courseId ?? ""} onChange={e => setExamInfo({ ...examInfo, courseId: e.target.value ? Number(e.target.value) : null })} className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background">
-                  <option value="">请选择课程</option>
-                  {courses.map(c => <option key={c.id} value={c.id}>{c.courseName || c.className || `课程 ${c.id}`}</option>)}
-                </select>
+                <div className="relative">
+                  <button type="button" onClick={() => setCourseDropdownOpen(o => !o)} className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background flex items-center justify-between gap-2">
+                    <span className="truncate">
+                      {selectedCourse ? (
+                        <>{selectedCourse.courseName || selectedCourse.className || `课程 ${selectedCourse.id}`}<span className="ml-1.5 text-xs text-muted-foreground">{selectedCourse.semester}</span></>
+                      ) : (
+                        <span className="text-muted-foreground">请选择课程</span>
+                      )}
+                    </span>
+                    <ChevronDown size={14} className="text-muted-foreground shrink-0" />
+                  </button>
+                  {courseDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setCourseDropdownOpen(false)} />
+                      <div className="absolute z-20 mt-1 w-full bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        {courses.length === 0 ? (
+                          <p className="px-3 py-2 text-sm text-muted-foreground text-center">暂无课程</p>
+                        ) : courses.map(c => (
+                          <button key={c.id} type="button" onClick={() => { setExamInfo({ ...examInfo, courseId: c.id }); setCourseDropdownOpen(false); }} className={`w-full text-left px-3 py-2 text-sm hover:bg-accent/40 ${examInfo.courseId === c.id ? "bg-primary/5" : ""}`}>
+                            <span>{c.courseName || c.className || `课程 ${c.id}`}</span>
+                            {c.semester && <span className="ml-1.5 text-xs text-muted-foreground">{c.semester}</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -10869,31 +11283,41 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
                 </div>
               </div>
               <div className="md:col-span-2">
-                <label className="text-sm font-medium block mb-1">选择班级（多选）</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium">选择学生</label>
+                  {students.length > 0 && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <button type="button" onClick={selectAllStudents} className="text-blue-600 hover:underline">全选</button>
+                      <button type="button" onClick={clearStudents} className="text-blue-600 hover:underline">取消全选</button>
+                    </div>
+                  )}
+                </div>
                 <div className="border border-border rounded-md p-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-44 overflow-y-auto">
-                  {myClasses.length === 0 ? (
-                    <p className="text-sm text-muted-foreground col-span-full py-2 text-center">暂无班级数据</p>
+                  {studentsLoading ? (
+                    <p className="text-sm text-muted-foreground col-span-full py-2 text-center">加载学生中…</p>
+                  ) : students.length === 0 ? (
+                    <p className="text-sm text-muted-foreground col-span-full py-2 text-center">{examInfo.courseId ? "该课程暂无学生" : "请先选择课程"}</p>
                   ) : (
-                    myClasses.map(c => {
-                      const checked = selectedClassIds.includes(c.id);
+                    students.map(s => {
+                      const checked = selectedStudentIds.includes(s.studentId);
                       return (
-                        <label key={c.id} className={`flex items-center gap-2 text-sm cursor-pointer rounded px-2 py-1.5 transition-colors ${checked ? "bg-primary/5" : "hover:bg-accent/40"}`}>
-                          <input type="checkbox" checked={checked} onChange={() => toggleClass(c.id)} />
-                          <span>{c.className}</span>
-                          {c.courseName && <span className="text-xs text-muted-foreground truncate">({c.courseName})</span>}
+                        <label key={s.studentId} className={`flex items-center gap-2 text-sm cursor-pointer rounded px-2 py-1.5 transition-colors ${checked ? "bg-primary/5" : "hover:bg-accent/40"}`}>
+                          <input type="checkbox" checked={checked} onChange={() => toggleStudent(s.studentId)} />
+                          <span className="truncate">{s.name}</span>
+                          <span className="text-xs text-muted-foreground shrink-0">{s.studentNo}</span>
                         </label>
                       );
                     })
                   )}
                 </div>
-                {selectedClassIds.length > 0 && <p className="text-xs text-muted-foreground mt-1">已选 {selectedClassIds.length} 个班级</p>}
+                {students.length > 0 && <p className="text-xs text-muted-foreground mt-1">已选 {selectedStudentIds.length} / {students.length} 名学生</p>}
               </div>
             </div>
           )}
 
-          {createStep === 2 && (
+          {createStep === 2 && !editingPaperId && (
             <div className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">题型筛选</label>
                   <div className="flex flex-wrap gap-1">
@@ -10912,13 +11336,6 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
                         {d.label}
                       </button>
                     ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground block mb-1">来源筛选</label>
-                  <div className="flex flex-wrap gap-1">
-                    <button onClick={() => setFilterSource(filterSource === "AI" ? null : "AI")} className={`px-2 py-1 text-xs rounded-full transition-colors ${filterSource === "AI" ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-accent"}`}>AI生成</button>
-                    <button onClick={() => setFilterSource(filterSource === "MANUAL" ? null : "MANUAL")} className={`px-2 py-1 text-xs rounded-full transition-colors ${filterSource === "MANUAL" ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-accent"}`}>手动录入</button>
                   </div>
                 </div>
                 <div>
@@ -10966,12 +11383,12 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
             </div>
           )}
 
-          {createStep === 3 && (
+          {createStep === (editingPaperId ? 2 : 3) && (
             <div className="space-y-3">
               <div className="rounded-md bg-muted/50 p-3 text-sm space-y-1">
                 <p><span className="text-muted-foreground">试卷：</span>{examInfo.name}</p>
                 <p><span className="text-muted-foreground">课程：</span>{courses.find(c => c.id === examInfo.courseId)?.courseName || courses.find(c => c.id === examInfo.courseId)?.className || `课程 ${examInfo.courseId}`}</p>
-                <p><span className="text-muted-foreground">班级：</span>{selectedClassIds.length > 0 ? selectedClassIds.map(id => myClasses.find(c => c.id === id)?.className).filter(Boolean).join("、") : "未选择"}</p>
+                <p><span className="text-muted-foreground">学生：</span>{selectedStudentIds.length > 0 ? `已选 ${selectedStudentIds.length} 名学生` : "未选择"}</p>
                 <p><span className="text-muted-foreground">时间：</span>{fmtTime(examInfo.startTime)} ~ {fmtTime(examInfo.endTime)}</p>
                 <p><span className="text-muted-foreground">题目：</span>{editable.length} 道，共 {editable.reduce((s, q) => s + (q.score || 0), 0)} 分</p>
               </div>
@@ -11001,13 +11418,17 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
                       <textarea value={q.stem} onChange={e => updateEditable(idx, { stem: e.target.value })} rows={3} className="w-full px-3 py-2 border border-border rounded-md text-sm resize-none" />
                     </div>
 
-                    {q.options.length > 0 && (
+                    {isChoiceType(q.questionType) && (
                       <div className="space-y-1">
-                        <label className="text-xs text-muted-foreground block mb-1">选项</label>
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs text-muted-foreground block mb-1">选项</label>
+                          <button onClick={() => addOption(idx)} className="text-xs text-blue-600 hover:underline">+ 添加选项</button>
+                        </div>
                         {q.options.map((o, oi) => (
-                          <div key={o.label} className="flex items-center gap-2">
+                          <div key={oi} className="flex items-center gap-2">
                             <span className="text-sm font-medium w-5 text-center">{o.label}.</span>
                             <input value={o.text} onChange={e => updateOptionText(idx, oi, e.target.value)} className="flex-1 px-2 py-1 border border-border rounded-md text-sm" />
+                            <button onClick={() => removeOption(idx, oi)} className="p-1 text-red-500 hover:bg-red-50 rounded" title="删除选项"><X size={14} /></button>
                           </div>
                         ))}
                       </div>
@@ -11027,10 +11448,10 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
             <button onClick={() => { if (createStep === 1) resetWizard(); else setCreateStep(s => s - 1); }} className="px-3 py-2 rounded-md text-sm border border-border hover:bg-accent/50">
               {createStep === 1 ? "取消" : "上一步"}
             </button>
-            {createStep < 3 ? (
+            {createStep < (editingPaperId ? 2 : 3) ? (
               <button onClick={goNext} className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">下一步</button>
             ) : (
-              <button onClick={handleCreateExam} className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">创建并发布</button>
+              <button onClick={editingPaperId ? handleUpdateExam : handleCreateExam} className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">{editingPaperId ? "保存修改" : "创建并发布"}</button>
             )}
           </div>
         </div>
@@ -11044,41 +11465,16 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
           <p className="text-sm text-muted-foreground">暂无试卷，点击右上角「创建考试」</p>
         </div>
       ) : (
-        <div className="bg-card rounded-lg border border-border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">试卷名称</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">课程</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">起止时间</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">状态</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {papers.map(p => (
-                <tr key={p.id} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
-                  <td className="px-4 py-3 font-medium">{p.paperName}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{p.courseName || "—"}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{fmtTime(p.startTime)} ~ {fmtTime(p.endTime)}</td>
-                  <td className="px-4 py-3">{statusTag(p.status)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => openResults(p.id)} className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"><Eye size={14} />结果</button>
-                      {p.status !== "PUBLISHED" && (
-                        <button onClick={() => handlePublish(p.id)} className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:underline"><Play size={14} />发布</button>
-                      )}
-                      {p.status === "PUBLISHED" && (
-                        <button onClick={() => handleClose(p.id)} className="inline-flex items-center gap-1 text-xs text-orange-600 hover:underline"><Clock size={14} />结束</button>
-                      )}
-                      <button onClick={() => handleDelete(p.id)} className="inline-flex items-center gap-1 text-xs text-red-600 hover:underline"><Trash2 size={14} />删除</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-foreground">草稿</h3>
+            {renderPapers(papers.filter(p => p.status === "DRAFT"))}
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-foreground">已发布 / 已结束</h3>
+            {renderPapers(papers.filter(p => p.status === "PUBLISHED" || p.status === "ENDED"))}
+          </div>
+        </>
       )}
     </div>
   );

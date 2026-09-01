@@ -386,6 +386,7 @@ CREATE TABLE `t_exam_paper` (
     `start_time`        DATETIME       DEFAULT NULL,
     `end_time`          DATETIME       DEFAULT NULL,
     `target_classes`    VARCHAR(512)   DEFAULT NULL COMMENT '参与班级(逗号分隔)',
+    `target_students`   VARCHAR(2048)  DEFAULT NULL COMMENT '参与学生(逗号分隔的学生ID)',
     `status`            VARCHAR(16)    DEFAULT 'DRAFT' COMMENT 'DRAFT/PUBLISHED/ONGOING/ENDED',
     `create_time`       DATETIME       DEFAULT CURRENT_TIMESTAMP,
     `deleted`           TINYINT        DEFAULT 0,
@@ -708,24 +709,24 @@ INSERT INTO `t_user` (`username`, `password`, `role`, `first_login`) VALUES
 
 -- 教师账号
 INSERT INTO `t_user` (`username`, `password`, `role`) VALUES
-('T001', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'TEACHER'),
-('T002', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'TEACHER');
+('T00001', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'TEACHER'),
+('T00002', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'TEACHER');
 
 INSERT INTO `t_teacher` (`id`, `user_id`, `teacher_no`, `name`, `gender`, `college`, `department`, `title`, `email`) VALUES
-(2, 2, 'T001', '张建国', '男', '计算机学院', '软件工程系', '教授', 'zjg@university.edu.cn'),
-(3, 3, 'T002', '李美玲', '女', '计算机学院', '网络工程系', '副教授', 'lml@university.edu.cn');
+(2, 2, 'T00001', '张建国', '男', '计算机学院', '软件工程系', '教授', 'zjg@university.edu.cn'),
+(3, 3, 'T00002', '李美玲', '女', '计算机学院', '网络工程系', '副教授', 'lml@university.edu.cn');
 
 -- 助教账号（3名助教，分别关联张建国、李美玲；默认密码 123456）
 -- 权限配置见 simulated_data.sql（依赖课程数据）
 INSERT INTO `t_user` (`username`, `password`, `role`) VALUES
-('A001', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'ASSISTANT'),
-('A002', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'ASSISTANT'),
-('A003', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'ASSISTANT');
+('A00001', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'ASSISTANT'),
+('A00002', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'ASSISTANT'),
+('A00003', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'ASSISTANT');
 
 INSERT INTO `t_teaching_assistant` (`user_id`, `teacher_id`, `name`) VALUES
-((SELECT id FROM t_user WHERE username = 'A001'), (SELECT id FROM t_teacher WHERE teacher_no = 'T001'), '陈明'),
-((SELECT id FROM t_user WHERE username = 'A002'), (SELECT id FROM t_teacher WHERE teacher_no = 'T001'), '赵丽'),
-((SELECT id FROM t_user WHERE username = 'A003'), (SELECT id FROM t_teacher WHERE teacher_no = 'T002'), '王磊');
+((SELECT id FROM t_user WHERE username = 'A00001'), (SELECT id FROM t_teacher WHERE teacher_no = 'T00001'), '陈明'),
+((SELECT id FROM t_user WHERE username = 'A00002'), (SELECT id FROM t_teacher WHERE teacher_no = 'T00001'), '赵丽'),
+((SELECT id FROM t_user WHERE username = 'A00003'), (SELECT id FROM t_teacher WHERE teacher_no = 'T00002'), '王磊');
 
 -- 预警规则预置
 INSERT INTO `t_warning_rule` (`rule_name`, `rule_type`, `threshold`, `severity`, `is_active`, `description`) VALUES

@@ -4,9 +4,12 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.aitaes.dto.ExamPaperCreateDTO;
 import com.example.aitaes.dto.ExamResultDTO;
 import com.example.aitaes.dto.GradingItemVO;
+import com.example.aitaes.dto.PaperGradingVO;
+import com.example.aitaes.dto.PaperQuestionEditVO;
 import com.example.aitaes.dto.StudentExamRecordVO;
 import com.example.aitaes.dto.StudentExamResultVO;
 import com.example.aitaes.dto.StudentExamVO;
+import com.example.aitaes.dto.StudentGradeRequestDTO;
 import com.example.aitaes.dto.SubmitExamResultDTO;
 import com.example.aitaes.entity.ExamPaper;
 import com.example.aitaes.entity.QuestionBank;
@@ -46,6 +49,12 @@ public interface ExamService {
 
     List<GradingItemVO> getGradingList(Long courseId, Long paperId);
     void submitGrade(Long answerId, Long graderUserId, BigDecimal score, String comment);
+    PaperGradingVO getPaperGrading(Long paperId, Long userId);
+    BigDecimal submitStudentGrade(Long recordId, Long graderUserId, List<StudentGradeRequestDTO.GradeItem> grades);
+
+    // ===== 试卷题目（供编辑回填） =====
+
+    List<PaperQuestionEditVO> getPaperQuestions(Long paperId);
 
     // ===== AI 预留接口 =====
 

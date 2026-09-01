@@ -1,6 +1,7 @@
 package com.example.aitaes.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -42,8 +43,15 @@ public class ExamPaper {
     /** 参与班级（逗号分隔） */
     private String targetClasses;
 
-    /** 状态：DRAFT/PUBLISHED/ONGOING/ENDED */
+    /** 参与学生（逗号分隔的学生ID） */
+    private String targetStudents;
+
+    /** 状态：DRAFT/PUBLISHED/ENDED */
     private String status;
+
+    /** 未批阅份数（有主观题未批的学生试卷数，瞬态，不落库） */
+    @TableField(exist = false)
+    private Integer ungradedCount;
 
     private LocalDateTime createTime;
 

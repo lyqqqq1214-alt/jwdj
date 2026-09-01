@@ -7,9 +7,12 @@ import com.example.aitaes.dto.ExamPaperCreateDTO;
 import com.example.aitaes.dto.ExamResultDTO;
 import com.example.aitaes.dto.GradeRequestDTO;
 import com.example.aitaes.dto.GradingItemVO;
+import com.example.aitaes.dto.PaperGradingVO;
+import com.example.aitaes.dto.PaperQuestionEditVO;
 import com.example.aitaes.dto.StudentExamRecordVO;
 import com.example.aitaes.dto.StudentExamResultVO;
 import com.example.aitaes.dto.StudentExamVO;
+import com.example.aitaes.dto.StudentGradeRequestDTO;
 import com.example.aitaes.dto.SubmitExamResultDTO;
 import com.example.aitaes.entity.ExamPaper;
 import com.example.aitaes.service.ExamService;
@@ -18,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -93,6 +97,19 @@ public class ExamController {
         return Result.success(examService.getExamResults(id));
     }
 
+    @GetMapping("/papers/{id}/questions")
+    @RequireRole({"TEACHER"})
+    public Result<List<PaperQuestionEditVO>> getPaperQuestions(@PathVariable Long id) {
+        return Result.success(examService.getPaperQuestions(id));
+    }
+
+    @GetMapping("/papers/{id}/grading")
+    @RequireRole({"TEACHER", "ASSISTANT"})
+    public Result<PaperGradingVO> getPaperGrading(@PathVariable Long id,
+                                                  @RequestAttribute("userId") Long userId) {
+        return Result.success(examService.getPaperGrading(id, userId));
+    }
+
     // ===== 教师端：主观题批阅 =====
 
     @GetMapping("/grading/list")
@@ -109,6 +126,15 @@ public class ExamController {
                                      @Valid @RequestBody GradeRequestDTO dto) {
         examService.submitGrade(answerId, userId, dto.getScore(), dto.getComment());
         return Result.success("批阅完成", null);
+    }
+
+    @PutMapping("/grading/student/{recordId}")
+    @RequireRole({"TEACHER", "ASSISTANT"})
+    public Result<BigDecimal> submitStudentGrade(@PathVariable Long recordId,
+                                                 @RequestAttribute("userId") Long userId,
+                                                 @Valid @RequestBody StudentGradeRequestDTO dto) {
+        BigDecimal total = examService.submitStudentGrade(recordId, userId, dto.getGrades());
+        return Result.success("批阅完成", total);
     }
 
     // ===== 学生端：在线考试 =====

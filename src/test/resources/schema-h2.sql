@@ -460,6 +460,7 @@ CREATE TABLE t_exam_paper (
     start_time        TIMESTAMP    DEFAULT NULL,
     end_time          TIMESTAMP    DEFAULT NULL,
     target_classes    VARCHAR(512) DEFAULT NULL,
+    target_students   VARCHAR(2048) DEFAULT NULL,
     status            VARCHAR(16)  DEFAULT 'DRAFT',
     create_time       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     deleted           TINYINT      DEFAULT 0,

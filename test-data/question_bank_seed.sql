@@ -12,40 +12,40 @@ SET NAMES utf8mb4;
 
 -- 确保教师账号存在
 INSERT INTO `t_user` (`username`, `password`, `role`, `first_login`) VALUES
-('T001', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'TEACHER', 0)
+('T00001', '$2a$10$GUh9AqBupw0IrscEUZ/Bd.03kGXgUUL2x1eFFC7DDckv/PAZx6fzG', 'TEACHER', 0)
 ON DUPLICATE KEY UPDATE `username` = VALUES(`username`);
 
 INSERT INTO `t_teacher` (`user_id`, `teacher_no`, `name`, `gender`, `college`, `department`, `title`, `email`)
-SELECT u.id, 'T001', '张建国', '男', '计算机学院', '软件工程系', '教授', 'zjg@university.edu.cn'
-FROM `t_user` u WHERE u.username = 'T001'
+SELECT u.id, 'T00001', '张建国', '男', '计算机学院', '软件工程系', '教授', 'zjg@university.edu.cn'
+FROM `t_user` u WHERE u.username = 'T00001'
 ON DUPLICATE KEY UPDATE `teacher_no` = VALUES(`teacher_no`);
 
 -- 创建课程
 INSERT INTO `t_course` (`course_no`, `course_name`, `teacher_id`, `credit`, `course_type`, `semester`, `description`)
-SELECT 'CS-NET-001', '计算机网络', t.id, 4.0, '必修', '2025-2026-1', '计算机网络课程，涵盖OSI参考模型、TCP/IP协议栈、物理层、数据链路层、网络层、传输层、应用层等核心知识'
-FROM `t_teacher` t WHERE t.teacher_no = 'T001'
+SELECT 'CS05102', '计算机网络', t.id, 4.0, '必修', '2025-2026-1', '计算机网络课程，涵盖OSI参考模型、TCP/IP协议栈、物理层、数据链路层、网络层、传输层、应用层等核心知识'
+FROM `t_teacher` t WHERE t.teacher_no = 'T00001'
 ON DUPLICATE KEY UPDATE `course_no` = VALUES(`course_no`);
 
 INSERT INTO `t_course` (`course_no`, `course_name`, `teacher_id`, `credit`, `course_type`, `semester`, `description`)
-SELECT 'CS-DS-001', '数据结构', t.id, 4.0, '必修', '2025-2026-1', '数据结构课程，涵盖线性表、树、图、查找、排序等核心知识'
-FROM `t_teacher` t WHERE t.teacher_no = 'T001'
+SELECT 'CS05101', '数据结构', t.id, 4.0, '必修', '2025-2026-1', '数据结构课程，涵盖线性表、树、图、查找、排序等核心知识'
+FROM `t_teacher` t WHERE t.teacher_no = 'T00001'
 ON DUPLICATE KEY UPDATE `course_no` = VALUES(`course_no`);
 
 INSERT INTO `t_course` (`course_no`, `course_name`, `teacher_id`, `credit`, `course_type`, `semester`, `description`)
-SELECT 'CS-CO-001', '计算机组成原理', t.id, 4.0, '必修', '2025-2026-1', '计算机组成原理课程，涵盖数据表示、指令系统、CPU、存储器、总线、I/O等'
-FROM `t_teacher` t WHERE t.teacher_no = 'T001'
+SELECT 'CS05104', '计算机组成原理', t.id, 4.0, '必修', '2025-2026-1', '计算机组成原理课程，涵盖数据表示、指令系统、CPU、存储器、总线、I/O等'
+FROM `t_teacher` t WHERE t.teacher_no = 'T00001'
 ON DUPLICATE KEY UPDATE `course_no` = VALUES(`course_no`);
 
 INSERT INTO `t_course` (`course_no`, `course_name`, `teacher_id`, `credit`, `course_type`, `semester`, `description`)
-SELECT 'CS-OS-001', '操作系统', t.id, 4.0, '必修', '2025-2026-1', '操作系统课程，涵盖进程管理、内存管理、文件系统、设备管理、I/O等'
-FROM `t_teacher` t WHERE t.teacher_no = 'T001'
+SELECT 'CS05105', '操作系统', t.id, 4.0, '必修', '2025-2026-1', '操作系统课程，涵盖进程管理、内存管理、文件系统、设备管理、I/O等'
+FROM `t_teacher` t WHERE t.teacher_no = 'T00001'
 ON DUPLICATE KEY UPDATE `course_no` = VALUES(`course_no`);
 
-SET @net_course_id = (SELECT id FROM `t_course` WHERE course_no = 'CS-NET-001' LIMIT 1);
-SET @ds_course_id = (SELECT id FROM `t_course` WHERE course_no = 'CS-DS-001' LIMIT 1);
-SET @co_course_id = (SELECT id FROM `t_course` WHERE course_no = 'CS-CO-001' LIMIT 1);
-SET @os_course_id = (SELECT id FROM `t_course` WHERE course_no = 'CS-OS-001' LIMIT 1);
-SET @teacher_id = (SELECT id FROM `t_teacher` WHERE teacher_no = 'T001' LIMIT 1);
+SET @net_course_id = (SELECT id FROM `t_course` WHERE course_no = 'CS05102' LIMIT 1);
+SET @ds_course_id = (SELECT id FROM `t_course` WHERE course_no = 'CS05101' LIMIT 1);
+SET @co_course_id = (SELECT id FROM `t_course` WHERE course_no = 'CS05104' LIMIT 1);
+SET @os_course_id = (SELECT id FROM `t_course` WHERE course_no = 'CS05105' LIMIT 1);
+SET @teacher_id = (SELECT id FROM `t_teacher` WHERE teacher_no = 'T00001' LIMIT 1);
 
 -- ============================================================
 -- 题库题目数据

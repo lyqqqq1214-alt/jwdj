@@ -8,9 +8,12 @@ import com.example.aitaes.common.ResultCode;
 import com.example.aitaes.dto.ExamPaperCreateDTO;
 import com.example.aitaes.dto.ExamResultDTO;
 import com.example.aitaes.dto.GradingItemVO;
+import com.example.aitaes.dto.PaperGradingVO;
+import com.example.aitaes.dto.PaperQuestionEditVO;
 import com.example.aitaes.dto.StudentExamRecordVO;
 import com.example.aitaes.dto.StudentExamResultVO;
 import com.example.aitaes.dto.StudentExamVO;
+import com.example.aitaes.dto.StudentGradeRequestDTO;
 import com.example.aitaes.dto.SubmitExamResultDTO;
 import com.example.aitaes.entity.*;
 import com.example.aitaes.mapper.*;
@@ -109,6 +112,7 @@ public class ExamServiceImpl implements ExamService {
         paper.setStartTime(dto.getStartTime());
         paper.setEndTime(dto.getEndTime());
         paper.setTargetClasses(dto.getTargetClasses());
+        paper.setTargetStudents(dto.getTargetStudents());
         paper.setStatus("DRAFT");
         examPaperMapper.insert(paper);
 
@@ -151,13 +155,20 @@ public class ExamServiceImpl implements ExamService {
         if (courseId != null) wrapper.eq(ExamPaper::getCourseId, courseId);
         if (teacherId != null) wrapper.eq(ExamPaper::getTeacherId, teacherId);
         wrapper.orderByDesc(ExamPaper::getCreateTime);
-        return examPaperMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
+        IPage<ExamPaper> page = examPaperMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
+
+        // 惰性归一化：已过截止时间仍为 PUBLISHED 的卷自动转为 ENDED
+        normalizeEnded(page.getRecords());
+        // 回填未批阅份数
+        fillUngradedCount(page.getRecords());
+        return page;
     }
 
     @Override
     public ExamPaper getPaperById(Long id) {
         ExamPaper paper = examPaperMapper.selectById(id);
         if (paper == null) throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "试卷不存在");
+        normalizeEnded(Collections.singletonList(paper));
         return paper;
     }
 
@@ -175,11 +186,11 @@ public class ExamServiceImpl implements ExamService {
         paper.setStartTime(dto.getStartTime());
         paper.setEndTime(dto.getEndTime());
         paper.setTargetClasses(dto.getTargetClasses());
+        paper.setTargetStudents(dto.getTargetStudents());
         examPaperMapper.updateById(paper);
 
-        // 删除旧题目关联，重新关联
-        examPaperQuestionMapper.delete(
-                new LambdaQueryWrapper<ExamPaperQuestion>().eq(ExamPaperQuestion::getPaperId, id));
+        // 删除旧题目关联（物理删除，绕过逻辑删除，否则 uk_paper_question 唯一键冲突），重新关联
+        examPaperQuestionMapper.physicalDeleteByPaperId(id);
         if (dto.getQuestions() != null) {
             for (ExamPaperCreateDTO.QuestionItem qi : dto.getQuestions()) {
                 ExamPaperQuestion epq = new ExamPaperQuestion();
@@ -200,6 +211,36 @@ public class ExamServiceImpl implements ExamService {
         examPaperMapper.deleteById(id);
         examPaperQuestionMapper.delete(
                 new LambdaQueryWrapper<ExamPaperQuestion>().eq(ExamPaperQuestion::getPaperId, id));
+    }
+
+    @Override
+    public List<PaperQuestionEditVO> getPaperQuestions(Long paperId) {
+        getPaperById(paperId);
+        List<ExamPaperQuestion> epqs = examPaperQuestionMapper.selectList(
+                new LambdaQueryWrapper<ExamPaperQuestion>()
+                        .eq(ExamPaperQuestion::getPaperId, paperId)
+                        .orderByAsc(ExamPaperQuestion::getQuestionNo));
+        if (epqs.isEmpty()) return Collections.emptyList();
+
+        Set<Long> qids = epqs.stream().map(ExamPaperQuestion::getQuestionId).collect(Collectors.toSet());
+        Map<Long, QuestionBank> qbMap = questionBankMapper.selectBatchIds(qids).stream()
+                .collect(Collectors.toMap(QuestionBank::getId, q -> q));
+
+        return epqs.stream().map(epq -> {
+            QuestionBank qb = qbMap.get(epq.getQuestionId());
+            String content = effectiveContent(epq, qb);
+            return PaperQuestionEditVO.builder()
+                    .questionId(epq.getQuestionId())
+                    .questionNo(epq.getQuestionNo())
+                    .questionType(qb != null ? qb.getQuestionType() : null)
+                    .score(epq.getScore())
+                    .stem(content != null ? parseStem(content) : null)
+                    .options(content != null ? parseOptions(content) : Collections.emptyList())
+                    .answer(content != null ? parseEditableAnswer(content) : null)
+                    .analysis(content != null ? parseAnalysis(content) : null)
+                    .knowledgePoints(qb != null ? qb.getKnowledgePoints() : null)
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -284,16 +325,16 @@ public class ExamServiceImpl implements ExamService {
         List<CourseStudent> csList = courseStudentMapper.selectList(
                 new LambdaQueryWrapper<CourseStudent>().eq(CourseStudent::getStudentId, studentId));
         if (csList.isEmpty()) return Collections.emptyList();
+        Set<Long> enrolled = csList.stream().map(CourseStudent::getCourseId).collect(Collectors.toSet());
 
-        List<Long> courseIds = csList.stream().map(CourseStudent::getCourseId).collect(Collectors.toList());
         List<ExamPaper> papers = examPaperMapper.selectList(
                 new LambdaQueryWrapper<ExamPaper>()
-                        .in(ExamPaper::getCourseId, courseIds)
                         .eq(ExamPaper::getStatus, "PUBLISHED")
                         .orderByDesc(ExamPaper::getCreateTime));
 
         LocalDateTime now = LocalDateTime.now();
         return papers.stream()
+                .filter(p -> inTargetStudents(studentId, enrolled, p))
                 .filter(p -> p.getEndTime() == null || now.isBefore(p.getEndTime()))
                 .collect(Collectors.toList());
     }
@@ -313,12 +354,8 @@ public class ExamServiceImpl implements ExamService {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "考试已结束");
         }
 
-        // 检查学生是否选修该课程
-        CourseStudent cs = courseStudentMapper.selectOne(
-                new LambdaQueryWrapper<CourseStudent>()
-                        .eq(CourseStudent::getCourseId, paper.getCourseId())
-                        .eq(CourseStudent::getStudentId, studentId));
-        if (cs == null) {
+        // 检查学生是否在目标班级/学生范围内
+        if (!inTargetStudents(studentId, enrolledCourseIds(studentId), paper)) {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "你不在该考试的参与班级中");
         }
 
@@ -615,9 +652,28 @@ public class ExamServiceImpl implements ExamService {
                 new LambdaQueryWrapper<AssessmentRecord>()
                         .eq(AssessmentRecord::getAssessmentId, assessment.getId()));
 
-        Long totalStudents = courseStudentMapper.selectCount(
-                new LambdaQueryWrapper<CourseStudent>()
-                        .eq(CourseStudent::getCourseId, paper.getCourseId()));
+        // 花名册：目标学生（优先）或目标班级的所有学生
+        Set<Long> rosterStudentIds;
+        Set<Long> targetStudents = targetStudentIds(paper);
+        if (!targetStudents.isEmpty()) {
+            rosterStudentIds = targetStudents;
+        } else {
+            Set<Long> targetIds = targetClassIds(paper);
+            List<CourseStudent> rosterCs = targetIds.isEmpty() ? Collections.emptyList()
+                    : courseStudentMapper.selectList(
+                            new LambdaQueryWrapper<CourseStudent>().in(CourseStudent::getCourseId, targetIds));
+            rosterStudentIds = rosterCs.stream().map(CourseStudent::getStudentId).collect(Collectors.toSet());
+        }
+        Map<Long, AssessmentRecord> submittedMap = records.stream()
+                .collect(Collectors.toMap(AssessmentRecord::getStudentId, r -> r, (a, b) -> a));
+
+        Set<Long> allStudentIds = new HashSet<>(rosterStudentIds);
+        allStudentIds.addAll(submittedMap.keySet());
+        Map<Long, Student> studentMap = allStudentIds.isEmpty() ? Collections.emptyMap()
+                : studentMapper.selectBatchIds(allStudentIds).stream()
+                        .collect(Collectors.toMap(Student::getId, s -> s));
+
+        Long totalStudents = (long) allStudentIds.size();
 
         BigDecimal avg = records.isEmpty() ? BigDecimal.ZERO
                 : records.stream().map(r -> r.getTotalScore() != null ? r.getTotalScore() : BigDecimal.ZERO)
@@ -629,28 +685,29 @@ public class ExamServiceImpl implements ExamService {
         BigDecimal min = records.stream().map(r -> r.getTotalScore() != null ? r.getTotalScore() : BigDecimal.ZERO)
                 .min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
 
+        // 及格线 = 总分 * 60%
+        BigDecimal passScore = paper.getTotalScore() != null
+                ? paper.getTotalScore().multiply(new BigDecimal("0.6"))
+                : new BigDecimal("60");
         long passCount = records.stream()
                 .filter(r -> r.getTotalScore() != null
-                        && r.getTotalScore().compareTo(new BigDecimal("60")) >= 0).count();
+                        && r.getTotalScore().compareTo(passScore) >= 0).count();
         BigDecimal passRate = records.isEmpty() ? BigDecimal.ZERO
                 : new BigDecimal(passCount).divide(new BigDecimal(records.size()), 4, RoundingMode.HALF_UP)
                         .multiply(new BigDecimal(100)).setScale(1, RoundingMode.HALF_UP);
 
-        // 学生成绩列表
-        List<Long> studentIds = records.stream().map(AssessmentRecord::getStudentId).collect(Collectors.toList());
-        Map<Long, Student> studentMap = studentIds.isEmpty() ? Collections.emptyMap()
-                : studentMapper.selectBatchIds(studentIds).stream()
-                        .collect(Collectors.toMap(Student::getId, s -> s));
-
-        List<ExamResultDTO.StudentScoreItem> studentScores = records.stream().map(r -> {
-            Student s = studentMap.get(r.getStudentId());
+        // 学生成绩列表：合并花名册 + 已交卷（未交卷 0 分）
+        List<ExamResultDTO.StudentScoreItem> studentScores = allStudentIds.stream().map(sid -> {
+            Student s = studentMap.get(sid);
+            AssessmentRecord r = submittedMap.get(sid);
+            boolean submitted = r != null;
             return ExamResultDTO.StudentScoreItem.builder()
-                    .studentId(r.getStudentId())
+                    .studentId(sid)
                     .studentNo(s != null ? s.getStudentNo() : null)
                     .name(s != null ? s.getName() : null)
-                    .totalScore(r.getTotalScore())
-                    .submitStatus(r.getSubmitStatus())
-                    .submitTime(r.getSubmitTime() != null ? r.getSubmitTime().toString() : null)
+                    .totalScore(submitted && r.getTotalScore() != null ? r.getTotalScore() : BigDecimal.ZERO)
+                    .submitStatus(submitted ? "SUBMITTED" : "ABSENT")
+                    .submitTime(submitted && r.getSubmitTime() != null ? r.getSubmitTime().toString() : null)
                     .build();
         }).collect(Collectors.toList());
 
@@ -752,6 +809,134 @@ public class ExamServiceImpl implements ExamService {
         log.info("主观题批阅: answerId={}, recordId={}, score={}", answerId, answer.getRecordId(), score);
     }
 
+    @Override
+    public PaperGradingVO getPaperGrading(Long paperId, Long userId) {
+        ExamPaper paper = getPaperById(paperId);
+        Assessment assessment = assessmentMapper.selectOne(
+                new LambdaQueryWrapper<Assessment>().eq(Assessment::getPaperId, paperId));
+        if (assessment == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "考试不存在");
+        }
+
+        List<AssessmentRecord> records = assessmentRecordMapper.selectList(
+                new LambdaQueryWrapper<AssessmentRecord>()
+                        .eq(AssessmentRecord::getAssessmentId, assessment.getId())
+                        .orderByAsc(AssessmentRecord::getStudentId));
+        if (records.isEmpty()) {
+            return PaperGradingVO.builder()
+                    .paperId(paperId).paperName(paper.getPaperName())
+                    .totalScore(paper.getTotalScore()).students(Collections.emptyList())
+                    .build();
+        }
+
+        Set<Long> studentIds = records.stream().map(AssessmentRecord::getStudentId).collect(Collectors.toSet());
+        Map<Long, Student> studentMap = studentMapper.selectBatchIds(studentIds).stream()
+                .collect(Collectors.toMap(Student::getId, s -> s));
+
+        Set<Long> recordIds = records.stream().map(AssessmentRecord::getId).collect(Collectors.toSet());
+        List<ExamAnswer> allAnswers = examAnswerMapper.selectList(
+                new LambdaQueryWrapper<ExamAnswer>()
+                        .in(ExamAnswer::getRecordId, recordIds)
+                        .orderByAsc(ExamAnswer::getQuestionNo));
+        Map<Long, List<ExamAnswer>> answerMap = allAnswers.stream()
+                .collect(Collectors.groupingBy(ExamAnswer::getRecordId));
+
+        Set<Long> questionIds = allAnswers.stream().map(ExamAnswer::getQuestionId).collect(Collectors.toSet());
+        Map<Long, QuestionBank> qbMap = questionIds.isEmpty() ? Collections.emptyMap()
+                : questionBankMapper.selectBatchIds(questionIds).stream()
+                        .collect(Collectors.toMap(QuestionBank::getId, q -> q));
+        Map<Long, String> overrideMap = loadOverrideMap(paperId);
+
+        List<PaperGradingVO.StudentItem> students = records.stream().map(r -> {
+            Student s = studentMap.get(r.getStudentId());
+            List<ExamAnswer> answers = answerMap.getOrDefault(r.getId(), Collections.emptyList());
+            BigDecimal objective = answers.stream()
+                    .filter(a -> isObjective(a.getQuestionType()))
+                    .map(a -> a.getScore() != null ? a.getScore() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            int pending = (int) answers.stream()
+                    .filter(a -> !isObjective(a.getQuestionType()))
+                    .filter(a -> a.getGraded() == null || a.getGraded() == 0)
+                    .count();
+
+            List<PaperGradingVO.QuestionItem> questions = answers.stream().map(a -> {
+                QuestionBank qb = qbMap.get(a.getQuestionId());
+                String content = overrideMap.getOrDefault(a.getQuestionId(),
+                        qb != null ? qb.getContent() : null);
+                return PaperGradingVO.QuestionItem.builder()
+                        .answerId(a.getId())
+                        .questionId(a.getQuestionId())
+                        .questionNo(a.getQuestionNo())
+                        .questionType(a.getQuestionType())
+                        .stem(content != null ? parseStem(content) : null)
+                        .options(content != null ? parseOptions(content) : Collections.emptyList())
+                        .studentAnswer(a.getStudentAnswer())
+                        .correctAnswer(a.getCorrectAnswer())
+                        .maxScore(a.getMaxScore())
+                        .score(a.getScore())
+                        .graded(a.getGraded())
+                        .comment(a.getComment())
+                        .build();
+            }).collect(Collectors.toList());
+
+            return PaperGradingVO.StudentItem.builder()
+                    .recordId(r.getId())
+                    .studentId(r.getStudentId())
+                    .studentNo(s != null ? s.getStudentNo() : null)
+                    .studentName(s != null ? s.getName() : null)
+                    .submitTime(r.getSubmitTime())
+                    .objectiveScore(objective)
+                    .totalScore(r.getTotalScore())
+                    .pendingCount(pending)
+                    .questions(questions)
+                    .build();
+        }).collect(Collectors.toList());
+
+        return PaperGradingVO.builder()
+                .paperId(paperId)
+                .paperName(paper.getPaperName())
+                .totalScore(paper.getTotalScore())
+                .students(students)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public BigDecimal submitStudentGrade(Long recordId, Long graderUserId,
+                                         List<StudentGradeRequestDTO.GradeItem> grades) {
+        Long teacherId = resolveTeacherId(graderUserId);
+        if (grades == null || grades.isEmpty()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "批阅列表不能为空");
+        }
+        for (StudentGradeRequestDTO.GradeItem g : grades) {
+            if (g.getAnswerId() == null || g.getScore() == null) continue;
+            ExamAnswer answer = examAnswerMapper.selectById(g.getAnswerId());
+            if (answer == null) {
+                throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "作答记录不存在");
+            }
+            if (!recordId.equals(answer.getRecordId())) {
+                throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "作答记录不属于该学生试卷");
+            }
+            if (isObjective(answer.getQuestionType())) {
+                throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "客观题已自动批改，无需手动批阅");
+            }
+            if (answer.getGraded() != null && answer.getGraded() == 1) {
+                continue; // 已批阅，跳过
+            }
+            if (answer.getMaxScore() != null && g.getScore().compareTo(answer.getMaxScore()) > 0) {
+                throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "分数不能超过本题满分");
+            }
+            answer.setScore(g.getScore());
+            answer.setComment(g.getComment());
+            answer.setGraded(1);
+            answer.setGraderId(teacherId);
+            examAnswerMapper.updateById(answer);
+        }
+        recalculateRecordTotal(recordId);
+        AssessmentRecord record = assessmentRecordMapper.selectById(recordId);
+        return record != null && record.getTotalScore() != null ? record.getTotalScore() : BigDecimal.ZERO;
+    }
+
     private void recalculateRecordTotal(Long recordId) {
         List<ExamAnswer> answers = examAnswerMapper.selectList(
                 new LambdaQueryWrapper<ExamAnswer>().eq(ExamAnswer::getRecordId, recordId));
@@ -763,6 +948,102 @@ public class ExamServiceImpl implements ExamService {
             record.setTotalScore(total);
             assessmentRecordMapper.updateById(record);
         }
+    }
+
+    // ===== 状态与可见性助手 =====
+
+    private void normalizeEnded(List<ExamPaper> papers) {
+        if (papers == null || papers.isEmpty()) return;
+        LocalDateTime now = LocalDateTime.now();
+        List<ExamPaper> toEnd = papers.stream()
+                .filter(p -> "PUBLISHED".equals(p.getStatus())
+                        && p.getEndTime() != null && now.isAfter(p.getEndTime()))
+                .collect(Collectors.toList());
+        for (ExamPaper p : toEnd) {
+            p.setStatus("ENDED");
+            examPaperMapper.updateById(p);
+            Assessment a = assessmentMapper.selectOne(
+                    new LambdaQueryWrapper<Assessment>().eq(Assessment::getPaperId, p.getId()));
+            if (a != null) {
+                a.setStatus("ENDED");
+                assessmentMapper.updateById(a);
+            }
+        }
+    }
+
+    private void fillUngradedCount(List<ExamPaper> papers) {
+        if (papers == null || papers.isEmpty()) return;
+        List<Long> paperIds = papers.stream().map(ExamPaper::getId).collect(Collectors.toList());
+        List<ExamAnswer> pending = examAnswerMapper.selectList(
+                new LambdaQueryWrapper<ExamAnswer>()
+                        .in(ExamAnswer::getPaperId, paperIds)
+                        .eq(ExamAnswer::getGraded, 0)
+                        .in(ExamAnswer::getQuestionType, List.of("SHORT", "COMPREHENSIVE")));
+        Map<Long, Set<Long>> paperRecordIds = new HashMap<>();
+        for (ExamAnswer a : pending) {
+            paperRecordIds.computeIfAbsent(a.getPaperId(), k -> new HashSet<>()).add(a.getRecordId());
+        }
+        for (ExamPaper p : papers) {
+            p.setUngradedCount(paperRecordIds.getOrDefault(p.getId(), Collections.emptySet()).size());
+        }
+    }
+
+    private Set<Long> targetClassIds(ExamPaper paper) {
+        Set<Long> ids = new HashSet<>();
+        if (paper.getTargetClasses() != null && !paper.getTargetClasses().isBlank()) {
+            for (String s : paper.getTargetClasses().split(",")) {
+                String t = s.trim();
+                if (!t.isEmpty()) {
+                    try {
+                        ids.add(Long.parseLong(t));
+                    } catch (NumberFormatException ignored) {
+                        // 忽略非数字段
+                    }
+                }
+            }
+        }
+        if (ids.isEmpty() && paper.getCourseId() != null) {
+            ids.add(paper.getCourseId());
+        }
+        return ids;
+    }
+
+    private Set<Long> enrolledCourseIds(Long studentId) {
+        List<CourseStudent> csList = courseStudentMapper.selectList(
+                new LambdaQueryWrapper<CourseStudent>().eq(CourseStudent::getStudentId, studentId));
+        return csList.stream().map(CourseStudent::getCourseId).collect(Collectors.toSet());
+    }
+
+    private boolean inTargetClasses(Set<Long> enrolled, ExamPaper paper) {
+        if (enrolled == null || enrolled.isEmpty()) return false;
+        Set<Long> target = targetClassIds(paper);
+        target.retainAll(enrolled);
+        return !target.isEmpty();
+    }
+
+    private Set<Long> targetStudentIds(ExamPaper paper) {
+        Set<Long> ids = new HashSet<>();
+        if (paper.getTargetStudents() != null && !paper.getTargetStudents().isBlank()) {
+            for (String s : paper.getTargetStudents().split(",")) {
+                String t = s.trim();
+                if (!t.isEmpty()) {
+                    try {
+                        ids.add(Long.parseLong(t));
+                    } catch (NumberFormatException ignored) {
+                        // 忽略非数字段
+                    }
+                }
+            }
+        }
+        return ids;
+    }
+
+    private boolean inTargetStudents(Long studentId, Set<Long> enrolled, ExamPaper paper) {
+        Set<Long> targetStudents = targetStudentIds(paper);
+        if (!targetStudents.isEmpty()) {
+            return targetStudents.contains(studentId);
+        }
+        return inTargetClasses(enrolled, paper);
     }
 
     // ===== 错题本 =====
@@ -831,6 +1112,19 @@ public class ExamServiceImpl implements ExamService {
         JsonNode answer = node.get("answer");
         if (answer == null || answer.isNull()) return null;
         if (answer.isArray()) return answer.toString();
+        return answer.asText();
+    }
+
+    private String parseEditableAnswer(String content) {
+        JsonNode node = parseContent(content);
+        if (node == null) return null;
+        JsonNode answer = node.get("answer");
+        if (answer == null || answer.isNull()) return null;
+        if (answer.isArray()) {
+            List<String> parts = new ArrayList<>();
+            answer.forEach(a -> parts.add(a.asText()));
+            return String.join(",", parts);
+        }
         return answer.asText();
     }
 

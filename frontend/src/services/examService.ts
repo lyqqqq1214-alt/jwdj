@@ -13,8 +13,10 @@ export interface ExamPaper {
   startTime?: string;
   endTime?: string;
   targetClasses?: string;
+  targetStudents?: string;
   status?: string;
   createTime?: string;
+  ungradedCount?: number;
 }
 
 export interface ExamPage {
@@ -33,6 +35,7 @@ export interface ExamPaperCreateDTO {
   startTime?: string;
   endTime?: string;
   targetClasses?: string;
+  targetStudents?: string;
   questions?: { questionId: number; questionNo: number; score: number; content?: string }[];
 }
 
@@ -137,6 +140,58 @@ export interface StudentExamResultVO {
   }[];
 }
 
+export interface PaperGradingQuestionItem {
+  answerId: number;
+  questionId: number;
+  questionNo: number;
+  questionType?: string;
+  stem?: string;
+  options?: { label: string; text: string }[];
+  studentAnswer?: string;
+  correctAnswer?: string;
+  maxScore?: number;
+  score?: number;
+  graded?: number;
+  comment?: string;
+}
+
+export interface PaperGradingStudentItem {
+  recordId: number;
+  studentId: number;
+  studentNo?: string;
+  studentName?: string;
+  submitTime?: string;
+  objectiveScore?: number;
+  totalScore?: number;
+  pendingCount?: number;
+  questions: PaperGradingQuestionItem[];
+}
+
+export interface PaperGradingVO {
+  paperId: number;
+  paperName?: string;
+  totalScore?: number;
+  students: PaperGradingStudentItem[];
+}
+
+export interface PaperQuestionEditVO {
+  questionId: number;
+  questionNo: number;
+  questionType?: string;
+  score?: number;
+  stem?: string;
+  options?: { label: string; text: string }[];
+  answer?: string;
+  analysis?: string;
+  knowledgePoints?: string;
+}
+
+export interface StudentGradeItem {
+  answerId: number;
+  score: number;
+  comment?: string;
+}
+
 // ===== 教师端：试卷管理 =====
 
 export async function getExamPapers(pageNum: number, pageSize: number, courseId?: number) {
@@ -185,6 +240,21 @@ export async function getGradingList(courseId: number, paperId?: number) {
 
 export async function submitGrade(answerId: number, score: number, comment?: string) {
   await api.put(`/exams/grading/${answerId}`, { score, comment });
+}
+
+export async function getPaperQuestions(paperId: number) {
+  const res = await api.get(`/exams/papers/${paperId}/questions`);
+  return res.data as PaperQuestionEditVO[];
+}
+
+export async function getPaperGrading(paperId: number) {
+  const res = await api.get(`/exams/papers/${paperId}/grading`);
+  return res.data as PaperGradingVO;
+}
+
+export async function submitStudentGrade(recordId: number, grades: StudentGradeItem[]) {
+  const res = await api.put(`/exams/grading/student/${recordId}`, { grades });
+  return res.data as number;
 }
 
 // ===== 学生端：在线考试 =====

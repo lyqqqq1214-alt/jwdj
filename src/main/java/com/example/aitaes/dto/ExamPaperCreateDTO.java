@@ -30,6 +30,9 @@ public class ExamPaperCreateDTO {
     /** 目标班级描述 */
     private String targetClasses;
 
+    /** 目标学生ID列表（逗号分隔） */
+    private String targetStudents;
+
     /** 题目列表（含每题分值） */
     private List<QuestionItem> questions;
 
