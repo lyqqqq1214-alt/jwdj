@@ -11497,6 +11497,7 @@ function StudentExam() {
   const [reviewResult, setReviewResult] = useState<StudentExamResultVO | null>(null);
   const autoSubmittedRef = useRef(false);
   const hasDeadlineRef = useRef(false);
+  const [navigatorCollapsed, setNavigatorCollapsed] = useState(false);
 
   const [toast, setToast] = useState<string | null>(null);
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
@@ -11563,6 +11564,16 @@ function StudentExam() {
       doSubmit(true);
     }
   }, [timeLeft, activeExam]);
+
+  useEffect(() => {
+    if (!activeExam || submittedResult) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [activeExam, submittedResult]);
 
   const openReview = async (record: StudentExamRecordVO) => {
     try {
@@ -11688,101 +11699,138 @@ function StudentExam() {
     );
   }
 
-  // ===== 考试作答 =====
+  // ===== 考试作答（全屏） =====
   if (activeExam) {
     const total = activeExam.questions.length;
     return (
-      <div className="space-y-5">
-        {toast && (
-          <div className="fixed top-20 right-6 z-50 px-4 py-3 bg-primary text-white text-sm rounded-lg shadow-lg animate-[fadeIn_0.2s_ease-out]">
-            <div className="flex items-center gap-2"><CheckCircle size={14} />{toast}</div>
+      <div className="fixed inset-0 z-[10000] bg-background overflow-y-auto">
+        <div className="max-w-6xl mx-auto px-6 py-6 space-y-5">
+          {toast && (
+            <div className="fixed top-6 right-6 z-[10001] px-4 py-3 bg-primary text-white text-sm rounded-lg shadow-lg animate-[fadeIn_0.2s_ease-out]">
+              <div className="flex items-center gap-2"><CheckCircle size={14} />{toast}</div>
+            </div>
+          )}
+          <div className="bg-card rounded-lg border border-border p-4 flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold text-foreground">{activeExam.paperName}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">共 {total} 题 · 满分 {activeExam.totalScore ?? "—"}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Clock size={14} />距截止
+              </span>
+              <span className="font-mono text-lg font-semibold text-primary">{fmtClock(timeLeft)}</span>
+              <button onClick={() => setShowConfirmModal(true)} className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">交卷</button>
+            </div>
           </div>
-        )}
-        <div className="bg-card rounded-lg border border-border p-4 flex items-center justify-between">
-          <div>
-            <h2 className="font-semibold text-foreground">{activeExam.paperName}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">共 {total} 题 · 满分 {activeExam.totalScore ?? "—"}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-lg font-semibold text-primary">{fmtClock(timeLeft)}</span>
-            <button onClick={() => setShowConfirmModal(true)} className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">交卷</button>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>第 {currentQuestion + 1} / {total} 题</span>
-          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-            <div className="h-full bg-primary transition-all" style={{ width: `${total ? ((currentQuestion + 1) / total) * 100 : 0}%` }} />
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>第 {currentQuestion + 1} / {total} 题</span>
+            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary transition-all" style={{ width: `${total ? ((currentQuestion + 1) / total) * 100 : 0}%` }} />
+            </div>
           </div>
-        </div>
 
-        <div className="bg-card rounded-lg border border-border p-5">
-          <div className="flex items-center justify-between mb-3">
-            <Tag color="blue">{typeLabel(q?.questionType)}</Tag>
-            <span className="text-sm text-muted-foreground">本题 {q?.score ?? "—"} 分</span>
-          </div>
-          <p className="text-base whitespace-pre-wrap">{q?.stem}</p>
+          <div className="flex gap-5 items-start">
+            <div className="flex-1 min-w-0 space-y-5">
+              <div className="bg-card rounded-lg border border-border p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <Tag color="blue">{typeLabel(q?.questionType)}</Tag>
+                  <span className="text-sm text-muted-foreground">本题 {q?.score ?? "—"} 分</span>
+                </div>
+                <p className="text-base whitespace-pre-wrap">{q?.stem}</p>
 
-          <div className="mt-4 space-y-2">
-            {hasOptions ? (
-              q!.options!.map(o => {
-                const selected = isMulti
-                  ? (answers[q!.questionId] || "").split(",").filter(Boolean).includes(o.label)
-                  : answers[q!.questionId] === o.label;
-                return (
-                  <button
-                    key={o.label}
-                    onClick={() => setOptionAnswer(q!.questionId, o.label)}
-                    className={`w-full text-left px-4 py-2.5 rounded-md border text-sm transition-colors ${selected ? "border-primary bg-primary/10 text-foreground" : "border-border hover:border-primary/50"}`}
-                  >
-                    <span className="font-medium mr-2">{o.label}.</span>{o.text}
-                  </button>
-                );
-              })
-            ) : qType === "TRUE_FALSE" ? (
-              <div className="grid grid-cols-2 gap-3">
-                {["TRUE", "FALSE"].map(v => {
-                  const selected = answers[q!.questionId] === v;
-                  return (
-                    <button
-                      key={v}
-                      onClick={() => setAnswers(prev => ({ ...prev, [q!.questionId]: v }))}
-                      className={`px-4 py-2.5 rounded-md border text-sm transition-colors ${selected ? "border-primary bg-primary/10 text-foreground" : "border-border hover:border-primary/50"}`}
-                    >
-                      {v === "TRUE" ? "正确" : "错误"}
-                    </button>
-                  );
-                })}
+                <div className="mt-4 space-y-2">
+                  {hasOptions ? (
+                    q!.options!.map(o => {
+                      const selected = isMulti
+                        ? (answers[q!.questionId] || "").split(",").filter(Boolean).includes(o.label)
+                        : answers[q!.questionId] === o.label;
+                      return (
+                        <button
+                          key={o.label}
+                          onClick={() => setOptionAnswer(q!.questionId, o.label)}
+                          className={`w-full text-left px-4 py-2.5 rounded-md border text-sm transition-colors ${selected ? "border-primary bg-primary/10 text-foreground" : "border-border hover:border-primary/50"}`}
+                        >
+                          <span className="font-medium mr-2">{o.label}.</span>{o.text}
+                        </button>
+                      );
+                    })
+                  ) : qType === "TRUE_FALSE" ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      {["TRUE", "FALSE"].map(v => {
+                        const selected = answers[q!.questionId] === v;
+                        return (
+                          <button
+                            key={v}
+                            onClick={() => setAnswers(prev => ({ ...prev, [q!.questionId]: v }))}
+                            className={`px-4 py-2.5 rounded-md border text-sm transition-colors ${selected ? "border-primary bg-primary/10 text-foreground" : "border-border hover:border-primary/50"}`}
+                          >
+                            {v === "TRUE" ? "正确" : "错误"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <textarea
+                      value={answers[q!.questionId] || ""}
+                      onChange={e => setAnswers(prev => ({ ...prev, [q!.questionId]: e.target.value }))}
+                      rows={5}
+                      placeholder="请输入你的答案…"
+                      className="w-full px-3 py-2 border border-border rounded-md text-sm resize-none"
+                    />
+                  )}
+                </div>
               </div>
-            ) : (
-              <textarea
-                value={answers[q!.questionId] || ""}
-                onChange={e => setAnswers(prev => ({ ...prev, [q!.questionId]: e.target.value }))}
-                rows={5}
-                placeholder="请输入你的答案…"
-                className="w-full px-3 py-2 border border-border rounded-md text-sm resize-none"
-              />
-            )}
-          </div>
-        </div>
 
-        <div className="flex items-center justify-between">
-          <button onClick={() => setCurrentQuestion(i => Math.max(0, i - 1))} disabled={currentQuestion === 0} className="px-4 py-2 rounded-md text-sm border border-border hover:bg-accent/50 disabled:opacity-40">上一题</button>
-          <button onClick={() => setCurrentQuestion(i => Math.min(total - 1, i + 1))} disabled={currentQuestion >= total - 1} className="px-4 py-2 rounded-md text-sm border border-border hover:bg-accent/50 disabled:opacity-40">下一题</button>
-        </div>
+              <div className="flex items-center justify-between">
+                <button onClick={() => setCurrentQuestion(i => Math.max(0, i - 1))} disabled={currentQuestion === 0} className="px-4 py-2 rounded-md text-sm border border-border hover:bg-accent/50 disabled:opacity-40">上一题</button>
+                <button onClick={() => setCurrentQuestion(i => Math.min(total - 1, i + 1))} disabled={currentQuestion >= total - 1} className="px-4 py-2 rounded-md text-sm border border-border hover:bg-accent/50 disabled:opacity-40">下一题</button>
+              </div>
+            </div>
 
-        {showConfirmModal && (
-          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-            <div className="bg-card rounded-lg border border-border p-6 w-full max-w-sm space-y-4">
-              <h3 className="font-semibold text-foreground">确认交卷？</h3>
-              <p className="text-sm text-muted-foreground">已作答 {Object.keys(answers).length} / {total} 题，交卷后无法修改。</p>
-              <div className="flex justify-end gap-2">
-                <button onClick={() => setShowConfirmModal(false)} className="px-4 py-2 rounded-md text-sm border border-border hover:bg-accent/50">再检查一下</button>
-                <button onClick={handleSubmitExam} className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">确认交卷</button>
+            <div className={`${navigatorCollapsed ? "w-10" : "w-56"} shrink-0 transition-all duration-200`}>
+              <div className="bg-card rounded-lg border border-border p-3 sticky top-6">
+                <div className="flex items-center justify-between">
+                  {!navigatorCollapsed && <span className="text-sm font-medium">答题卡</span>}
+                  <button onClick={() => setNavigatorCollapsed(c => !c)} className="p-1 rounded-md text-muted-foreground hover:bg-accent/50 hover:text-foreground" title={navigatorCollapsed ? "展开" : "收起"}>
+                    {navigatorCollapsed ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+                  </button>
+                </div>
+                {!navigatorCollapsed && (
+                  <div className="grid grid-cols-5 gap-2 mt-3">
+                    {activeExam.questions.map((qq, i) => {
+                      const answered = answers[qq.questionId] !== undefined && answers[qq.questionId] !== "";
+                      const current = i === currentQuestion;
+                      return (
+                        <button
+                          key={qq.questionNo}
+                          onClick={() => setCurrentQuestion(i)}
+                          className={`h-8 rounded-md text-xs font-medium transition-colors ${current ? "ring-2 ring-primary ring-offset-1 ring-offset-card" : ""} ${answered ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-accent"}`}
+                        >
+                          {qq.questionNo}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        )}
+
+          {showConfirmModal && (
+            <div className="fixed inset-0 z-[10001] bg-black/40 flex items-center justify-center p-4">
+              <div className="bg-card rounded-lg border border-border p-6 w-full max-w-sm space-y-4">
+                <h3 className="font-semibold text-foreground">确认交卷？</h3>
+                <p className="text-sm text-muted-foreground">已作答 {Object.keys(answers).length} / {total} 题，交卷后无法修改。</p>
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setShowConfirmModal(false)} className="px-4 py-2 rounded-md text-sm border border-border hover:bg-accent/50">再检查一下</button>
+                  <button onClick={handleSubmitExam} className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">确认交卷</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
