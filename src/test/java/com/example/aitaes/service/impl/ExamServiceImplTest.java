@@ -248,6 +248,7 @@ class ExamServiceImplTest {
             paper.setStatus("PUBLISHED");
             when(studentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(student);
             when(examPaperMapper.selectById(1L)).thenReturn(paper);
+            when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
             when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
                     .thenReturn(List.of(new CourseStudent() {{
                         setCourseId(1L); setStudentId(100L);
@@ -270,6 +271,7 @@ class ExamServiceImplTest {
             paper.setStatus("PUBLISHED");
             when(studentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(student);
             when(examPaperMapper.selectById(1L)).thenReturn(paper);
+            when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
             when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
                     .thenReturn(List.of(new CourseStudent() {{
                         setCourseId(1L); setStudentId(100L);
@@ -283,6 +285,25 @@ class ExamServiceImplTest {
             var vo = examService.getExamForStudent(1L, 3L);
 
             assertEquals("编辑后的题干", vo.getQuestions().get(0).getStem());
+        }
+
+        @Test
+        @DisplayName("EX-35: 已交卷学生应禁止再次进入")
+        void shouldRejectAlreadySubmittedStudent() {
+            paper.setStatus("PUBLISHED");
+            when(studentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(student);
+            when(examPaperMapper.selectById(1L)).thenReturn(paper);
+
+            AssessmentRecord record = new AssessmentRecord();
+            record.setStudentId(100L);
+            record.setAssessmentId(1L);
+            when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(record));
+            Assessment assessment = new Assessment();
+            assessment.setId(1L);
+            assessment.setPaperId(1L);
+            when(assessmentMapper.selectBatchIds(any())).thenReturn(List.of(assessment));
+
+            assertThrows(BusinessException.class, () -> examService.getExamForStudent(1L, 3L));
         }
     }
 

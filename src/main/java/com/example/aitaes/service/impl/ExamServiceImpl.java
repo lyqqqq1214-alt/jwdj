@@ -372,6 +372,11 @@ public class ExamServiceImpl implements ExamService {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "考试已结束");
         }
 
+        // 已交卷则禁止再次进入
+        if (submittedPaperIds(studentId).contains(paperId)) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "你已完成该考试");
+        }
+
         // 检查学生是否在目标班级/学生范围内
         if (!inTargetStudents(studentId, enrolledCourseIds(studentId), paper)) {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "你不在该考试的参与班级中");
