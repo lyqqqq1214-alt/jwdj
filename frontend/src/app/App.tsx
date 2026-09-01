@@ -11495,6 +11495,8 @@ function StudentExam() {
   const [submittedResult, setSubmittedResult] = useState<SubmitExamResultDTO | null>(null);
 
   const [reviewResult, setReviewResult] = useState<StudentExamResultVO | null>(null);
+  const autoSubmittedRef = useRef(false);
+  const hasDeadlineRef = useRef(false);
 
   const [toast, setToast] = useState<string | null>(null);
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
@@ -11523,7 +11525,10 @@ function StudentExam() {
       setAnswers({});
       setSubmittedResult(null);
       setReviewResult(null);
-      setTimeLeft((vo.durationMinutes || 60) * 60);
+      autoSubmittedRef.current = false;
+      const endMs = vo.endTime ? new Date(vo.endTime).getTime() : null;
+      hasDeadlineRef.current = endMs != null;
+      setTimeLeft(endMs ? Math.max(0, Math.floor((endMs - Date.now()) / 1000)) : 0);
     } catch (e) {
       showToastMsg(e instanceof Error ? e.message : "无法开始考试");
     }
@@ -11537,17 +11542,27 @@ function StudentExam() {
     load();
   };
 
-  const handleSubmitExam = async () => {
+  const doSubmit = async (isAuto: boolean) => {
     if (!activeExam) return;
     try {
       const result = await submitExam(activeExam.paperId, answers);
       setSubmittedResult(result);
       setShowConfirmModal(false);
+      if (isAuto) showToastMsg("时间到，已自动交卷");
       load();
     } catch (e) {
       showToastMsg(e instanceof Error ? e.message : "交卷失败");
     }
   };
+
+  const handleSubmitExam = () => doSubmit(false);
+
+  useEffect(() => {
+    if (activeExam && hasDeadlineRef.current && timeLeft === 0 && !autoSubmittedRef.current) {
+      autoSubmittedRef.current = true;
+      doSubmit(true);
+    }
+  }, [timeLeft, activeExam]);
 
   const openReview = async (record: StudentExamRecordVO) => {
     try {
