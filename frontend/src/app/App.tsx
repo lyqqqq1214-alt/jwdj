@@ -11859,18 +11859,28 @@ function StudentExam() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {pendingExams.map(p => (
-              <div key={p.id} className="bg-card rounded-lg border border-border p-5">
-                <h3 className="font-semibold text-foreground">{p.paperName}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{p.courseName}</p>
-                <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                  <span>满分 {p.totalScore ?? "—"}</span>
-                  <span>时长 {p.durationMinutes ?? "—"} 分钟</span>
+            {pendingExams.map(p => {
+              const notStarted = p.startTime && new Date(p.startTime).getTime() > Date.now();
+              return (
+                <div key={p.id} className="bg-card rounded-lg border border-border p-5">
+                  <h3 className="font-semibold text-foreground">{p.paperName}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{p.courseName}</p>
+                  <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                    <span>满分 {p.totalScore ?? "—"}</span>
+                    <span>时长 {p.durationMinutes ?? "—"} 分钟</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">开始：{fmtDate(p.startTime)}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">截止：{fmtDate(p.endTime)}</p>
+                  <button
+                    onClick={() => startExam(p)}
+                    disabled={notStarted}
+                    className="mt-4 w-full px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {notStarted ? "未开始" : "开始考试"}
+                  </button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">截止：{fmtDate(p.endTime)}</p>
-                <button onClick={() => startExam(p)} className="mt-4 w-full px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">开始考试</button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )
       ) : (
