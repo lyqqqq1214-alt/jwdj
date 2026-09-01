@@ -423,7 +423,11 @@ public class ExamServiceImpl implements ExamService {
     @Transactional
     public SubmitExamResultDTO submitExam(Long paperId, Long userId, Map<Long, String> answers) {
         Long studentId = resolveStudentId(userId);
-        ExamPaper paper = getPaperById(paperId);
+        // 直接读卷，跳过 normalizeEnded，以允许截止瞬间的自动交卷
+        ExamPaper paper = examPaperMapper.selectById(paperId);
+        if (paper == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "试卷不存在");
+        }
         if ("DRAFT".equals(paper.getStatus()) || "ENDED".equals(paper.getStatus())) {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "考试不可用");
         }
@@ -431,7 +435,8 @@ public class ExamServiceImpl implements ExamService {
         if (paper.getStartTime() != null && now.isBefore(paper.getStartTime())) {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "考试尚未开始");
         }
-        if (paper.getEndTime() != null && now.isAfter(paper.getEndTime())) {
+        // 宽限期：截止后 2 分钟内仍可交卷，容忍自动交卷的网络延迟
+        if (paper.getEndTime() != null && now.isAfter(paper.getEndTime().plusMinutes(2))) {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "考试已结束，无法交卷");
         }
 

@@ -458,6 +458,35 @@ class ExamServiceImplTest {
                     () -> examService.submitExam(1L, 3L, Map.of(10L, "2")));
             verify(assessmentRecordMapper, never()).insert(any(AssessmentRecord.class));
         }
+
+        @Test
+        @DisplayName("EX-36: 截止后2分钟宽限期内仍可交卷")
+        void shouldAllowSubmitWithinGrace() {
+            paper.setEndTime(LocalDateTime.now().minusMinutes(1));
+            when(studentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(student);
+            when(examPaperMapper.selectById(1L)).thenReturn(paper);
+            when(assessmentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(assessment);
+            when(assessmentRecordMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(0L);
+
+            ExamPaperQuestion epq = new ExamPaperQuestion();
+            epq.setQuestionId(10L); epq.setQuestionNo(1); epq.setScore(new BigDecimal("10"));
+            when(examPaperQuestionMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(epq));
+            when(questionBankMapper.selectById(10L)).thenReturn(question);
+
+            SubmitExamResultDTO result = examService.submitExam(1L, 3L, Map.of(10L, "2"));
+
+            assertEquals(new BigDecimal("10"), result.getObjectiveScore());
+        }
+
+        @Test
+        @DisplayName("EX-37: 超过宽限期应拒绝交卷")
+        void shouldRejectSubmitAfterGrace() {
+            paper.setEndTime(LocalDateTime.now().minusMinutes(10));
+            when(studentMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(student);
+            when(examPaperMapper.selectById(1L)).thenReturn(paper);
+
+            assertThrows(BusinessException.class, () -> examService.submitExam(1L, 3L, Map.of(10L, "2")));
+        }
     }
 
     @Nested
