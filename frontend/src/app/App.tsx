@@ -28,7 +28,7 @@ import { getOperationLogs, OperationLog } from "../services/logService";
 import { getAllConfigs, batchUpdateConfigs, SystemConfig } from "../services/configService";
 import { uploadFile, getImportHistory, downloadTemplate as fetchTemplateBlob, ImportLog } from "../services/importService";
 import { generateQuestions } from "../services/aiQuizService";
-import { getQuestionList, getKnowledgeTree, QuestionBank, KnowledgePoint } from "../services/questionBankService";
+import { getQuestionList, QuestionBank } from "../services/questionBankService";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Role = "admin" | "teacher" | "teaching-assistant" | "student";
@@ -10477,7 +10477,6 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
   const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
   const editStudentIdsRef = useRef<number[] | null>(null);
   const [bankQuestions, setBankQuestions] = useState<QuestionBank[]>([]);
-  const [knowledgeTree, setKnowledgeTree] = useState<KnowledgePoint[]>([]);
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<number[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
 
@@ -10522,15 +10521,12 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
   useEffect(() => { getMyCourses().then(data => setCourses(data || [])).catch(() => setCourses([])); }, []);
 
   useEffect(() => {
-    if (!examInfo.courseId) { setBankQuestions([]); setKnowledgeTree([]); return; }
+    if (!examInfo.courseId) { setBankQuestions([]); return; }
     setLoadingQuestions(true);
     getQuestionList(1, 500, examInfo.courseId)
       .then(data => setBankQuestions(data.records || []))
       .catch(() => setBankQuestions([]))
       .finally(() => setLoadingQuestions(false));
-    getKnowledgeTree(examInfo.courseId)
-      .then(data => setKnowledgeTree(data || []))
-      .catch(() => setKnowledgeTree([]));
   }, [examInfo.courseId]);
 
   useEffect(() => {
@@ -10584,15 +10580,11 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
     }
   };
 
-  const flattenKnowledge = (nodes: KnowledgePoint[]): string[] => {
-    const out: string[] = [];
-    const walk = (list: KnowledgePoint[]) => {
-      for (const n of list) { out.push(n.name); if (n.children) walk(n.children); }
-    };
-    walk(nodes);
-    return out;
-  };
-  const knowledgeOptions = flattenKnowledge(knowledgeTree);
+  // 知识点筛选选项：直接取自题库中题目自身携带的知识点（knowledgePoints），
+  // 而非独立的知识点树表，保证筛选选项与实际题目知识点一一对应。
+  const knowledgeOptions = Array.from(new Set(
+    bankQuestions.flatMap(q => (q.knowledgePoints || "").split(/[,，、]/).map(s => s.trim()).filter(Boolean))
+  )).sort((a, b) => a.localeCompare(b, "zh"));
 
   const questionTypes = [
     { value: "SINGLE", label: "单选题" },
@@ -10733,7 +10725,6 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
     setFilterKnowledge(null);
     setEditable([]);
     setBankQuestions([]);
-    setKnowledgeTree([]);
     setSelectedQuizQuestions([]);
   };
 
