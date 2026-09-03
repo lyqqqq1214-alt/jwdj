@@ -11332,6 +11332,50 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
                 </tbody>
               </table>
             </div>
+
+            {/* 题目统计 */}
+            {results.questionStats && results.questionStats.length > 0 && (
+              <div className="bg-card rounded-lg border border-border overflow-hidden">
+                <div className="px-4 py-3 border-b border-border bg-muted/50">
+                  <h3 className="text-sm font-semibold text-foreground">题目统计</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/30">
+                        <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">题号</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">题型</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">题干</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">知识点</th>
+                        <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground">作答人数</th>
+                        <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground">正确</th>
+                        <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground">错误</th>
+                        <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground">正确率</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {results.questionStats.map((q, idx) => {
+                        const rate = q.correctRate ?? 0;
+                        const rateColor = rate >= 70 ? "text-green-600" : rate >= 40 ? "text-orange-600" : "text-red-600";
+                        const typeMap: Record<string,string> = { SINGLE: "单选", MULTI: "多选", FILL: "填空", SHORT: "简答", COMPREHENSIVE: "综合" };
+                        return (
+                          <tr key={idx} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
+                            <td className="px-4 py-2.5 font-mono text-xs">{q.questionNo ?? idx + 1}</td>
+                            <td className="px-4 py-2.5"><Tag color="blue">{typeMap[q.questionType] ?? q.questionType ?? "—"}</Tag></td>
+                            <td className="px-4 py-2.5 text-xs max-w-xs truncate" title={q.questionStem}>{q.questionStem ?? "—"}</td>
+                            <td className="px-4 py-2.5 text-xs text-muted-foreground">{q.knowledgePoints ?? "—"}</td>
+                            <td className="px-4 py-2.5 text-center font-mono">{q.answerCount ?? 0}</td>
+                            <td className="px-4 py-2.5 text-center font-mono text-green-600">{q.correctCount ?? 0}</td>
+                            <td className="px-4 py-2.5 text-center font-mono text-red-600">{q.wrongCount ?? 0}</td>
+                            <td className={`px-4 py-2.5 text-center font-mono font-medium ${rateColor}`}>{rate}%</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
