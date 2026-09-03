@@ -32,9 +32,15 @@ public class ExamResultDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class QuestionStat {
+        private Long questionId;
         private Integer questionNo;
         private BigDecimal correctRate;
         private String questionType;
+        private String questionStem;
+        private String knowledgePoints;
+        private Integer answerCount;
+        private Integer correctCount;
+        private Integer wrongCount;
     }
 
     @Data

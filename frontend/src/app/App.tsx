@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import {
   LayoutDashboard, Users, BookOpen, Settings, LogOut, ChevronRight,
   TrendingUp, GraduationCap, Bell, Search, Moon, Sun, Upload,
@@ -19,7 +19,7 @@ import {
 import { login, saveUser, getCurrentUser, clearUser, mapRole, logout } from "../services/authService";
 import { getDashboardFull, getMyCourses, DashboardOverview, DashboardCharts, WarningStudent, ClassVO } from "../services/dashboardService";
 import { getTeacherList, createTeacher, updateTeacher, deleteTeacher, updateTeacherStatus, resetTeacherPassword, TeacherVO } from "../services/teacherService";
-import { getStudentOverview, getStudentTrends, getStudentWrongQuestions, getStudentCourses, StudentOverview, StudentCourse } from "../services/studentService";
+import { getStudentOverview, getStudentTrends, getStudentWrongQuestions, getStudentCourses, createStudentWrongQuestion, analyzeWrongQuestion, generateSimilarQuestions, StudentOverview, StudentCourse, StudentWrongQuestion } from "../services/studentService";
 import { getStudentProfile, toggleFocusStudent, generateAiEvaluation, generateAiSuggestions, getMyPortrait, generateMyAiSuggestions, StudentProfile as StudentProfileData, LearningSuggestion } from "../services/portraitService";
 import { getMyClasses, getClassStudents, createClass, addStudentToClass, removeStudentFromClass, ClassVO as ClsVO, StudentVO } from "../services/classService";
 import { getPendingExams, getExamPapers, getExamPaperById, createExamPaper, updateExamPaper, deleteExamPaper, publishExamPaper, closeExamPaper, getExamResults, submitExam, getStudentExam, getMyExamRecords, getMyExamResult, getGradingList, submitGrade, getPaperQuestions, getPaperGrading, submitStudentGrade, ExamPaper, ExamResultDTO, StudentExamVO, SubmitExamResultDTO, StudentExamRecordVO, StudentExamResultVO, GradingItemVO, PaperGradingVO, PaperQuestionEditVO, StudentGradeItem } from "../services/examService";
