@@ -9581,10 +9581,30 @@ function StudentWrongBook() {
   const [showAIGenerateModal, setShowAIGenerateModal] = useState(false);
   const [aiGeneratedQuestions, setAiGeneratedQuestions] = useState<any[]>([]);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
   const [apiWrongQuestions, setApiWrongQuestions] = useState<any[]>([]);
   const [loadingWrong, setLoadingWrong] = useState(true);
   const [studentCourses, setStudentCourses] = useState<StudentCourse[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [savingManualWrong, setSavingManualWrong] = useState(false);
+  const [manualWrong, setManualWrong] = useState({
+    question: "函数 f(x)=x² 在 x=2 处的导数是多少？",
+    options: "A. 2\nB. 4\nC. 6\nD. 8",
+    correctAnswer: "B",
+    studentAnswer: "A",
+    knowledgePoints: "高等数学,导数",
+    remark: "误把 x² 的导数记成了 x。",
+  });
+
+  const formatMathText = (value: unknown) => String(value ?? "")
+    .replace(/\$([^$]+)\$/g, "$1")
+    .replace(/\\left|\\right/g, "")
+    .replace(/\\cdot|\\times/g, "×")
+    .replace(/\\div/g, "÷")
+    .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1)/($2)")
+    .replace(/\^\{([^{}]+)\}/g, "^$1")
+    .replace(/_\{([^{}]+)\}/g, "_$1")
+    .replace(/\\([a-zA-Z]+)/g, "$1");
 
   useEffect(() => {
     getStudentCourses().then(courses => {
@@ -9594,31 +9614,56 @@ function StudentWrongBook() {
         const savedId = saved ? parseInt(saved) : null;
         const found = savedId && courses.find(c => c.id === savedId);
         setSelectedCourseId(found ? savedId! : courses[0].id);
-      }
-    }).catch(() => {});
+      } else setSelectedCourseId(null);
+    }).catch(() => {
+      setStudentCourses([]);
+      setSelectedCourseId(null);
+    });
   }, []);
 
   const selectedCourse = studentCourses.find(c => c.id === selectedCourseId);
 
   useEffect(() => {
-    if (!selectedCourseId) return;
+    setLoadingWrong(true);
     getStudentWrongQuestions(selectedCourseId).then(data => {
       if (data && data.length > 0) {
-        setApiWrongQuestions(data.map(q => ({
-          id: q.id,
-          course: q.courseName || selectedCourse?.courseName || "",
-          chapter: q.knowledgePoint || "未知",
-          section: q.knowledgePoint || "",
-          question: q.questionContent,
-          type: "choice",
-          options: ["A", "B", "C", "D"],
-          myAnswer: q.studentAnswer ? 0 : -1,
-          correctAnswer: q.correctAnswer ? 0 : 0,
-          explain: "",
-        })));
+        setApiWrongQuestions(data.map(mapWrongQuestion));
+      } else {
+        setApiWrongQuestions([]);
       }
-    }).catch(() => {}).finally(() => setLoadingWrong(false));
+    }).catch(() => setApiWrongQuestions([])).finally(() => setLoadingWrong(false));
   }, [selectedCourseId]);
+
+  const mapWrongQuestion = (q: StudentWrongQuestion) => ({
+    id: q.id,
+    course: q.courseName || selectedCourse?.courseName || "个人错题本（测试）",
+    chapter: q.knowledgePoints || "未知",
+    section: q.knowledgePoints || "",
+    question: formatMathText((() => { try { return JSON.parse(q.questionContent).stem || q.questionContent; } catch { return q.questionContent; } })()),
+    type: "choice",
+    options: (() => { try { const options = JSON.parse(q.questionContent).options || {}; return (Array.isArray(options) ? options.map((o: any) => o.text || o) : Object.values(options)).map(formatMathText); } catch { return []; } })(),
+    myAnswer: formatMathText(q.studentAnswer || "未作答"),
+    correctAnswer: formatMathText(q.correctAnswer || "未记录"),
+    explain: formatMathText(q.analysis || "暂无解析，可点击“AI错因分析”生成。"),
+  });
+
+  const saveManualWrongQuestion = async () => {
+    if (!manualWrong.question.trim() || !manualWrong.knowledgePoints.trim()) {
+      alert("请填写题目内容和知识点");
+      return;
+    }
+    setSavingManualWrong(true);
+    try {
+      const saved = await createStudentWrongQuestion({ courseId: selectedCourseId, ...manualWrong });
+      setApiWrongQuestions(items => [mapWrongQuestion(saved), ...items]);
+      setShowAddWrongModal(false);
+      alert("错题已添加，可立即测试 AI 错因分析和相似题生成");
+    } catch {
+      alert("错题保存失败，请确认后端已重启并已登录学生账号");
+    } finally {
+      setSavingManualWrong(false);
+    }
+  };
 
   const handleCourseChange = (courseId: number) => {
     setSelectedCourseId(courseId);
@@ -9636,8 +9681,31 @@ function StudentWrongBook() {
   };
 
   const allQuestions = apiWrongQuestions;
+  const wrongBookCourseName = selectedCourse?.courseName || "个人错题本（测试）";
+  const wrongBookCategories = useMemo(() => {
+    const chapterMap = new Map<string, Set<string>>();
+    allQuestions
+      .filter(q => !wrongBookCourseName || q.course === wrongBookCourseName)
+      .forEach(q => {
+        const chapter = q.chapter || "未知";
+        const section = q.section || chapter;
+        if (!chapterMap.has(chapter)) {
+          chapterMap.set(chapter, new Set<string>());
+        }
+        chapterMap.get(chapter)!.add(section);
+      });
+
+    return [{
+      name: wrongBookCourseName || "当前课程",
+      chapters: Array.from(chapterMap.entries()).map(([name, sections]) => ({
+        name,
+        sections: Array.from(sections),
+      })),
+    }];
+  }, [allQuestions, wrongBookCourseName]);
+
   const filteredQuestions = allQuestions.filter(q => {
-    if (q.course !== selectedCourse?.courseName) return false;
+    if (wrongBookCourseName && q.course !== wrongBookCourseName) return false;
     if (!selectedChapter && !selectedSection) return true;
     if (selectedChapter && q.chapter !== selectedChapter) return false;
     if (selectedSection && q.section !== selectedSection) return false;
@@ -9659,8 +9727,65 @@ function StudentWrongBook() {
     setPracticeAnswers({});
   };
 
-  const handlePracticeAnswer = (qIdx: number, answer: number) => {
+  const handlePracticeAnswer = async (qIdx: number, answer: number) => {
     setPracticeAnswers(prev => ({ ...prev, [qIdx]: answer }));
+    const question = practiceQuestionsList[qIdx];
+    if (!question || question.isOriginal || answer === question.answer) return;
+    try {
+      const options = (question.options || []).map((option: unknown, index: number) =>
+        `${String.fromCharCode(65 + index)}. ${option}`).join("\n");
+      const saved = await createStudentWrongQuestion({
+        courseId: selectedCourseId,
+        question: question.question,
+        options,
+        correctAnswer: String.fromCharCode(65 + question.answer),
+        studentAnswer: String.fromCharCode(65 + answer),
+        knowledgePoints: question.knowledgePoints || selectedQuestion?.chapter || "AI 相似题",
+        remark: "AI 相似题练习答错，已自动加入错题本。",
+        source: "AI_GENERATE",
+      });
+      setApiWrongQuestions(items => [mapWrongQuestion(saved), ...items]);
+    } catch {
+      alert("答题结果已记录，但自动加入错题本失败，请稍后重试");
+    }
+  };
+
+  const requestSimilarQuestions = async (question: any) => {
+    if (!question) {
+      alert("请先选择一道错题");
+      return;
+    }
+    setAiGenerating(true);
+    setAiGeneratedQuestions([]);
+    try {
+      const questions = await generateSimilarQuestions(question.id);
+      setAiGeneratedQuestions(questions.map((q: any, index: number) => ({
+        id: index,
+        question: formatMathText(q.stem),
+        options: Object.values(q.options || {}).map(formatMathText),
+        answer: typeof q.answer === "string" && /^[A-D]$/i.test(q.answer.trim()) ? q.answer.trim().toUpperCase().charCodeAt(0) - 65 : 0,
+        explain: formatMathText(q.explanation),
+        knowledgePoints: (q.knowledgeTags || []).join(",") || selectedQuestion?.chapter || "AI 相似题",
+      })));
+    } catch {
+      alert("相似题生成失败，请稍后重试");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  const requestAnalysis = async () => {
+    if (!selectedQuestion) return;
+    setAnalysisLoading(true);
+    try {
+      const analysis = await analyzeWrongQuestion(selectedQuestion.id);
+      setSelectedQuestion((current: any) => current ? { ...current, explain: analysis } : null);
+      setApiWrongQuestions(items => items.map(item => item.id === selectedQuestion.id ? { ...item, explain: analysis } : item));
+    } catch {
+      alert("错因分析生成失败，请稍后重试");
+    } finally {
+      setAnalysisLoading(false);
+    }
   };
 
   return (
@@ -9671,8 +9796,9 @@ function StudentWrongBook() {
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground">选择课程</span>
             <div className="relative">
-              <select value={selectedCourseId || ""} onChange={e => handleCourseChange(parseInt(e.target.value))}
+              <select value={selectedCourseId || ""} onChange={e => e.target.value && handleCourseChange(parseInt(e.target.value))}
                 className="appearance-none bg-card border border-border px-4 py-2 pr-8 rounded-lg text-sm font-medium cursor-pointer hover:bg-accent transition-colors">
+                {studentCourses.length === 0 && <option value="">个人错题本（测试模式）</option>}
                 {studentCourses.map(c => (
                   <option key={c.id} value={c.id}>
                     {c.courseName}
@@ -9687,7 +9813,7 @@ function StudentWrongBook() {
             <button onClick={() => setShowAddWrongModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 border border-border text-sm rounded-md hover:bg-accent">
               <Plus size={14} />手动添加
             </button>
-            <button onClick={() => setShowAIGenerateModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-sm rounded-md hover:bg-blue-700">
+            <button onClick={() => { setShowAIGenerateModal(true); setAiGeneratedQuestions([]); }} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-sm rounded-md hover:bg-blue-700">
               <Brain size={14} />AI生成相似题
             </button>
           </div>
@@ -9696,9 +9822,9 @@ function StudentWrongBook() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
         <div className="lg:col-span-1 bg-card rounded-lg border border-border p-4">
-          <h3 className="font-medium text-sm mb-3">知识点筛选</h3>
-          <div className="space-y-2">
-            {wrongQuestionCategories.filter(c => c.name === selectedCourse.name).map(course => (
+            <h3 className="font-medium text-sm mb-3">知识点筛选</h3>
+            <div className="space-y-2">
+            {wrongBookCategories.map(course => (
               <div key={course.name}>
                 <button onClick={() => toggleCourse(course.name)} className="w-full flex items-center justify-between text-left text-sm hover:bg-accent rounded px-2 py-1">
                   <span>{course.name}</span>
@@ -9732,6 +9858,9 @@ function StudentWrongBook() {
                 )}
               </div>
             ))}
+            {wrongBookCategories[0].chapters.length === 0 && (
+              <p className="text-xs text-muted-foreground px-2 py-1">暂无可筛选知识点</p>
+            )}
           </div>
           {(selectedChapter || selectedSection) && (
             <button onClick={() => { setSelectedChapter(null); setSelectedSection(null); }} className="mt-4 w-full py-2 text-xs border border-border rounded hover:bg-accent">
@@ -9745,7 +9874,9 @@ function StudentWrongBook() {
             <h3 className="font-medium text-sm">错题列表</h3>
           </div>
           <div className="divide-y divide-border">
-            {filteredQuestions.map(q => (
+            {loadingWrong ? (
+              <p className="text-center text-sm text-muted-foreground py-8">错题加载中...</p>
+            ) : filteredQuestions.map(q => (
               <div key={q.id} className="p-4 hover:bg-accent/30 cursor-pointer" onClick={() => setSelectedQuestion(q)}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -9756,17 +9887,17 @@ function StudentWrongBook() {
                     </div>
                     <p className="text-sm line-clamp-2">{q.question}</p>
                     <div className="mt-2 flex items-center gap-4 text-xs">
-                      <span className="text-red-600">我的答案：{q.options[q.myAnswer]}</span>
-                      <span className="text-emerald-600">正确答案：{q.options[q.correctAnswer]}</span>
+                      <span className="text-red-600">我的答案：{q.myAnswer}</span>
+                      <span className="text-emerald-600">正确答案：{q.correctAnswer}</span>
                     </div>
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); startPractice(q); }} className="flex-shrink-0 px-3 py-1.5 text-xs bg-primary text-white rounded hover:bg-blue-700">
+                  <button onClick={(e) => { e.stopPropagation(); setSelectedQuestion(q); setShowAIGenerateModal(true); requestSimilarQuestions(q); }} className="flex-shrink-0 px-3 py-1.5 text-xs bg-primary text-white rounded hover:bg-blue-700">
                     练习相似题
                   </button>
                 </div>
               </div>
             ))}
-            {filteredQuestions.length === 0 && (
+            {!loadingWrong && filteredQuestions.length === 0 && (
               <p className="text-center text-sm text-muted-foreground py-8">暂无错题</p>
             )}
           </div>
@@ -9784,32 +9915,22 @@ function StudentWrongBook() {
               </div>
               <button onClick={() => setSelectedQuestion(null)}><X size={16} /></button>
             </div>
-            <p className="font-medium text-sm">{selectedQuestion.question}</p>
-            <div className="space-y-2">
-              {selectedQuestion.options.map((opt, i) => (
-                <div key={i} className={`px-4 py-3 rounded-md text-sm ${
-                  i === selectedQuestion.correctAnswer ? "bg-emerald-50 border border-emerald-200" :
-                  i === selectedQuestion.myAnswer ? "bg-red-50 border border-red-200" :
-                  "bg-muted"
-                }`}>
-                  <span className={`font-medium ${
-                    i === selectedQuestion.correctAnswer ? "text-emerald-700" :
-                    i === selectedQuestion.myAnswer ? "text-red-700" : ""
-                  }`}>
-                    {String.fromCharCode(65 + i)}. {opt}
-                  </span>
-                  {i === selectedQuestion.correctAnswer && <span className="ml-2 text-xs text-emerald-600">✓ 正确答案</span>}
-                  {i === selectedQuestion.myAnswer && i !== selectedQuestion.correctAnswer && <span className="ml-2 text-xs text-red-600">✗ 我的答案</span>}
-                </div>
-              ))}
+            <p className="font-medium text-sm">{formatMathText(selectedQuestion.question)}</p>
+            {selectedQuestion.options.length > 0 && <div className="space-y-2">
+              {selectedQuestion.options.map((opt, i) => <div key={i} className="px-4 py-3 rounded-md text-sm bg-muted">{String.fromCharCode(65 + i)}. {formatMathText(opt)}</div>)}
+            </div>}
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <p className="rounded-md bg-red-50 p-3 text-red-700">我的答案：{formatMathText(selectedQuestion.myAnswer)}</p>
+              <p className="rounded-md bg-emerald-50 p-3 text-emerald-700">正确答案：{formatMathText(selectedQuestion.correctAnswer)}</p>
             </div>
             <div className="bg-blue-50 rounded-lg p-4">
               <p className="text-xs font-medium text-blue-700 mb-1">解析</p>
-              <p className="text-sm text-blue-600">{selectedQuestion.explain}</p>
+              <p className="text-sm text-blue-600">{formatMathText(selectedQuestion.explain)}</p>
             </div>
-            <button onClick={() => { startPractice(selectedQuestion); setSelectedQuestion(null); }} className="w-full py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700">
-              练习相似题
-            </button>
+            <div className="grid grid-cols-2 gap-3">
+              <button disabled={analysisLoading} onClick={requestAnalysis} className="py-2 border border-primary text-primary rounded-md text-sm hover:bg-primary/10 disabled:opacity-50">{analysisLoading ? "分析中..." : "AI错因分析"}</button>
+              <button onClick={() => { setShowAIGenerateModal(true); requestSimilarQuestions(selectedQuestion); }} className="py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700">练习相似题</button>
+            </div>
           </div>
         </div>
       )}
@@ -9829,7 +9950,7 @@ function StudentWrongBook() {
             </div>
 
             <div>
-              <p className="font-medium text-sm mb-3">{practiceQuestionsList[practiceIdx].question}</p>
+              <p className="font-medium text-sm mb-3">{formatMathText(practiceQuestionsList[practiceIdx].question)}</p>
               <div className="space-y-2">
                 {practiceQuestionsList[practiceIdx].options.map((opt, i) => {
                   const answered = practiceAnswers[practiceIdx] !== undefined;
@@ -9842,7 +9963,7 @@ function StudentWrongBook() {
                   return (
                     <button key={i} onClick={() => !answered && handlePracticeAnswer(practiceIdx, i)}
                       className={`w-full text-left px-4 py-3 rounded-md transition-colors ${cls} ${!answered ? "cursor-pointer" : "cursor-default"}`}>
-                      {String.fromCharCode(65 + i)}. {opt}
+                      {String.fromCharCode(65 + i)}. {formatMathText(opt)}
                     </button>
                   );
                 })}
@@ -9850,7 +9971,7 @@ function StudentWrongBook() {
               {practiceAnswers[practiceIdx] !== undefined && (
                 <div className="mt-3 bg-blue-50 rounded-lg p-4">
                   <p className="text-xs font-medium text-blue-700 mb-1">解析</p>
-                  <p className="text-sm text-blue-600">{practiceQuestionsList[practiceIdx].explain}</p>
+                  <p className="text-sm text-blue-600">{formatMathText(practiceQuestionsList[practiceIdx].explain)}</p>
                 </div>
               )}
             </div>
@@ -9878,15 +9999,15 @@ function StudentWrongBook() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">题目内容</label>
-                <textarea className="w-full px-3 py-2 border border-border rounded-md text-sm h-24 resize-none" placeholder="请输入题目内容..." />
+                <textarea value={manualWrong.question} onChange={e => setManualWrong(value => ({ ...value, question: e.target.value }))} className="w-full px-3 py-2 border border-border rounded-md text-sm h-24 resize-none" placeholder="请输入题目内容..." />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">选项（每行一个）</label>
-                <textarea className="w-full px-3 py-2 border border-border rounded-md text-sm h-20 resize-none" placeholder="A. 选项一&#10;B. 选项二&#10;C. 选项三&#10;D. 选项四" />
+                <textarea value={manualWrong.options} onChange={e => setManualWrong(value => ({ ...value, options: e.target.value }))} className="w-full px-3 py-2 border border-border rounded-md text-sm h-20 resize-none" placeholder="A. 选项一&#10;B. 选项二&#10;C. 选项三&#10;D. 选项四" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">正确答案</label>
-                <select className="w-full px-3 py-2 border border-border rounded-md text-sm">
+                <select value={manualWrong.correctAnswer} onChange={e => setManualWrong(value => ({ ...value, correctAnswer: e.target.value }))} className="w-full px-3 py-2 border border-border rounded-md text-sm">
                   <option value="A">A</option>
                   <option value="B">B</option>
                   <option value="C">C</option>
@@ -9895,7 +10016,7 @@ function StudentWrongBook() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">我的错误答案</label>
-                <select className="w-full px-3 py-2 border border-border rounded-md text-sm">
+                <select value={manualWrong.studentAnswer} onChange={e => setManualWrong(value => ({ ...value, studentAnswer: e.target.value }))} className="w-full px-3 py-2 border border-border rounded-md text-sm">
                   <option value="A">A</option>
                   <option value="B">B</option>
                   <option value="C">C</option>
@@ -9904,16 +10025,16 @@ function StudentWrongBook() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">知识点/章节</label>
-                <input type="text" className="w-full px-3 py-2 border border-border rounded-md text-sm" placeholder="例如：微积分 - 导数" />
+                <input type="text" value={manualWrong.knowledgePoints} onChange={e => setManualWrong(value => ({ ...value, knowledgePoints: e.target.value }))} className="w-full px-3 py-2 border border-border rounded-md text-sm" placeholder="例如：微积分 - 导数" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">备注/理解难点</label>
-                <textarea className="w-full px-3 py-2 border border-border rounded-md text-sm h-16 resize-none" placeholder="记录自己做错的原因或理解难点..." />
+                <textarea value={manualWrong.remark} onChange={e => setManualWrong(value => ({ ...value, remark: e.target.value }))} className="w-full px-3 py-2 border border-border rounded-md text-sm h-16 resize-none" placeholder="记录自己做错的原因或理解难点..." />
               </div>
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowAddWrongModal(false)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
-              <button onClick={() => { setShowAddWrongModal(false); alert("错题已添加"); }} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700">保存错题</button>
+              <button disabled={savingManualWrong} onClick={saveManualWrongQuestion} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50">{savingManualWrong ? "保存中..." : "保存错题"}</button>
             </div>
           </div>
         </div>
@@ -9935,25 +10056,32 @@ function StudentWrongBook() {
                 </div>
               ) : aiGeneratedQuestions.length > 0 ? (
                 <div className="space-y-4">
+                  <button onClick={() => {
+                    setPracticeQuestionsList(aiGeneratedQuestions);
+                    setPracticeIdx(0);
+                    setPracticeAnswers({});
+                    setShowAIGenerateModal(false);
+                    setPracticeMode(true);
+                  }} className="w-full py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700">开始相似题练习</button>
                   {aiGeneratedQuestions.map((q, i) => (
                     <div key={i} className="border border-border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Tag color="cyan">AI生成</Tag>
                         <span className="text-xs text-muted-foreground">第{i + 1}题</span>
                       </div>
-                      <p className="text-sm font-medium mb-2">{q.question}</p>
+                      <p className="text-sm font-medium mb-2">{formatMathText(q.question)}</p>
                       <div className="space-y-1">
                         {q.options.map((opt: string, j: number) => (
                           <div key={j} className="px-3 py-2 bg-muted rounded text-xs">
-                            {String.fromCharCode(65 + j)}. {opt}
+                            {String.fromCharCode(65 + j)}. {formatMathText(opt)}
                           </div>
                         ))}
                       </div>
                       <div className="mt-3 bg-blue-50 rounded-lg p-3">
                         <p className="text-xs font-medium text-blue-700">答案：{String.fromCharCode(65 + q.answer)}</p>
-                        <p className="text-xs text-blue-600 mt-1">{q.explain}</p>
+                        <p className="text-xs text-blue-600 mt-1">{formatMathText(q.explain)}</p>
                       </div>
-                      <button onClick={() => alert("已添加到错题本")} className="mt-3 px-3 py-1.5 bg-primary/10 text-primary text-xs rounded-md hover:bg-primary/20">添加到错题本</button>
+                      <p className="mt-3 text-xs text-muted-foreground">在练习中答错后，会自动加入错题本。</p>
                     </div>
                   ))}
                 </div>
@@ -9963,55 +10091,8 @@ function StudentWrongBook() {
                   <div className="bg-card rounded-lg border border-border p-4">
                     <h4 className="text-sm font-medium mb-3">选择生成依据</h4>
                     <div className="space-y-2">
-                      <button onClick={() => {
-                        setAiGenerating(true);
-                        setTimeout(() => {
-                          setAiGeneratedQuestions([
-                            {
-                              question: "求函数 f(x) = x³ - 3x² + 2 在 x = 1 处的导数值。",
-                              options: ["-3", "0", "3", "-6"],
-                              answer: 0,
-                              explain: "f'(x) = 3x² - 6x，代入 x = 1 得 f'(1) = 3 - 6 = -3。",
-                            },
-                            {
-                              question: "设函数 y = e^(2x)，求 dy/dx。",
-                              options: ["e^(2x)", "2e^(2x)", "e^(x)", "2e^(x)"],
-                              answer: 1,
-                              explain: "复合函数求导，dy/dx = e^(2x) * 2 = 2e^(2x)。",
-                            },
-                            {
-                              question: "求不定积分 ∫(2x + 1)dx。",
-                              options: ["x² + x + C", "2x² + x + C", "x² + 2x + C", "2x² + 2x + C"],
-                              answer: 0,
-                              explain: "∫(2x + 1)dx = x² + x + C。",
-                            },
-                          ]);
-                          setAiGenerating(false);
-                        }, 2000);
-                      }} className="w-full text-left px-3 py-2 border border-border rounded-md text-sm hover:bg-accent">
-                        根据当前课程（高等数学）生成相似题
-                      </button>
-                      <button onClick={() => {
-                        setAiGenerating(true);
-                        setTimeout(() => {
-                          setAiGeneratedQuestions([
-                            {
-                              question: "TCP三次握手过程中，第二次握手时服务器发送的报文包含哪些标志位？",
-                              options: ["SYN", "ACK", "SYN+ACK", "FIN"],
-                              answer: 2,
-                              explain: "第二次握手时服务器发送 SYN+ACK，表示同意建立连接并确认收到客户端的SYN。",
-                            },
-                            {
-                              question: "HTTP状态码404表示什么含义？",
-                              options: ["服务器内部错误", "请求成功", "资源未找到", "重定向"],
-                              answer: 2,
-                              explain: "404表示请求的资源未找到（Not Found）。",
-                            },
-                          ]);
-                          setAiGenerating(false);
-                        }, 2000);
-                      }} className="w-full text-left px-3 py-2 border border-border rounded-md text-sm hover:bg-accent">
-                        根据当前错题知识点生成相似题
+                      <button disabled={!selectedQuestion && allQuestions.length === 0} onClick={() => requestSimilarQuestions(selectedQuestion || allQuestions[0])} className="w-full text-left px-3 py-2 border border-border rounded-md text-sm hover:bg-accent disabled:opacity-50">
+                        根据{selectedQuestion ? "当前错题" : "第一道错题"}的知识点生成相似题
                       </button>
                     </div>
                   </div>
