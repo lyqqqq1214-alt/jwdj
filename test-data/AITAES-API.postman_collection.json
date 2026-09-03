@@ -1,0 +1,650 @@
+{
+  "info": {
+    "name": "AITAES API 测试集合",
+    "description": "教学评价系统全部接口测试集合，包含 27 个请求，覆盖数据源管理、数据导入、评价查询、仪表盘、报告管理、导出 6 大模块",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "course_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "teacher_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "semester",
+      "value": "2025-2026-1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1-数据源管理",
+      "item": [
+        {
+          "name": "GET 查询数据源列表",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"返回成功标识\", () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.code).to.eql(200);",
+                  "});",
+                  "pm.test(\"data为分页对象\", () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.data.records).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/datasource?pageNum=1&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "datasource"],
+              "query": [
+                {"key": "pageNum", "value": "1"},
+                {"key": "pageSize", "value": "10"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST 创建数据源",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"返回新创建的ID\", () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.data.id).to.be.a('number');",
+                  "    pm.collectionVariables.set('datasource_id', json.data.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/datasource",
+              "host": ["{{base_url}}"],
+              "path": ["api", "datasource"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"sourceName\":\"测试数据源\",\"sourceType\":\"EXCEL\",\"description\":\"Postman测试\",\"status\":\"ACTIVE\"}"
+            }
+          }
+        },
+        {
+          "name": "GET 查询激活的数据源",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"返回数组\", () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/datasource/active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "datasource", "active"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2-数据导入",
+      "item": [
+        {
+          "name": "POST 导入教师 (TEACHER)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"导入成功\", () => pm.expect(pm.response.json().data.successRows).to.be.greaterThan(0));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/import/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "import", "upload"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "file", "type": "file", "src": "teacher.csv"},
+                {"key": "importType", "value": "TEACHER", "type": "text"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST 导入学生 (STUDENT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"导入成功\", () => pm.expect(pm.response.json().data.successRows).to.be.greaterThan(0));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/import/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "import", "upload"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "file", "type": "file", "src": "student.csv"},
+                {"key": "importType", "value": "STUDENT", "type": "text"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST 导入课程 (COURSE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"导入成功\", () => pm.expect(pm.response.json().data.successRows).to.be.greaterThan(0));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/import/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "import", "upload"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "file", "type": "file", "src": "course.csv"},
+                {"key": "importType", "value": "COURSE", "type": "text"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST 导入评分 (SCORE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"导入成功\", () => pm.expect(pm.response.json().data.successRows).to.be.greaterThan(0));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/import/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "import", "upload"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "file", "type": "file", "src": "score.csv"},
+                {"key": "importType", "value": "SCORE", "type": "text"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3-评价查询",
+      "item": [
+        {
+          "name": "GET 课程评价（正常）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"包含综合得分\", () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.data.overallScore).to.exist;",
+                  "    pm.expect(json.data.categoryScores.length).to.eql(4);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/evaluation/course/{{course_id}}?semester={{semester}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "evaluation", "course", "{{course_id}}"],
+              "query": [{"key": "semester", "value": "{{semester}}"}]
+            }
+          }
+        },
+        {
+          "name": "GET 课程评价（课程不存在-异常）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"返回404错误\", () => pm.expect(pm.response.json().code).to.not.eql(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/evaluation/course/999?semester={{semester}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "evaluation", "course", "999"],
+              "query": [{"key": "semester", "value": "{{semester}}"}]
+            }
+          }
+        },
+        {
+          "name": "GET 教师评价",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"包含教师姓名和课程数\", () => {",
+                  "    const d = pm.response.json().data;",
+                  "    pm.expect(d.name).to.exist;",
+                  "    pm.expect(d.courseCount).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/evaluation/teacher/{{teacher_id}}?semester={{semester}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "evaluation", "teacher", "{{teacher_id}}"],
+              "query": [{"key": "semester", "value": "{{semester}}"}]
+            }
+          }
+        },
+        {
+          "name": "GET 学院排名",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"返回数组且已排序\", () => {",
+                  "    const arr = pm.response.json().data;",
+                  "    pm.expect(arr).to.be.an('array');",
+                  "    if (arr.length >= 2) {",
+                  "        pm.expect(arr[0].averageOverallScore).to.be.at.least(arr[1].averageOverallScore);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/evaluation/college?college=计算机学院&semester={{semester}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "evaluation", "college"],
+              "query": [
+                {"key": "college", "value": "计算机学院"},
+                {"key": "semester", "value": "{{semester}}"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET 学期概览",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"返回数组\", () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/evaluation/semester/{{semester}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "evaluation", "semester", "{{semester}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4-仪表盘",
+      "item": [
+        {
+          "name": "GET 仪表盘完整数据",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"包含概览/分布/趋势三部分\", () => {",
+                  "    const d = pm.response.json().data;",
+                  "    pm.expect(d.overview).to.exist;",
+                  "    pm.expect(d.distributions).to.exist;",
+                  "    pm.expect(d.trend).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/dashboard?semester={{semester}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard"],
+              "query": [{"key": "semester", "value": "{{semester}}"}]
+            }
+          }
+        },
+        {
+          "name": "GET 概览统计",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"包含统计数字\", () => pm.expect(pm.response.json().data).to.exist);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/overview?semester={{semester}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "overview"],
+              "query": [{"key": "semester", "value": "{{semester}}"}]
+            }
+          }
+        },
+        {
+          "name": "GET 评分分布",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"返回分布数组\", () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/distribution?semester={{semester}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "distribution"],
+              "query": [{"key": "semester", "value": "{{semester}}"}]
+            }
+          }
+        },
+        {
+          "name": "GET 学期趋势",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/trend",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "trend"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5-报告管理",
+      "item": [
+        {
+          "name": "POST 生成课程报告",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"报告包含ID\", () => pm.expect(pm.response.json().data.id).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/report/generate/course/{{course_id}}?semester={{semester}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "report", "generate", "course", "{{course_id}}"],
+              "query": [{"key": "semester", "value": "{{semester}}"}]
+            }
+          }
+        },
+        {
+          "name": "POST 生成教师报告",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"报告类型为TEACHER\", () => pm.expect(pm.response.json().data.reportType).to.eql('TEACHER'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/report/generate/teacher/{{teacher_id}}?semester={{semester}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "report", "generate", "teacher", "{{teacher_id}}"],
+              "query": [{"key": "semester", "value": "{{semester}}"}]
+            }
+          }
+        },
+        {
+          "name": "GET 报告列表",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"返回分页数据\", () => pm.expect(pm.response.json().data.records).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/report?pageNum=1&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "report"],
+              "query": [
+                {"key": "pageNum", "value": "1"},
+                {"key": "pageSize", "value": "10"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6-导出",
+      "item": [
+        {
+          "name": "GET 导出课程评价",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"响应类型为Excel\", () => {",
+                  "    const ct = pm.response.headers.get('Content-Type');",
+                  "    pm.expect(ct).to.include('spreadsheetml');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/export/course/{{course_id}}?semester={{semester}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "export", "course", "{{course_id}}"],
+              "query": [{"key": "semester", "value": "{{semester}}"}]
+            }
+          }
+        },
+        {
+          "name": "GET 导出教师评价",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/export/teacher/{{teacher_id}}?semester={{semester}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "export", "teacher", "{{teacher_id}}"],
+              "query": [{"key": "semester", "value": "{{semester}}"}]
+            }
+          }
+        },
+        {
+          "name": "GET 导出学院排名",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"状态码为200\", () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/export/college?semester={{semester}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "export", "college"],
+              "query": [{"key": "semester", "value": "{{semester}}"}]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

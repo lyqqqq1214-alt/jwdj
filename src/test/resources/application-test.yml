@@ -1,0 +1,41 @@
+# ===== AITAES 测试环境配置 =====
+# 使用 H2 内存数据库，无需安装 MySQL
+
+spring:
+  # H2 内存数据库 + MySQL 兼容模式
+  datasource:
+    url: jdbc:h2:mem:aitaes_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  # 测试环境不需要 Redis
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.session.data.redis.RedisSessionRepositoryAutoConfiguration
+
+  # 文件上传大小
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# MyBatis Plus - 打印 SQL 便于调试
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.example.aitaes.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# 日志
+logging:
+  level:
+    com.example.aitaes: DEBUG

@@ -1,0 +1,17 @@
+# ===== MySQL 数据库生产/开发配置 =====
+# 需要提前创建数据库 `aitaes_db`，并配置好用户名密码
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/aitaes_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      mode: never
+      schema-locations: classpath:db/init.sql
+  session:
+    store-type: none
+  redis:
+    timeout: 2s
+    connect-timeout: 2s
