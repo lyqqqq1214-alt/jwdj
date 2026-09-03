@@ -34,9 +34,21 @@ export interface StudentWrongQuestion {
   questionContent: string;
   studentAnswer?: string;
   correctAnswer?: string;
-  knowledgePoint?: string;
+  knowledgePoints?: string;
+  analysis?: string;
   courseName?: string;
   createTime?: string;
+}
+
+export interface ManualWrongQuestionRequest {
+  courseId?: number | null;
+  question: string;
+  options: string;
+  correctAnswer: string;
+  studentAnswer: string;
+  knowledgePoints: string;
+  remark?: string;
+  source?: 'MANUAL' | 'AI_GENERATE';
 }
 
 export async function getStudentCourses() {
@@ -59,7 +71,7 @@ export async function getStudentTrends(courseId: number) {
   return res.data as ScoreTrendItem[];
 }
 
-export async function getStudentWrongQuestions(courseId: number) {
+export async function getStudentWrongQuestions(courseId?: number | null) {
   const res = await api.get('/student/wrong-questions', { params: { courseId } });
   return res.data as StudentWrongQuestion[];
 }
@@ -67,4 +79,20 @@ export async function getStudentWrongQuestions(courseId: number) {
 export async function getStudentWrongQuestionDetail(id: number) {
   const res = await api.get(`/student/wrong-questions/${id}`);
   return res.data as StudentWrongQuestion;
+}
+
+export async function createStudentWrongQuestion(payload: ManualWrongQuestionRequest) {
+  const res = await api.post('/student/wrong-questions', payload);
+  return res.data as StudentWrongQuestion;
+}
+
+export async function analyzeWrongQuestion(id: number) {
+  const res = await api.post(`/student/wrong-questions/${id}/analysis`);
+  return res.data as string;
+}
+
+export async function generateSimilarQuestions(id: number, count = 3, difficulty = 'MEDIUM') {
+  const res = await api.post(`/student/wrong-questions/${id}/similar-questions`, null,
+    { params: { count, difficulty } });
+  return res.data as any[];
 }

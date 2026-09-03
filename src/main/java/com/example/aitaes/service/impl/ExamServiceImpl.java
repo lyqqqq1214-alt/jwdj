@@ -739,11 +739,49 @@ public class ExamServiceImpl implements ExamService {
                     .build();
         }).collect(Collectors.toList());
 
+        List<ExamAnswer> answers = examAnswerMapper.selectList(
+                new LambdaQueryWrapper<ExamAnswer>()
+                        .eq(ExamAnswer::getPaperId, paperId)
+                        .orderByAsc(ExamAnswer::getQuestionNo));
+        Set<Long> questionIds = answers.stream().map(ExamAnswer::getQuestionId).collect(Collectors.toSet());
+        Map<Long, QuestionBank> questionMap = questionIds.isEmpty() ? Collections.emptyMap()
+                : questionBankMapper.selectBatchIds(questionIds).stream()
+                        .collect(Collectors.toMap(QuestionBank::getId, q -> q));
+        Map<Long, String> overrideMap = loadOverrideMap(paperId);
+
+        List<ExamResultDTO.QuestionStat> questionStats = answers.stream()
+                .collect(Collectors.groupingBy(ExamAnswer::getQuestionId, LinkedHashMap::new, Collectors.toList()))
+                .entrySet().stream().map(entry -> {
+                    List<ExamAnswer> questionAnswers = entry.getValue();
+                    long correctCount = questionAnswers.stream()
+                            .filter(answer -> Integer.valueOf(1).equals(answer.getIsCorrect())).count();
+                    long gradedCount = questionAnswers.stream()
+                            .filter(answer -> answer.getIsCorrect() != null).count();
+                    QuestionBank question = questionMap.get(entry.getKey());
+                    ExamAnswer firstAnswer = questionAnswers.getFirst();
+                    String content = overrideMap.getOrDefault(entry.getKey(),
+                            question != null ? question.getContent() : null);
+                    return ExamResultDTO.QuestionStat.builder()
+                            .questionId(entry.getKey())
+                            .questionNo(firstAnswer.getQuestionNo())
+                            .questionType(firstAnswer.getQuestionType())
+                            .questionStem(parseStem(content))
+                            .knowledgePoints(question != null ? question.getKnowledgePoints() : null)
+                            .answerCount(questionAnswers.size())
+                            .correctCount((int) correctCount)
+                            .wrongCount((int) (gradedCount - correctCount))
+                            .correctRate(gradedCount == 0 ? null
+                                    : new BigDecimal(correctCount).multiply(new BigDecimal(100))
+                                    .divide(new BigDecimal(gradedCount), 1, RoundingMode.HALF_UP))
+                            .build();
+                }).sorted(Comparator.comparing(ExamResultDTO.QuestionStat::getQuestionNo))
+                .collect(Collectors.toList());
+
         return ExamResultDTO.builder()
                 .averageScore(avg).maxScore(max).minScore(min).passRate(passRate)
                 .totalStudents(totalStudents.intValue()).submittedCount(records.size())
                 .scoreDistribution(Collections.emptyList())
-                .questionStats(Collections.emptyList())
+                .questionStats(questionStats)
                 .studentScores(studentScores)
                 .build();
     }

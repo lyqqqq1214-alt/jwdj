@@ -47,7 +47,11 @@ export interface ExamResultDTO {
   totalStudents?: number;
   submittedCount?: number;
   scoreDistribution?: { name: string; value: number }[];
-  questionStats?: { questionNo: number; correctRate: number; questionType: string }[];
+  questionStats?: {
+    questionId: number; questionNo: number; correctRate?: number; questionType: string;
+    questionStem?: string; knowledgePoints?: string; answerCount?: number;
+    correctCount?: number; wrongCount?: number;
+  }[];
   studentScores?: {
     studentId: number;
     studentNo?: string;

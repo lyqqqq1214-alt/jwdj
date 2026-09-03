@@ -56,9 +56,7 @@ public interface ExamService {
 
     List<PaperQuestionEditVO> getPaperQuestions(Long paperId);
 
-    // ===== AI 预留接口 =====
+    // ===== AI 辅助批阅 =====
 
-    default String generateWrongAnswerAnalysis(Long questionId) { return null; }
-    default List<QuestionBank> generateSimilarQuestions(Long questionId, int count) { return null; }
     default String suggestScore(String questionContent, String studentAnswer) { return null; }
 }

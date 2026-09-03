@@ -158,6 +158,7 @@ public class OllamaServiceImpl implements OllamaService {
 
                 只返回JSON对象，不要Markdown代码块或任何额外文字。顶层仅包含questions数组，数组必须恰好包含%d个对象。
                 每道题必须直接考查"知识点"列表中的至少一个知识点，禁止生成列表以外主题的题目。
+                题干、选项、答案和解析必须使用普通可读文本；禁止使用 LaTeX、美元符号 $、反斜杠命令（如\\frac、\\sqrt）或 Markdown 数学公式标记。幂请写成 e^x、x^2 这类形式。
                 questions中的每个对象必须包含：
                 {"questionType":"单选/多选/填空/简答/综合","stem":"题干","options":{"A":"选项A","B":"选项B"},"answer":"答案",
                  "explanation":"解析","knowledgeTags":["知识点标签"],"socraticQuestions":["递进追问"]}

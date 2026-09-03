@@ -15,13 +15,17 @@ import com.example.aitaes.entity.Teacher;
 import com.example.aitaes.entity.StudentWrongQuestion;
 import com.example.aitaes.mapper.*;
 import com.example.aitaes.service.PortraitService;
+import com.example.aitaes.service.WrongQuestionService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,6 +39,8 @@ import java.util.stream.Collectors;
 @RequireRole("STUDENT")
 public class StudentController {
 
+    private static final String PERSONAL_WRONG_BOOK_COURSE_NO = "WRONG-BOOK-TEST";
+
     private final AssessmentRecordMapper assessmentRecordMapper;
     private final AssessmentMapper assessmentMapper;
     private final AttendanceMapper attendanceMapper;
@@ -44,6 +50,8 @@ public class StudentController {
     private final CourseMapper courseMapper;
     private final TeacherMapper teacherMapper;
     private final PortraitService portraitService;
+    private final WrongQuestionService wrongQuestionService;
+    private final ObjectMapper objectMapper;
 
     private Long getStudentId(Long userId) {
         Student student = studentMapper.selectOne(
@@ -208,13 +216,12 @@ public class StudentController {
      */
     @GetMapping("/wrong-questions")
     public Result<List<StudentWrongQuestion>> wrongQuestions(@RequestAttribute("userId") Long userId,
-                                                               @RequestParam Long courseId) {
+                                                               @RequestParam(required = false) Long courseId) {
         Long studentId = getStudentId(userId);
-        List<StudentWrongQuestion> list = wrongQuestionMapper.selectList(
-                new LambdaQueryWrapper<StudentWrongQuestion>()
-                        .eq(StudentWrongQuestion::getStudentId, studentId)
-                        .eq(StudentWrongQuestion::getCourseId, courseId)
-                        .orderByDesc(StudentWrongQuestion::getCreateTime));
+        LambdaQueryWrapper<StudentWrongQuestion> query = new LambdaQueryWrapper<StudentWrongQuestion>()
+                .eq(StudentWrongQuestion::getStudentId, studentId);
+        if (courseId != null) query.eq(StudentWrongQuestion::getCourseId, courseId);
+        List<StudentWrongQuestion> list = wrongQuestionMapper.selectList(query.orderByDesc(StudentWrongQuestion::getCreateTime));
         return Result.success(list);
     }
 
@@ -225,6 +232,99 @@ public class StudentController {
     public Result<StudentWrongQuestion> wrongQuestionDetail(@PathVariable Long id) {
         StudentWrongQuestion q = wrongQuestionMapper.selectById(id);
         return Result.success(q);
+    }
+
+    /** 手动录入一条错题，便于学生补充练习和使用 AI 分析。 */
+    @PostMapping("/wrong-questions")
+    public Result<StudentWrongQuestion> createWrongQuestion(@RequestAttribute("userId") Long userId,
+                                                              @RequestBody ManualWrongQuestionRequest request) {
+        Long studentId = getStudentId(userId);
+        if (request == null || !org.springframework.util.StringUtils.hasText(request.getQuestion())
+                || !org.springframework.util.StringUtils.hasText(request.getCorrectAnswer())
+                || !org.springframework.util.StringUtils.hasText(request.getStudentAnswer())
+                || !org.springframework.util.StringUtils.hasText(request.getKnowledgePoints())) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "课程、题目、答案和知识点不能为空");
+        }
+        Long courseId = resolveManualWrongQuestionCourse(studentId, request.getCourseId());
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("stem", request.getQuestion().trim());
+        snapshot.put("options", parseOptions(request.getOptions()));
+        try {
+            StudentWrongQuestion wrongQuestion = new StudentWrongQuestion();
+            wrongQuestion.setStudentId(studentId);
+            wrongQuestion.setCourseId(courseId);
+            wrongQuestion.setQuestionContent(objectMapper.writeValueAsString(snapshot));
+            wrongQuestion.setStudentAnswer(request.getStudentAnswer().trim());
+            wrongQuestion.setCorrectAnswer(request.getCorrectAnswer().trim());
+            wrongQuestion.setKnowledgePoints(request.getKnowledgePoints().trim());
+            wrongQuestion.setAnalysis(request.getRemark());
+            wrongQuestion.setWrongCount(1);
+            wrongQuestion.setSource("AI_GENERATE".equals(request.getSource()) ? "AI_GENERATE" : "MANUAL");
+            wrongQuestion.setCreateTime(LocalDateTime.now());
+            wrongQuestion.setUpdateTime(LocalDateTime.now());
+            wrongQuestionMapper.insert(wrongQuestion);
+            return Result.success("错题添加成功", wrongQuestion);
+        } catch (JsonProcessingException ex) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "错题选项格式错误");
+        }
+    }
+
+    private Map<String, String> parseOptions(String rawOptions) {
+        Map<String, String> options = new LinkedHashMap<>();
+        if (!org.springframework.util.StringUtils.hasText(rawOptions)) return options;
+        String[] lines = rawOptions.split("\\r?\\n");
+        for (int i = 0; i < lines.length; i++) {
+            String option = lines[i].trim().replaceFirst("^[A-Za-z][.、:：]\\s*", "");
+            if (org.springframework.util.StringUtils.hasText(option)) {
+                options.put(String.valueOf((char) ('A' + options.size())), option);
+            }
+        }
+        return options;
+    }
+
+    private Long resolveManualWrongQuestionCourse(Long studentId, Long requestedCourseId) {
+        if (requestedCourseId != null) {
+            Long enrollmentCount = courseStudentMapper.selectCount(new LambdaQueryWrapper<CourseStudent>()
+                    .eq(CourseStudent::getStudentId, studentId)
+                    .eq(CourseStudent::getCourseId, requestedCourseId));
+            if (enrollmentCount == 0) {
+                throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "不能向未选课程添加错题");
+            }
+            return requestedCourseId;
+        }
+        Course testCourse = courseMapper.selectOne(new LambdaQueryWrapper<Course>()
+                .eq(Course::getCourseNo, PERSONAL_WRONG_BOOK_COURSE_NO));
+        if (testCourse == null) {
+            testCourse = new Course();
+            testCourse.setCourseNo(PERSONAL_WRONG_BOOK_COURSE_NO);
+            testCourse.setCourseName("个人错题本（测试）");
+            testCourse.setClassName("个人练习");
+            testCourse.setCredit(BigDecimal.ZERO);
+            testCourse.setCourseType("TEST");
+            testCourse.setSemester("TEST");
+            testCourse.setDescription("未关联课程时用于错题本和 AI 功能测试的系统课程");
+            courseMapper.insert(testCourse);
+        }
+        return testCourse.getId();
+    }
+
+    /** 调用大模型生成错因分析，并保存到错题本。 */
+    @PostMapping("/wrong-questions/{id}/analysis")
+    public Result<String> analyzeWrongQuestion(@RequestAttribute("userId") Long userId,
+                                                @PathVariable Long id) {
+        return Result.success("错因分析生成成功", wrongQuestionService.analyzeWrongAnswer(userId, id));
+    }
+
+    /** 基于该错题的知识点生成同类巩固练习。 */
+    @PostMapping("/wrong-questions/{id}/similar-questions")
+    public Result<List<AiGeneratedQuestionDTO>> similarQuestions(@RequestAttribute("userId") Long userId,
+                                                                   @PathVariable Long id,
+                                                                   @RequestParam(defaultValue = "3") int count,
+                                                                   @RequestParam(defaultValue = "MEDIUM") String difficulty) {
+        if (count < 1 || count > 10) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "题目数量应在1到10之间");
+        }
+        return Result.success(wrongQuestionService.generateSimilarQuestions(userId, id, count, difficulty));
     }
 
     /**
