@@ -73,6 +73,7 @@ enums/               ImportType, ImportStatus
 - `application.yml` — datasource, MyBatis Plus, multipart limits (10MB), business config under `aitaes.*`
 - MyBatis Plus uses `map-underscore-to-camel-case: true`, logic delete field `deleted`, auto-increment IDs
 - Default profile uses MySQL at `localhost:3306/aitaes_db` (root/1234); tests use H2 auto-configured by Spring Boot
+- Database startup/initialization steps: [docs/database-startup.md](docs/database-startup.md)
 
 ### API Modules
 
