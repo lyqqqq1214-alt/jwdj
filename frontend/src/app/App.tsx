@@ -23,7 +23,7 @@ import { getStudentOverview, getStudentTrends, getStudentWrongQuestions, getStud
 import { getStudentProfile, toggleFocusStudent, generateAiEvaluation, generateAiSuggestions, getMyPortrait, generateMyAiSuggestions, StudentProfile as StudentProfileData, LearningSuggestion } from "../services/portraitService";
 import { getMyClasses, getClassStudents, createClass, addStudentToClass, removeStudentFromClass, ClassVO as ClsVO, StudentVO } from "../services/classService";
 import { getPendingExams, getExamPapers, getExamPaperById, createExamPaper, updateExamPaper, deleteExamPaper, publishExamPaper, closeExamPaper, getExamResults, submitExam, getStudentExam, getMyExamRecords, getMyExamResult, getGradingList, submitGrade, getPaperQuestions, getPaperGrading, submitStudentGrade, ExamPaper, ExamResultDTO, StudentExamVO, SubmitExamResultDTO, StudentExamRecordVO, StudentExamResultVO, GradingItemVO, PaperGradingVO, PaperQuestionEditVO, StudentGradeItem } from "../services/examService";
-import { sendNotification, getMyNotifications, Notification as NotifItem } from "../services/notificationService";
+import { sendNotification, getMyNotifications, markNotificationRead, markAllNotificationsRead, getUnreadCount, Notification as NotifItem } from "../services/notificationService";
 import { getOperationLogs, OperationLog } from "../services/logService";
 import { getAllConfigs, batchUpdateConfigs, SystemConfig } from "../services/configService";
 import { uploadFile, getImportHistory, downloadTemplate as fetchTemplateBlob, ImportLog } from "../services/importService";
@@ -35,10 +35,10 @@ import { getAiAnalysisReport, getQuestionBankAudit, assessmentTypeLabel, questio
 type Role = "admin" | "teacher" | "teaching-assistant" | "student";
 type Page =
   | "login"
-  | "admin-dashboard" | "admin-teachers" | "admin-ai-ops" | "admin-audit" | "admin-config"
+  | "admin-dashboard" | "admin-teachers" | "admin-ai-ops" | "admin-audit" | "admin-config" | "admin-notification"
   | "teacher-ai-analysis" | "teacher-dashboard" | "teacher-class" | "teacher-import" | "teacher-profile" | "teacher-ai-quiz" | "teacher-bank" | "teacher-exam" | "teacher-notification"
   | "ta-dashboard" | "ta-import" | "ta-profile" | "ta-grading"
-  | "student-dashboard" | "student-profile" | "student-score-trend" | "student-wrong-book" | "student-exam";
+  | "student-dashboard" | "student-profile" | "student-score-trend" | "student-wrong-book" | "student-exam" | "student-notification";
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 const loginTrend = [
@@ -1404,6 +1404,7 @@ const navItems: Record<Role, { icon: any; label: string; page?: Page; children?:
     { icon: GraduationCap, label: "教师账号管理", page: "admin-teachers" },
     { icon: Brain, label: "AI运维中心", page: "admin-ai-ops" },
     { icon: FileSearch, label: "系统审计日志", page: "admin-audit" },
+    { icon: Bell, label: "通知中心", page: "admin-notification" },
     { icon: Settings, label: "系统配置", page: "admin-config" },
   ],
   teacher: [
@@ -1425,6 +1426,7 @@ const navItems: Record<Role, { icon: any; label: string; page?: Page; children?:
     { icon: Upload, label: "数据导入", page: "ta-import" },
     { icon: User, label: "学生画像", page: "ta-profile" },
     { icon: FileText, label: "考试批阅", page: "ta-grading" },
+    { icon: Bell, label: "通知中心", page: "teacher-notification" },
   ],
   student: [
     { icon: LayoutDashboard, label: "个人学习中心", page: "student-dashboard" },
@@ -1432,6 +1434,7 @@ const navItems: Record<Role, { icon: any; label: string; page?: Page; children?:
     { icon: TrendingUp, label: "成绩趋势", page: "student-score-trend" },
     { icon: BookOpen, label: "错题本", page: "student-wrong-book" },
     { icon: Clock, label: "在线考试", page: "student-exam" },
+    { icon: Bell, label: "通知中心", page: "student-notification" },
   ],
 };
 
@@ -1545,40 +1548,30 @@ function Sidebar({ role, page, onNav, onLogout, dark, onToggleDark, collapsed, o
   );
 }
 
-function Topbar({ title, breadcrumb, role }: { title: string; breadcrumb: string[]; role: Role }) {
+function Topbar({ title, breadcrumb, role, onNav }: { title: string; breadcrumb: string[]; role: Role; onNav: (p: Page) => void }) {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [bellNotifs, setBellNotifs] = useState<NotifItem[]>([]);
+  const [unread, setUnread] = useState(0);
 
-  const getNotifications = () => {
-    switch (role) {
-      case "student": return studentNotifications;
-      case "teacher": return teacherNotifications;
-      case "admin": return adminNotifications;
-      case "teaching-assistant": return teacherNotifications;
-      default: return [];
+  const loadBell = useCallback(() => {
+    getUnreadCount().then(setUnread).catch(() => {});
+    getMyNotifications(1, 6).then(data => setBellNotifs(data.records || [])).catch(() => {});
+  }, []);
+
+  useEffect(() => { loadBell(); }, [loadBell]);
+
+  const notificationPage: Page =
+    role === "admin" ? "admin-notification"
+      : role === "student" ? "student-notification"
+      : "teacher-notification";
+
+  const fmtBellTime = (t?: string) => t ? t.replace("T", " ").substring(0, 16) : "";
+
+  const handleClickItem = async (n: NotifItem) => {
+    if (n.isRead === 0) {
+      try { await markNotificationRead(n.id); loadBell(); } catch { /* ignore */ }
     }
   };
-
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "system":
-      case "warning":
-        return { icon: AlertCircle, bg: "bg-red-100", color: "text-red-600" };
-      case "ai":
-        return { icon: Brain, bg: "bg-purple-100", color: "text-purple-600" };
-      case "admin":
-        return { icon: Shield, bg: "bg-blue-100", color: "text-blue-600" };
-      case "homework":
-        return { icon: BookOpen, bg: "bg-green-100", color: "text-green-600" };
-      case "exam":
-        return { icon: FileText, bg: "bg-orange-100", color: "text-orange-600" };
-      case "grade":
-        return { icon: Award, bg: "bg-yellow-100", color: "text-yellow-600" };
-      default:
-        return { icon: Bell, bg: "bg-blue-100", color: "text-blue-600" };
-    }
-  };
-
-  const notifications = getNotifications();
 
   return (
     <div className="h-14 bg-card border-b border-border flex items-center px-6 gap-4 flex-shrink-0">
@@ -1591,11 +1584,11 @@ function Topbar({ title, breadcrumb, role }: { title: string; breadcrumb: string
         ))}
       </div>
       <div className="ml-auto flex items-center gap-3 relative">
-        <button onClick={() => setShowNotifications(!showNotifications)} className="relative text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={() => { setShowNotifications(!showNotifications); if (!showNotifications) loadBell(); }} className="relative text-muted-foreground hover:text-foreground transition-colors">
           <Bell size={18} />
-          {notifications.length > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center">
-              {notifications.length}
+          {unread > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center">
+              {unread > 99 ? "99+" : unread}
             </span>
           )}
         </button>
@@ -1605,38 +1598,37 @@ function Topbar({ title, breadcrumb, role }: { title: string; breadcrumb: string
             <div className="fixed inset-0 bg-black/20 z-40" onClick={() => setShowNotifications(false)} />
             <div className="absolute top-full right-0 mt-2 w-80 bg-card rounded-lg border border-border shadow-lg z-50 overflow-hidden">
               <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                <h4 className="font-medium text-sm">通知中心</h4>
+                <h4 className="font-medium text-sm">通知中心{unread > 0 && <span className="ml-2 text-xs text-red-500">{unread} 条未读</span>}</h4>
                 <button onClick={() => setShowNotifications(false)} className="text-muted-foreground hover:text-foreground">
                   <X size={14} />
                 </button>
               </div>
-              {notifications.length === 0 ? (
+              {bellNotifs.length === 0 ? (
                 <div className="px-4 py-8 text-center text-sm text-muted-foreground">暂无通知</div>
               ) : (
                 <div className="max-h-80 overflow-y-auto">
-                  {notifications.map(n => {
-                    const { icon: Icon, bg, color } = getNotificationIcon(n.type);
-                    return (
-                      <div key={n.id} className="px-4 py-3 border-b border-border last:border-0 hover:bg-accent/30 cursor-pointer transition-colors">
-                        <div className="flex items-start gap-2">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${bg}`}>
-                            <Icon size={12} className={color} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium line-clamp-2">{n.title}</p>
-                            {(n as any).sender && <p className="text-xs text-muted-foreground mt-1">{(n as any).sender}</p>}
-                            {(n as any).recipients && <p className="text-xs text-muted-foreground mt-1">{(n as any).recipients}</p>}
-                            {(n as any).target && <p className="text-xs text-muted-foreground mt-1">{(n as any).target}</p>}
-                            <p className="text-xs text-muted-foreground">{n.time}</p>
-                          </div>
+                  {bellNotifs.map(n => (
+                    <div key={n.id} onClick={() => handleClickItem(n)}
+                      className={`px-4 py-3 border-b border-border last:border-0 hover:bg-accent/30 cursor-pointer transition-colors ${n.isRead === 0 ? "bg-primary/5" : ""}`}>
+                      <div className="flex items-start gap-2">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-blue-100">
+                          <Bell size={12} className="text-blue-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium line-clamp-2 flex items-center gap-1.5">
+                            {n.isRead === 0 && <span className="w-1.5 h-1.5 bg-red-500 rounded-full flex-shrink-0" />}
+                            {n.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{n.content}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{n.senderName || "系统"} · {fmtBellTime(n.createTime)}</p>
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               )}
               <div className="px-4 py-2 border-t border-border">
-                <button onClick={() => setShowNotifications(false)} className="w-full text-xs text-primary hover:underline">查看全部通知</button>
+                <button onClick={() => { setShowNotifications(false); onNav(notificationPage); }} className="w-full text-xs text-primary hover:underline">查看全部通知</button>
               </div>
             </div>
           </>
@@ -1655,7 +1647,7 @@ function AppShell({ role, page, onNav, onLogout, dark, onToggleDark, breadcrumb,
     <div className="flex h-screen bg-background overflow-hidden" style={{ fontFamily: "Inter, sans-serif" }}>
       <Sidebar role={role} page={page} onNav={onNav} onLogout={onLogout} dark={dark} onToggleDark={onToggleDark} collapsed={collapsed} onToggleCollapse={() => setCollapsed(c => !c)} />
       <div className="flex flex-col flex-1 min-w-0">
-        <Topbar title={breadcrumb[breadcrumb.length - 1]} breadcrumb={breadcrumb} role={role} />
+        <Topbar title={breadcrumb[breadcrumb.length - 1]} breadcrumb={breadcrumb} role={role} onNav={onNav} />
         <main className="flex-1 overflow-y-auto p-6 space-y-6">{children}</main>
       </div>
     </div>
@@ -8469,29 +8461,40 @@ function TeacherExamManagementLegacy({ selectedQuizQuestions, setSelectedQuizQue
   );
 }
 
-// ─── Teacher: Notification (通知中心) ──────────────────────────────────────────
-function TeacherNotification() {
+// ─── Notification Center (通知中心：教师/管理员发送，全体角色接收) ─────────────
+function NotificationCenter({ mode }: { mode: "teacher" | "admin" | "student" }) {
   const [showSendModal, setShowSendModal] = useState(false);
   const [notificationType, setNotificationType] = useState<string | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [useScheduledSend, setUseScheduledSend] = useState(false);
-  const [scheduledTime, setScheduledTime] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [notifTitle, setNotifTitle] = useState("");
   const [notifContent, setNotifContent] = useState("");
-  const [notifRecipientScope, setNotifRecipientScope] = useState("COURSE");
-  const [notifCourseId, setNotifCourseId] = useState<number | null>(null);
+  // 教师：COURSE + courseId（"ALL"=名下全部课程）；管理员：ALL=全体师生 / TEACHERS=全体教师
+  const [notifCourseId, setNotifCourseId] = useState<number | "ALL">("ALL");
+  const [notifScope, setNotifScope] = useState<string>("ALL");
 
   // API state
   const [notifications, setNotifications] = useState<NotifItem[]>([]);
   const [loadingNotifs, setLoadingNotifs] = useState(true);
+  const [myCourses, setMyCourses] = useState<{ id: number; courseName?: string; className?: string }[]>([]);
 
-  useEffect(() => {
+  const canSend = mode !== "student";
+
+  const loadNotifications = useCallback(() => {
+    setLoadingNotifs(true);
     getMyNotifications(1, 100).then(data => {
       setNotifications(data.records || []);
     }).catch(() => {}).finally(() => setLoadingNotifs(false));
   }, []);
+
+  useEffect(() => { loadNotifications(); }, [loadNotifications]);
+
+  useEffect(() => {
+    if (mode === "teacher") {
+      getMyCourses().then(courses => setMyCourses(courses || [])).catch(() => {});
+    }
+  }, [mode]);
 
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
 
@@ -8511,31 +8514,48 @@ function TeacherNotification() {
     }
   };
 
+  const currentTemplate = notificationTemplates.find(t => t.id === selectedTemplate);
+
   const handleSendNotification = async () => {
-    if (useScheduledSend && !scheduledTime) {
-      showToastMsg("请设置定时发送时间");
-      return;
-    }
+    const title = notifTitle.trim() || currentTemplate?.title || "";
+    const content = notifContent.trim() || currentTemplate?.content || "";
+    if (!title) { showToastMsg("请输入通知标题"); return; }
+    if (!content.trim()) { showToastMsg("请输入通知内容"); return; }
     try {
-      await sendNotification({
-        title: notifTitle || currentTemplate?.title || "通知",
-        content: notifContent || currentTemplate?.content || "",
-        recipientScope: notifRecipientScope,
-        courseId: notifCourseId || undefined,
-      });
-      showToastMsg(useScheduledSend ? "定时通知已安排" : "通知已发送");
-      // Refresh list
-      getMyNotifications(1, 100).then(data => setNotifications(data.records || []));
-    } catch { showToastMsg("发送失败"); }
+      if (mode === "admin") {
+        await sendNotification({ title, content, recipientScope: notifScope });
+      } else {
+        await sendNotification({
+          title, content, recipientScope: "COURSE",
+          courseId: notifCourseId === "ALL" ? undefined : (notifCourseId as number),
+        });
+      }
+      showToastMsg("通知已发送");
+      loadNotifications();
+    } catch { showToastMsg("发送失败，请重试"); }
     setShowSendModal(false);
-    setUseScheduledSend(false);
-    setScheduledTime("");
     setSelectedTemplate(null);
     setNotifTitle("");
     setNotifContent("");
   };
 
-  const currentTemplate = notificationTemplates.find(t => t.id === selectedTemplate);
+  const handleMarkRead = async (id: number) => {
+    try { await markNotificationRead(id); loadNotifications(); } catch { /* ignore */ }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllNotificationsRead();
+      showToastMsg("已全部标记为已读");
+      loadNotifications();
+    } catch { /* ignore */ }
+  };
+
+  const fmtNotifTime = (t?: string) => t ? t.replace("T", " ").substring(0, 16) : "";
+  const unreadCount = notifications.filter(n => n.isRead === 0).length;
+
+  const filteredNotifications = notifications.filter(n =>
+    notificationType ? (notificationType === "system" ? n.senderName === "系统" : n.senderName !== "系统") : true);
 
   return (
     <div className="space-y-5">
@@ -8546,38 +8566,59 @@ function TeacherNotification() {
       )}
 
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">通知中心</h2>
+        <div>
+          <h2 className="text-lg font-semibold">通知中心</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {mode === "student" ? "接收教师与管理员发布的通知" : mode === "admin" ? "向全体师生发布通知公告" : "向授课学生发布通知"}
+          </p>
+        </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowTemplateModal(true)} className="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
-            <FileText size={14} />模板管理
-          </button>
-          <button onClick={() => setShowSendModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700">
-            <Plus size={14} />发送通知
-          </button>
+          {unreadCount > 0 && (
+            <button onClick={handleMarkAllRead} className="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
+              <CheckCircle size={14} />全部已读 ({unreadCount})
+            </button>
+          )}
+          {canSend && (
+            <>
+              <button onClick={() => setShowTemplateModal(true)} className="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
+                <FileText size={14} />模板管理
+              </button>
+              <button onClick={() => setShowSendModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700">
+                <Plus size={14} />{mode === "admin" ? "发布通知" : "发送通知"}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
       <div className="flex items-center gap-2">
         <button onClick={() => setNotificationType(null)} className={`px-4 py-2 rounded-md text-sm ${!notificationType ? "bg-primary text-white" : "bg-muted hover:bg-accent"}`}>全部</button>
         <button onClick={() => setNotificationType("system")} className={`px-4 py-2 rounded-md text-sm ${notificationType === "system" ? "bg-primary text-white" : "bg-muted hover:bg-accent"}`}>系统预警</button>
-        <button onClick={() => setNotificationType("manual")} className={`px-4 py-2 rounded-md text-sm ${notificationType === "manual" ? "bg-primary text-white" : "bg-muted hover:bg-accent"}`}>手动发送</button>
+        {canSend && (
+          <button onClick={() => setNotificationType("manual")} className={`px-4 py-2 rounded-md text-sm ${notificationType === "manual" ? "bg-primary text-white" : "bg-muted hover:bg-accent"}`}>我发送的</button>
+        )}
       </div>
 
       <div className="space-y-3">
         {loadingNotifs ? (
           <p className="text-center text-sm text-muted-foreground py-8">加载中...</p>
-        ) : notifications.length === 0 ? (
+        ) : filteredNotifications.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground py-8">暂无通知</p>
-        ) : notifications.filter(n => notificationType ? (notificationType === "system" ? n.senderName === "系统" : n.senderName !== "系统") : true).map(n => (
-          <div key={n.id} className="bg-card rounded-lg border border-border p-4">
+        ) : filteredNotifications.map(n => (
+          <div key={n.id}
+            onClick={() => { if (n.isRead === 0) handleMarkRead(n.id); }}
+            className={`bg-card rounded-lg border border-border p-4 transition-colors ${n.isRead === 0 ? "border-l-4 border-l-primary cursor-pointer hover:bg-accent/30" : "opacity-80"}`}>
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="font-medium text-sm">{n.title}</p>
-                <p className="text-xs text-muted-foreground mt-1">{n.createTime}</p>
-                <p className="text-xs text-muted-foreground">{n.content}</p>
+              <div className="min-w-0">
+                <p className="font-medium text-sm flex items-center gap-2">
+                  {n.isRead === 0 && <span className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0" title="未读" />}
+                  {n.title}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">{fmtNotifTime(n.createTime)} · 发送人：{n.senderName || "系统"}</p>
+                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{n.content}</p>
               </div>
               <Tag color={n.senderName === "系统" ? "red" : "blue"}>
-                {n.senderName === "系统" ? "系统预警" : "手动发送"}
+                {n.senderName === "系统" ? "系统预警" : canSend ? "手动发送" : "通知"}
               </Tag>
             </div>
           </div>
@@ -8588,7 +8629,7 @@ function TeacherNotification() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card rounded-lg border border-border w-full max-w-lg p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold">发送通知</h3>
+              <h3 className="font-semibold">{mode === "admin" ? "发布通知" : "发送通知"}</h3>
               <button onClick={() => setShowSendModal(false)}><X size={16} /></button>
             </div>
             {selectedTemplate && (
@@ -8598,12 +8639,23 @@ function TeacherNotification() {
             )}
             <div>
               <label className="text-xs font-medium text-muted-foreground">收件人</label>
-              <select className="mt-1 w-full px-3 py-2 border border-border rounded-md text-sm">
-                <option>全部班级</option>
-                <option>高等数学A · 2024级1班</option>
-                <option>高等数学A · 2024级2班</option>
-                <option>线性代数 · 2024级1班</option>
-              </select>
+              {mode === "admin" ? (
+                <select value={notifScope} onChange={e => setNotifScope(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 border border-border rounded-md text-sm bg-background">
+                  <option value="ALL">全体师生（所有教师、助教、学生）</option>
+                  <option value="TEACHERS">全体教师（含助教）</option>
+                </select>
+              ) : (
+                <select value={String(notifCourseId)} onChange={e => setNotifCourseId(e.target.value === "ALL" ? "ALL" : Number(e.target.value))}
+                  className="mt-1 w-full px-3 py-2 border border-border rounded-md text-sm bg-background">
+                  <option value="ALL">全部课程学生（名下所有课程）</option>
+                  {myCourses.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.className ? `${c.className} · ` : ""}{c.courseName || `课程${c.id}`}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             <div>
               <div className="flex items-center justify-between">
@@ -8612,23 +8664,20 @@ function TeacherNotification() {
                   <button onClick={() => setShowTemplateModal(true)} className="text-xs text-primary hover:underline">从模板选择</button>
                 )}
               </div>
-              <input type="text" defaultValue={currentTemplate?.title} className="mt-1 w-full px-3 py-2 border border-border rounded-md text-sm" placeholder="请输入通知标题" />
+              <input type="text" value={notifTitle} onChange={e => setNotifTitle(e.target.value)}
+                placeholder={currentTemplate?.title || "请输入通知标题"}
+                className="mt-1 w-full px-3 py-2 border border-border rounded-md text-sm" />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">正文</label>
-              <textarea defaultValue={currentTemplate?.content} className="mt-1 w-full px-3 py-2 border border-border rounded-md text-sm h-32 resize-none" placeholder="请输入通知内容" />
-            </div>
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={useScheduledSend} onChange={e => setUseScheduledSend(e.target.checked)} className="rounded" />
-              <label className="text-sm">定时发送</label>
-              {useScheduledSend && (
-                <input type="datetime-local" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)} className="px-3 py-1.5 text-sm border border-border rounded-md" />
-              )}
+              <textarea value={notifContent} onChange={e => setNotifContent(e.target.value)}
+                placeholder={currentTemplate?.content || "请输入通知内容"}
+                className="mt-1 w-full px-3 py-2 border border-border rounded-md text-sm h-32 resize-none" />
             </div>
             <div className="flex gap-3">
               <button onClick={() => { setShowSendModal(false); setSelectedTemplate(null); }} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
               <button onClick={handleSendNotification} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-blue-700">
-                {useScheduledSend ? "定时发送" : "立即发送"}
+                立即发送
               </button>
             </div>
           </div>
@@ -8642,7 +8691,7 @@ function TeacherNotification() {
               <h3 className="font-semibold">通知模板</h3>
               <button onClick={() => setShowTemplateModal(false)}><X size={16} /></button>
             </div>
-            <p className="text-xs text-muted-foreground">选择一个模板，占位符如{{班级名称}}将在发送时自动替换</p>
+            <p className="text-xs text-muted-foreground">选择一个模板，占位符如{"{班级名称}"}将在发送时自动替换</p>
             <div className="space-y-3">
               {notificationTemplates.map(t => (
                 <div key={t.id} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
@@ -12527,6 +12576,8 @@ const pageMeta: Record<Page, { breadcrumb: string[] }> = {
   "teacher-bank": { breadcrumb: ["教师端", "题库管理"] },
   "teacher-exam": { breadcrumb: ["教师端", "考试管理"] },
   "teacher-notification": { breadcrumb: ["教师端", "通知中心"] },
+  "admin-notification": { breadcrumb: ["管理员端", "通知中心"] },
+  "student-notification": { breadcrumb: ["学生端", "通知中心"] },
   "teacher-logs": { breadcrumb: ["教师端", "操作日志"] },
   "ta-dashboard": { breadcrumb: ["助教端", "教学驾驶舱"] },
   "ta-import": { breadcrumb: ["助教端", "数据导入"] },
@@ -12803,7 +12854,9 @@ export default function App() {
         {page === "teacher-ai-quiz" && <TeacherAIQuiz onNav={setPage} />}
         {page === "teacher-bank" && <TeacherQuestionBank onNav={setPage} setSelectedQuizQuestions={setSelectedQuizQuestions} filterSourceType={filterSourceType} setFilterSourceType={setFilterSourceType} />}
         {page === "teacher-exam" && <TeacherExamManagement selectedQuizQuestions={selectedQuizQuestions} setSelectedQuizQuestions={setSelectedQuizQuestions} />}
-        {page === "teacher-notification" && <TeacherNotification />}
+        {page === "teacher-notification" && <NotificationCenter mode="teacher" />}
+        {page === "admin-notification" && <NotificationCenter mode="admin" />}
+        {page === "student-notification" && <NotificationCenter mode="student" />}
         {page === "teacher-logs" && <TeacherOperationLogs />}
         {/* Teaching Assistant pages (复用教师端组件，后端已做权限控制) */}
         {page === "ta-dashboard" && <TeacherDashboard onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} />}

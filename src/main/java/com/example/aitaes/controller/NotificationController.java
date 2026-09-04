@@ -1,6 +1,7 @@
 package com.example.aitaes.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.example.aitaes.annotation.RequireRole;
 import com.example.aitaes.common.Result;
 import com.example.aitaes.entity.Notification;
 import com.example.aitaes.service.NotificationService;
@@ -23,9 +24,10 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     /**
-     * 发送通知
+     * 发送通知（教师/助教/管理员可发送，学生仅接收）
      */
     @PostMapping
+    @RequireRole({"TEACHER", "ASSISTANT", "ADMIN"})
     public Result<Notification> send(@RequestAttribute("userId") Long userId,
                                       @RequestAttribute("username") String username,
                                       @RequestBody Map<String, Object> body) {

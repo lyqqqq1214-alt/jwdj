@@ -1,6 +1,7 @@
 package com.example.aitaes.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -45,4 +46,8 @@ public class Notification {
 
     /** 逻辑删除（0=正常, 1=删除） */
     private Integer deleted;
+
+    /** 当前查询用户是否已读（非持久化，列表查询时按接收者记录填充；自己发送的通知视为已读） */
+    @TableField(exist = false)
+    private Integer isRead;
 }
