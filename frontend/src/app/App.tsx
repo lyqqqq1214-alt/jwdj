@@ -1438,19 +1438,12 @@ const navItems: Record<Role, { icon: any; label: string; page?: Page; children?:
   ],
 };
 
-const roleUser: Record<Role, { name: string; uid: string }> = {
-  admin: { name: "陈系统", uid: "A0001" },
-  teacher: { name: "刘晓红", uid: "T2019002" },
-  "teaching-assistant": { name: "陈晓峰", uid: "TA2024001" },
-  student: { name: "张伟", uid: "2024001" },
-};
-
-function Sidebar({ role, page, onNav, onLogout, dark, onToggleDark, collapsed, onToggleCollapse }: {
+function Sidebar({ role, page, onNav, onLogout, dark, onToggleDark, collapsed, onToggleCollapse, userData }: {
   role: Role; page: Page; onNav: (p: Page) => void; onLogout: () => void;
   dark: boolean; onToggleDark: () => void; collapsed: boolean; onToggleCollapse: () => void;
+  userData?: { displayName?: string; username?: string };
 }) {
   const items = navItems[role];
-  const user = roleUser[role];
   return (
     <aside className={`flex flex-col h-full bg-sidebar transition-all duration-200 ${collapsed ? "w-16" : "w-56"} flex-shrink-0`}>
       {/* Logo */}
@@ -1537,10 +1530,10 @@ function Sidebar({ role, page, onNav, onLogout, dark, onToggleDark, collapsed, o
           <LogOut size={14} />
           {!collapsed && <span>退出登录</span>}
         </button>
-        {!collapsed && (
+        {!collapsed && userData && (
           <div className="px-3 pt-2 border-t border-sidebar-border mt-1">
-            <p className="text-xs font-medium text-white">{user.name}</p>
-            <p className="text-xs text-sidebar-foreground font-mono">{user.uid}</p>
+            <p className="text-xs font-medium text-white">{userData.displayName || userData.username}</p>
+            <p className="text-xs text-sidebar-foreground font-mono">{userData.username}</p>
           </div>
         )}
       </div>
@@ -1638,14 +1631,15 @@ function Topbar({ title, breadcrumb, role, onNav }: { title: string; breadcrumb:
   );
 }
 
-function AppShell({ role, page, onNav, onLogout, dark, onToggleDark, breadcrumb, children }: {
+function AppShell({ role, page, onNav, onLogout, dark, onToggleDark, breadcrumb, children, userData }: {
   role: Role; page: Page; onNav: (p: Page) => void; onLogout: () => void;
   dark: boolean; onToggleDark: () => void; breadcrumb: string[]; children: React.ReactNode;
+  userData?: { displayName?: string; username?: string };
 }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
     <div className="flex h-screen bg-background overflow-hidden" style={{ fontFamily: "Inter, sans-serif" }}>
-      <Sidebar role={role} page={page} onNav={onNav} onLogout={onLogout} dark={dark} onToggleDark={onToggleDark} collapsed={collapsed} onToggleCollapse={() => setCollapsed(c => !c)} />
+      <Sidebar role={role} page={page} onNav={onNav} onLogout={onLogout} dark={dark} onToggleDark={onToggleDark} collapsed={collapsed} onToggleCollapse={() => setCollapsed(c => !c)} userData={userData} />
       <div className="flex flex-col flex-1 min-w-0">
         <Topbar title={breadcrumb[breadcrumb.length - 1]} breadcrumb={breadcrumb} role={role} onNav={onNav} />
         <main className="flex-1 overflow-y-auto p-6 space-y-6">{children}</main>
@@ -1777,10 +1771,10 @@ function LoginPage({ onLogin }: { onLogin: (role: Role, user: any) => void }) {
           </button>
 
           <div className="text-center text-slate-500 text-xs space-y-1">
-            <p>测试账号：</p>
-            <p>管理员: admin / admin123</p>
-            <p>教师: T001 / 123456 | T002 / 123456</p>
-            <p>学生: 2024001 / 123456 | 2024002 / 123456</p>
+            <p>测试账号（密码统一 123456）：</p>
+            <p>管理员: admin</p>
+            <p>教师: T00001 | T00002</p>
+            <p>学生: 202426010101 | 202407010101</p>
           </div>
         </div>
       </div>
@@ -12838,7 +12832,8 @@ export default function App() {
   return (
     <>
       <AppShell role={role} page={page} onNav={setPage} onLogout={handleLogout}
-        dark={dark} onToggleDark={toggleDark} breadcrumb={breadcrumb}>
+        dark={dark} onToggleDark={toggleDark} breadcrumb={breadcrumb}
+        userData={user}>
         {/* Admin pages */}
         {page === "admin-dashboard" && <AdminDashboard />}
         {page === "admin-teachers" && <AdminTeacherManagement />}

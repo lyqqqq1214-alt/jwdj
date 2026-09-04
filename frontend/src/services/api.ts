@@ -32,6 +32,13 @@ api.interceptors.response.use(
     }
     const res = response.data;
     // 后端统一返回 Result 格式: { code, message, data }
+    // 后端对未登录返回 HTTP 200 + body code=401，需在此处统一处理
+    if (res.code === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      return Promise.reject(new Error('登录已过期，请重新登录'));
+    }
     if (res.code === 200) {
       return res;
     }
