@@ -25,14 +25,15 @@ public class DashboardController {
     private final DashboardService dashboardService;
 
     /**
-     * 驾驶舱完整数据
+     * 驾驶舱完整数据（className 可选，传入则仅统计该班级）
      */
     @GetMapping
-    public Result<Map<String, Object>> full(@RequestParam Long courseId) {
+    public Result<Map<String, Object>> full(@RequestParam Long courseId,
+                                            @RequestParam(required = false) String className) {
         Map<String, Object> data = new HashMap<>();
-        data.put("overview", dashboardService.getOverview(courseId));
-        data.put("charts", dashboardService.getCharts(courseId));
-        data.put("warnings", dashboardService.getWarnings(courseId));
+        data.put("overview", dashboardService.getOverview(courseId, className));
+        data.put("charts", dashboardService.getCharts(courseId, className));
+        data.put("warnings", dashboardService.getWarnings(courseId, className));
         return Result.success(data);
     }
 
@@ -40,28 +41,31 @@ public class DashboardController {
      * 概览统计卡片
      */
     @GetMapping("/overview")
-    public Result<DashboardOverviewDTO> overview(@RequestParam Long courseId) {
-        return Result.success(dashboardService.getOverview(courseId));
+    public Result<DashboardOverviewDTO> overview(@RequestParam Long courseId,
+                                                 @RequestParam(required = false) String className) {
+        return Result.success(dashboardService.getOverview(courseId, className));
     }
 
     /**
      * 图表数据
      */
     @GetMapping("/charts")
-    public Result<DashboardChartsDTO> charts(@RequestParam Long courseId) {
-        return Result.success(dashboardService.getCharts(courseId));
+    public Result<DashboardChartsDTO> charts(@RequestParam Long courseId,
+                                             @RequestParam(required = false) String className) {
+        return Result.success(dashboardService.getCharts(courseId, className));
     }
 
     /**
      * 预警学生列表
      */
     @GetMapping("/warnings")
-    public Result<List<WarningStudentDTO>> warnings(@RequestParam Long courseId) {
-        return Result.success(dashboardService.getWarnings(courseId));
+    public Result<List<WarningStudentDTO>> warnings(@RequestParam Long courseId,
+                                                    @RequestParam(required = false) String className) {
+        return Result.success(dashboardService.getWarnings(courseId, className));
     }
 
     /**
-     * 教师可选班级列表 (UC27 班级切换器)
+     * 教师授课课程列表（含每门课程的班级列表，用于课程/班级切换）
      */
     @GetMapping("/courses")
     public Result<List<ClassVO>> myCourses(@RequestAttribute("userId") Long userId) {

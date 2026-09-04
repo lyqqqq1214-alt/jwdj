@@ -39,11 +39,14 @@ public class DashboardServiceImpl implements DashboardService {
     private final ExperimentMapper experimentMapper;
 
     @Override
-    public DashboardOverviewDTO getOverview(Long courseId) {
+    public DashboardOverviewDTO getOverview(Long courseId, String className) {
+        Set<Long> studentIds = resolveClassStudentIds(courseId, className);
+
         // 班级人数
-        Long studentCount = courseStudentMapper.selectCount(
-                new LambdaQueryWrapper<CourseStudent>()
-                        .eq(CourseStudent::getCourseId, courseId));
+        Long studentCount = studentIds != null ? (long) studentIds.size()
+                : courseStudentMapper.selectCount(
+                        new LambdaQueryWrapper<CourseStudent>()
+                                .eq(CourseStudent::getCourseId, courseId));
 
         // 最近一次考核平均分
         List<Assessment> assessments = assessmentMapper.selectList(
@@ -53,9 +56,10 @@ public class DashboardServiceImpl implements DashboardService {
         BigDecimal avgScore = BigDecimal.ZERO;
         if (!assessments.isEmpty()) {
             Assessment latest = assessments.get(0);
-            List<AssessmentRecord> records = assessmentRecordMapper.selectList(
+            List<AssessmentRecord> records = filterByStudentIds(assessmentRecordMapper.selectList(
                     new LambdaQueryWrapper<AssessmentRecord>()
-                            .eq(AssessmentRecord::getAssessmentId, latest.getId()));
+                            .eq(AssessmentRecord::getAssessmentId, latest.getId())),
+                    AssessmentRecord::getStudentId, studentIds);
             avgScore = records.stream()
                     .map(r -> r.getTotalScore() != null ? r.getTotalScore() : BigDecimal.ZERO)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -65,13 +69,13 @@ public class DashboardServiceImpl implements DashboardService {
         }
 
         // 出勤率
-        Long totalAtt = attendanceMapper.selectCount(
+        List<Attendance> courseAttendances = filterByStudentIds(attendanceMapper.selectList(
                 new LambdaQueryWrapper<Attendance>()
-                        .eq(Attendance::getCourseId, courseId));
-        Long presentAtt = attendanceMapper.selectCount(
-                new LambdaQueryWrapper<Attendance>()
-                        .eq(Attendance::getCourseId, courseId)
-                        .in(Attendance::getStatus, List.of("出勤", "PRESENT")));
+                        .eq(Attendance::getCourseId, courseId)),
+                Attendance::getStudentId, studentIds);
+        long totalAtt = courseAttendances.size();
+        long presentAtt = courseAttendances.stream()
+                .filter(a -> "出勤".equals(a.getStatus()) || "PRESENT".equalsIgnoreCase(a.getStatus())).count();
         BigDecimal attRate = totalAtt > 0
                 ? new BigDecimal(presentAtt).divide(new BigDecimal(totalAtt), 4, RoundingMode.HALF_UP)
                         .multiply(new BigDecimal(100)).setScale(1, RoundingMode.HALF_UP)
@@ -82,23 +86,24 @@ public class DashboardServiceImpl implements DashboardService {
                 .inSql(AssessmentRecord::getAssessmentId,
                         "SELECT id FROM t_assessment WHERE course_id = " + courseId
                                 + " AND assessment_type = 'HOMEWORK'");
-        Long totalHw = assessmentRecordMapper.selectCount(hwWrapper);
-        LambdaQueryWrapper<AssessmentRecord> onTimeWrapper = new LambdaQueryWrapper<AssessmentRecord>()
-                .inSql(AssessmentRecord::getAssessmentId,
-                        "SELECT id FROM t_assessment WHERE course_id = " + courseId
-                                + " AND assessment_type = 'HOMEWORK'")
-                .eq(AssessmentRecord::getSubmitStatus, "ON_TIME");
-        Long onTimeHw = assessmentRecordMapper.selectCount(onTimeWrapper);
+        List<AssessmentRecord> hwRecords = filterByStudentIds(
+                assessmentRecordMapper.selectList(hwWrapper),
+                AssessmentRecord::getStudentId, studentIds);
+        long totalHw = hwRecords.size();
+        long onTimeHw = hwRecords.stream().filter(r -> "ON_TIME".equals(r.getSubmitStatus())).count();
         BigDecimal hwRate = totalHw > 0
                 ? new BigDecimal(onTimeHw).divide(new BigDecimal(totalHw), 4, RoundingMode.HALF_UP)
                         .multiply(new BigDecimal(100)).setScale(1, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
         // 预警人数
-        Long warningCount = warningRecordMapper.selectCount(
-                new LambdaQueryWrapper<WarningRecord>()
-                        .eq(WarningRecord::getCourseId, courseId)
-                        .eq(WarningRecord::getIsResolved, 0));
+        LambdaQueryWrapper<WarningRecord> warnWrapper = new LambdaQueryWrapper<WarningRecord>()
+                .eq(WarningRecord::getCourseId, courseId)
+                .eq(WarningRecord::getIsResolved, 0);
+        if (studentIds != null) {
+            warnWrapper.in(WarningRecord::getStudentId, studentIds);
+        }
+        Long warningCount = warningRecordMapper.selectCount(warnWrapper);
 
         return DashboardOverviewDTO.builder()
                 .studentCount(studentCount.intValue())
@@ -110,24 +115,29 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-    public DashboardChartsDTO getCharts(Long courseId) {
+    public DashboardChartsDTO getCharts(Long courseId, String className) {
+        Set<Long> studentIds = resolveClassStudentIds(courseId, className);
         return DashboardChartsDTO.builder()
-                .scoreDistribution(getScoreDistribution(courseId))
-                .scoreTrend(getScoreTrend(courseId))
-                .attendanceStats(getAttendanceStats(courseId))
-                .homeworkStats(getHomeworkStats(courseId))
-                .knowledgeRadar(getKnowledgeRadar(courseId))
-                .experimentStats(getExperimentStats(courseId))
+                .scoreDistribution(getScoreDistribution(courseId, studentIds))
+                .scoreTrend(getScoreTrend(courseId, studentIds))
+                .attendanceStats(getAttendanceStats(courseId, studentIds))
+                .homeworkStats(getHomeworkStats(courseId, studentIds))
+                .knowledgeRadar(getKnowledgeRadar(courseId, studentIds))
+                .experimentStats(getExperimentStats(courseId, studentIds))
                 .build();
     }
 
     @Override
-    public List<WarningStudentDTO> getWarnings(Long courseId) {
-        List<WarningRecord> warnings = warningRecordMapper.selectList(
-                new LambdaQueryWrapper<WarningRecord>()
-                        .eq(WarningRecord::getCourseId, courseId)
-                        .eq(WarningRecord::getIsResolved, 0)
-                        .orderByDesc(WarningRecord::getCreateTime));
+    public List<WarningStudentDTO> getWarnings(Long courseId, String className) {
+        Set<Long> classStudentIds = resolveClassStudentIds(courseId, className);
+        LambdaQueryWrapper<WarningRecord> wrapper = new LambdaQueryWrapper<WarningRecord>()
+                .eq(WarningRecord::getCourseId, courseId)
+                .eq(WarningRecord::getIsResolved, 0)
+                .orderByDesc(WarningRecord::getCreateTime);
+        if (classStudentIds != null) {
+            wrapper.in(WarningRecord::getStudentId, classStudentIds);
+        }
+        List<WarningRecord> warnings = warningRecordMapper.selectList(wrapper);
 
         if (warnings.isEmpty()) return Collections.emptyList();
 
@@ -280,6 +290,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .courseNo(c.getCourseNo())
                 .courseName(c.getCourseName())
                 .className(resolveClassName(c, classNamesByCourse.get(c.getId())))
+                .classNames(classNamesByCourse.getOrDefault(c.getId(), Collections.emptyList()))
                 .semester(c.getSemester())
                 .credit(c.getCredit())
                 .courseType(c.getCourseType())
@@ -307,9 +318,30 @@ public class DashboardServiceImpl implements DashboardService {
         return (own != null && !own.isBlank()) ? own : null;
     }
 
+    /**
+     * 解析班级筛选：className 为空返回 null（不过滤，统计全课程）；
+     * 否则返回该课程下该班级的学生ID集合（t_course_student.class_name）。
+     */
+    private Set<Long> resolveClassStudentIds(Long courseId, String className) {
+        if (className == null || className.isBlank()) {
+            return null;
+        }
+        return courseStudentMapper.selectList(new LambdaQueryWrapper<CourseStudent>()
+                        .eq(CourseStudent::getCourseId, courseId)
+                        .eq(CourseStudent::getClassName, className)).stream()
+                .map(CourseStudent::getStudentId).collect(Collectors.toSet());
+    }
+
+    /** 按学生ID集合过滤记录，studentIds 为 null 时原样返回 */
+    private <T> List<T> filterByStudentIds(List<T> records, java.util.function.Function<T, Long> idGetter,
+                                           Set<Long> studentIds) {
+        if (studentIds == null) return records;
+        return records.stream().filter(r -> studentIds.contains(idGetter.apply(r))).collect(Collectors.toList());
+    }
+
     // ===== 图表数据 =====
 
-    private List<ChartItem> getScoreDistribution(Long courseId) {
+    private List<ChartItem> getScoreDistribution(Long courseId, Set<Long> studentIds) {
         List<Assessment> assessments = assessmentMapper.selectList(
                 new LambdaQueryWrapper<Assessment>()
                         .eq(Assessment::getCourseId, courseId)
@@ -317,9 +349,10 @@ public class DashboardServiceImpl implements DashboardService {
         if (assessments.isEmpty()) return Collections.emptyList();
 
         Assessment latest = assessments.get(0);
-        List<AssessmentRecord> records = assessmentRecordMapper.selectList(
+        List<AssessmentRecord> records = filterByStudentIds(assessmentRecordMapper.selectList(
                 new LambdaQueryWrapper<AssessmentRecord>()
-                        .eq(AssessmentRecord::getAssessmentId, latest.getId()));
+                        .eq(AssessmentRecord::getAssessmentId, latest.getId())),
+                AssessmentRecord::getStudentId, studentIds);
 
         int[] ranges = {0, 60, 70, 80, 90, 101};
         String[] labels = {"0-59", "60-69", "70-79", "80-89", "90-100"};
@@ -344,7 +377,7 @@ public class DashboardServiceImpl implements DashboardService {
         return items;
     }
 
-    private List<ChartItem> getScoreTrend(Long courseId) {
+    private List<ChartItem> getScoreTrend(Long courseId, Set<Long> studentIds) {
         List<Assessment> assessments = assessmentMapper.selectList(
                 new LambdaQueryWrapper<Assessment>()
                         .eq(Assessment::getCourseId, courseId)
@@ -352,9 +385,10 @@ public class DashboardServiceImpl implements DashboardService {
                         .orderByAsc(Assessment::getAssessmentDate));
 
         return assessments.stream().map(a -> {
-            List<AssessmentRecord> records = assessmentRecordMapper.selectList(
+            List<AssessmentRecord> records = filterByStudentIds(assessmentRecordMapper.selectList(
                     new LambdaQueryWrapper<AssessmentRecord>()
-                            .eq(AssessmentRecord::getAssessmentId, a.getId()));
+                            .eq(AssessmentRecord::getAssessmentId, a.getId())),
+                    AssessmentRecord::getStudentId, studentIds);
             BigDecimal avg = records.isEmpty() ? BigDecimal.ZERO
                     : records.stream().map(r -> r.getTotalScore() != null ? r.getTotalScore() : BigDecimal.ZERO)
                             .reduce(BigDecimal.ZERO, BigDecimal::add)
@@ -363,10 +397,11 @@ public class DashboardServiceImpl implements DashboardService {
         }).collect(Collectors.toList());
     }
 
-    private List<ChartItem> getAttendanceStats(Long courseId) {
-        List<Attendance> records = attendanceMapper.selectList(
+    private List<ChartItem> getAttendanceStats(Long courseId, Set<Long> studentIds) {
+        List<Attendance> records = filterByStudentIds(attendanceMapper.selectList(
                 new LambdaQueryWrapper<Attendance>()
-                        .eq(Attendance::getCourseId, courseId));
+                        .eq(Attendance::getCourseId, courseId)),
+                Attendance::getStudentId, studentIds);
         Map<String, Long> grouped = records.stream()
                 .collect(Collectors.groupingBy(
                         a -> AttendanceStatus.normalize(a.getStatus()),
@@ -380,7 +415,7 @@ public class DashboardServiceImpl implements DashboardService {
         );
     }
 
-    private List<HomeworkSubmitStat> getHomeworkStats(Long courseId) {
+    private List<HomeworkSubmitStat> getHomeworkStats(Long courseId, Set<Long> studentIds) {
         List<Assessment> hwAssessments = assessmentMapper.selectList(
                 new LambdaQueryWrapper<Assessment>()
                         .eq(Assessment::getCourseId, courseId)
@@ -388,9 +423,10 @@ public class DashboardServiceImpl implements DashboardService {
                         .orderByAsc(Assessment::getAssessmentNo));
 
         return hwAssessments.stream().map(hw -> {
-            List<AssessmentRecord> records = assessmentRecordMapper.selectList(
+            List<AssessmentRecord> records = filterByStudentIds(assessmentRecordMapper.selectList(
                     new LambdaQueryWrapper<AssessmentRecord>()
-                            .eq(AssessmentRecord::getAssessmentId, hw.getId()));
+                            .eq(AssessmentRecord::getAssessmentId, hw.getId())),
+                    AssessmentRecord::getStudentId, studentIds);
             long onTime = records.stream().filter(r -> "ON_TIME".equals(r.getSubmitStatus())).count();
             long late = records.stream().filter(r -> "LATE".equals(r.getSubmitStatus())).count();
             long absent = records.stream().filter(r -> "ABSENT".equals(r.getSubmitStatus())).count();
@@ -401,10 +437,11 @@ public class DashboardServiceImpl implements DashboardService {
         }).collect(Collectors.toList());
     }
 
-    private List<ChartItem> getKnowledgeRadar(Long courseId) {
-        List<StudentKpMastery> masteryList = studentKpMasteryMapper.selectList(
+    private List<ChartItem> getKnowledgeRadar(Long courseId, Set<Long> studentIds) {
+        List<StudentKpMastery> masteryList = filterByStudentIds(studentKpMasteryMapper.selectList(
                 new LambdaQueryWrapper<StudentKpMastery>()
-                        .eq(StudentKpMastery::getCourseId, courseId));
+                        .eq(StudentKpMastery::getCourseId, courseId)),
+                StudentKpMastery::getStudentId, studentIds);
 
         Map<String, List<StudentKpMastery>> grouped = masteryList.stream()
                 .collect(Collectors.groupingBy(StudentKpMastery::getKpName));
@@ -418,15 +455,21 @@ public class DashboardServiceImpl implements DashboardService {
         }).collect(Collectors.toList());
     }
 
-    private List<ExperimentStat> getExperimentStats(Long courseId) {
-        Long studentCount = courseStudentMapper.selectCount(
-                new LambdaQueryWrapper<CourseStudent>()
-                        .eq(CourseStudent::getCourseId, courseId));
+    private List<ExperimentStat> getExperimentStats(Long courseId, Set<Long> studentIds) {
+        int totalCount;
+        if (studentIds != null) {
+            totalCount = studentIds.size();
+        } else {
+            totalCount = courseStudentMapper.selectCount(
+                    new LambdaQueryWrapper<CourseStudent>()
+                            .eq(CourseStudent::getCourseId, courseId)).intValue();
+        }
 
-        List<Experiment> experiments = experimentMapper.selectList(
+        List<Experiment> experiments = filterByStudentIds(experimentMapper.selectList(
                 new LambdaQueryWrapper<Experiment>()
                         .eq(Experiment::getCourseId, courseId)
-                        .orderByAsc(Experiment::getExperimentNo));
+                        .orderByAsc(Experiment::getExperimentNo)),
+                Experiment::getStudentId, studentIds);
 
         Map<String, List<Experiment>> grouped = experiments.stream()
                 .collect(Collectors.groupingBy(e -> e.getExperimentName() + "_" + e.getExperimentNo()));
@@ -444,7 +487,6 @@ public class DashboardServiceImpl implements DashboardService {
                             .reduce(BigDecimal.ZERO, BigDecimal::add)
                             .divide(new BigDecimal(list.size()), 2, RoundingMode.HALF_UP);
             int submittedCount = list.size();
-            int totalCount = studentCount.intValue();
             BigDecimal submitRate = totalCount > 0
                     ? new BigDecimal(submittedCount).divide(new BigDecimal(totalCount), 4, RoundingMode.HALF_UP)
                             .multiply(new BigDecimal(100)).setScale(1, RoundingMode.HALF_UP)

@@ -41,16 +41,20 @@ export interface DashboardCharts {
 
 export interface WarningStudent {
   studentId: number;
-  studentName: string;
-  studentNo: string;
-  reason: string;
-  score: number;
-  attendanceRate: number;
+  studentNo?: string;
+  name?: string;
+  courseId?: number;
+  warningType?: string;
+  severity?: string;
+  warningMsg?: string;
+  createTime?: string;
 }
 
 export interface ClassVO {
   id: number;
   className: string;
+  /** 该课程下的全部授课班级名，用于详情页班级筛选 */
+  classNames?: string[];
   courseNo?: string;
   courseName?: string;
   semester?: string;
@@ -62,13 +66,13 @@ export interface ClassVO {
   homeworkRate?: number;
 }
 
-export async function getDashboardFull(courseId: number) {
-  const res = await api.get('/dashboard', { params: { courseId } });
+export async function getDashboardFull(courseId: number, className?: string) {
+  const res = await api.get('/dashboard', { params: { courseId, className: className || undefined } });
   return res.data as { overview: DashboardOverview; charts: DashboardCharts; warnings: WarningStudent[] };
 }
 
-export async function getDashboardOverview(courseId: number) {
-  const res = await api.get('/dashboard/overview', { params: { courseId } });
+export async function getDashboardOverview(courseId: number, className?: string) {
+  const res = await api.get('/dashboard/overview', { params: { courseId, className: className || undefined } });
   return res.data as DashboardOverview;
 }
 

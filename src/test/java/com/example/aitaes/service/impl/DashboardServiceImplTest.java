@@ -57,10 +57,19 @@ class DashboardServiceImplTest {
             record.setTotalScore(new BigDecimal("85"));
             when(assessmentRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(record));
 
-            when(attendanceMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(10L, 9L);
+            java.util.List<Attendance> atts = new java.util.ArrayList<>();
+            for (int i = 0; i < 9; i++) {
+                Attendance a = new Attendance();
+                a.setStatus("出勤");
+                atts.add(a);
+            }
+            Attendance absent = new Attendance();
+            absent.setStatus("缺勤");
+            atts.add(absent);
+            when(attendanceMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(atts);
             when(warningRecordMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(2L);
 
-            DashboardOverviewDTO result = dashboardService.getOverview(1L);
+            DashboardOverviewDTO result = dashboardService.getOverview(1L, null);
 
             assertEquals(30, result.getStudentCount());
             assertEquals(new BigDecimal("85.00"), result.getAverageScore());
@@ -73,10 +82,10 @@ class DashboardServiceImplTest {
         void shouldReturnZeros_WhenNoData() {
             when(courseStudentMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(0L);
             when(assessmentMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
-            when(attendanceMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(0L);
+            when(attendanceMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
             when(warningRecordMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(0L);
 
-            DashboardOverviewDTO result = dashboardService.getOverview(1L);
+            DashboardOverviewDTO result = dashboardService.getOverview(1L, null);
 
             assertEquals(0, result.getStudentCount());
             assertEquals(BigDecimal.ZERO, result.getAverageScore());
@@ -95,7 +104,7 @@ class DashboardServiceImplTest {
             when(attendanceMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
             when(studentKpMasteryMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
 
-            DashboardChartsDTO result = dashboardService.getCharts(1L);
+            DashboardChartsDTO result = dashboardService.getCharts(1L, null);
 
             assertNotNull(result.getScoreDistribution());
             assertNotNull(result.getScoreTrend());
@@ -126,7 +135,7 @@ class DashboardServiceImplTest {
             student.setName("赵同学");
             when(studentMapper.selectBatchIds(anyList())).thenReturn(List.of(student));
 
-            List<WarningStudentDTO> result = dashboardService.getWarnings(1L);
+            List<WarningStudentDTO> result = dashboardService.getWarnings(1L, null);
 
             assertEquals(1, result.size());
             assertEquals("赵同学", result.get(0).getName());
@@ -137,7 +146,21 @@ class DashboardServiceImplTest {
         @DisplayName("DB-05: 无预警时应返回空列表")
         void shouldReturnEmpty_WhenNoWarnings() {
             when(warningRecordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
-            assertTrue(dashboardService.getWarnings(1L).isEmpty());
+            assertTrue(dashboardService.getWarnings(1L, null).isEmpty());
+        }
+        @Test
+        @DisplayName("DB-07: 传入 className 时应按班级学生集合计算人数")
+        void shouldFilterByClassName_WhenClassNameGiven() {
+            CourseStudent cs1 = new CourseStudent();
+            cs1.setCourseId(1L); cs1.setStudentId(100L); cs1.setClassName("应数2401");
+            CourseStudent cs2 = new CourseStudent();
+            cs2.setCourseId(1L); cs2.setStudentId(101L); cs2.setClassName("应数2402");
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
+                    .thenReturn(List.of(cs1)); // 班级筛选查询只返回该班学生
+
+            DashboardOverviewDTO result = dashboardService.getOverview(1L, "应数2401");
+
+            assertEquals(1, result.getStudentCount());
         }
     }
 
@@ -173,6 +196,7 @@ class DashboardServiceImplTest {
 
             assertEquals(1, result.size());
             assertEquals(3, result.get(0).getStudentCount());
+            assertTrue(result.get(0).getClassNames().isEmpty());
         }
     }
 }

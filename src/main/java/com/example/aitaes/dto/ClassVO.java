@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 班级卡片返回对象
@@ -21,6 +22,8 @@ public class ClassVO {
     private String courseNo;
     private String courseName;
     private String className;
+    /** 该课程下的全部授课班级名（去重排序），用于详情页班级筛选 */
+    private List<String> classNames;
     private String semester;
     private BigDecimal credit;
     private String courseType;

@@ -10,22 +10,22 @@ import java.util.List;
 public interface DashboardService {
 
     /**
-     * 概览统计卡片
+     * 概览统计卡片（className 为空时统计全课程，否则仅统计该班级）
      */
-    DashboardOverviewDTO getOverview(Long courseId);
+    DashboardOverviewDTO getOverview(Long courseId, String className);
 
     /**
-     * 图表数据
+     * 图表数据（className 为空时统计全课程，否则仅统计该班级）
      */
-    DashboardChartsDTO getCharts(Long courseId);
+    DashboardChartsDTO getCharts(Long courseId, String className);
 
     /**
-     * 预警学生列表
+     * 预警学生列表（className 为空时返回全课程，否则仅返回该班级）
      */
-    List<WarningStudentDTO> getWarnings(Long courseId);
+    List<WarningStudentDTO> getWarnings(Long courseId, String className);
 
     /**
-     * 教师可选班级列表（用于班级切换器 UC27）
+     * 教师可选课程列表（用于课程切换器 UC27）
      */
     List<ClassVO> getMyCourses(Long userId);
 }
