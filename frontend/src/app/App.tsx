@@ -3692,7 +3692,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                   className="bg-card rounded-xl border border-border p-5 cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-primary/20 hover:-translate-y-0.5">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="font-semibold text-base">{c.className}</h3>
+                      <h3 className="font-semibold text-base">{c.className || "未分班"}</h3>
                       <p className="text-sm text-muted-foreground mt-0.5">{c.courseName}</p>
                       <p className="text-xs text-muted-foreground mt-1">{c.semester}</p>
                     </div>
@@ -3785,7 +3785,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                   {dashboardCourses.map(c => (
                     <button key={c.id} onClick={() => toggleCompareClass(c.id)}
                       className={`px-2 py-1 text-xs rounded transition-colors ${selectedCompareClasses.includes(c.id) ? "bg-primary text-white" : "bg-muted hover:bg-accent"}`}>
-                      {c.className}
+                      {c.className || "未分班"}
                     </button>
                   ))}
                 </div>

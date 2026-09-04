@@ -187,9 +187,17 @@ public class DashboardServiceImpl implements DashboardService {
 
         List<Long> courseIds = courses.stream().map(Course::getId).collect(Collectors.toList());
 
-        Map<Long, Long> studentCountMap = courseStudentMapper.selectList(
-                new LambdaQueryWrapper<CourseStudent>().in(CourseStudent::getCourseId, courseIds))
-                .stream().collect(Collectors.groupingBy(CourseStudent::getCourseId, Collectors.counting()));
+        // 课程-学生关联：同时统计人数与授课班级名（t_course_student.class_name）
+        List<CourseStudent> allCourseStudents = courseStudentMapper.selectList(
+                new LambdaQueryWrapper<CourseStudent>().in(CourseStudent::getCourseId, courseIds));
+        Map<Long, Long> studentCountMap = allCourseStudents.stream()
+                .collect(Collectors.groupingBy(CourseStudent::getCourseId, Collectors.counting()));
+        Map<Long, List<String>> classNamesByCourse = allCourseStudents.stream()
+                .filter(cs -> cs.getClassName() != null && !cs.getClassName().isBlank())
+                .collect(Collectors.groupingBy(CourseStudent::getCourseId,
+                        Collectors.mapping(CourseStudent::getClassName,
+                                Collectors.collectingAndThen(Collectors.toSet(),
+                                        set -> set.stream().sorted().collect(Collectors.toList())))));
 
         Map<Long, BigDecimal> avgScoreMap = new HashMap<>();
         List<Assessment> allAssessments = assessmentMapper.selectList(
@@ -271,7 +279,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .id(c.getId())
                 .courseNo(c.getCourseNo())
                 .courseName(c.getCourseName())
-                .className(c.getCourseName())
+                .className(resolveClassName(c, classNamesByCourse.get(c.getId())))
                 .semester(c.getSemester())
                 .credit(c.getCredit())
                 .courseType(c.getCourseType())
@@ -280,6 +288,23 @@ public class DashboardServiceImpl implements DashboardService {
                 .attendanceRate(attendanceRateMap.getOrDefault(c.getId(), BigDecimal.ZERO))
                 .homeworkRate(homeworkRateMap.getOrDefault(c.getId(), BigDecimal.ZERO))
                 .build()).collect(Collectors.toList());
+    }
+
+    /**
+     * 解析课程卡片的班级名：
+     * 优先取选课记录中的班级（t_course_student.class_name，去重排序），
+     * 多个班级显示「首个班名 等N个班」；无选课时回退到课程表自身 class_name；
+     * 均为空则返回 null（前端兜底显示"未分班"）。
+     */
+    private String resolveClassName(Course course, List<String> classNames) {
+        if (classNames != null && !classNames.isEmpty()) {
+            if (classNames.size() == 1) {
+                return classNames.get(0);
+            }
+            return classNames.get(0) + " 等" + classNames.size() + "个班";
+        }
+        String own = course.getClassName();
+        return (own != null && !own.isBlank()) ? own : null;
     }
 
     // ===== 图表数据 =====
