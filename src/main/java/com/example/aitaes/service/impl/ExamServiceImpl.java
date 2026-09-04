@@ -18,6 +18,7 @@ import com.example.aitaes.dto.SubmitExamResultDTO;
 import com.example.aitaes.entity.*;
 import com.example.aitaes.mapper.*;
 import com.example.aitaes.service.ExamService;
+import com.example.aitaes.service.NotificationService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,7 @@ public class ExamServiceImpl implements ExamService {
     private final TeachingAssistantMapper teachingAssistantMapper;
     private final UserMapper userMapper;
     private final ObjectMapper objectMapper;
+    private final NotificationService notificationService;
 
     // ===== 私有方法 =====
 
@@ -312,6 +314,12 @@ public class ExamServiceImpl implements ExamService {
 
         paper.setStatus("PUBLISHED");
         examPaperMapper.updateById(paper);
+        try {
+            notificationService.notifyExamPublished(paper);
+        } catch (Exception e) {
+            // 通知失败不影响考试发布
+            log.warn("发布考试通知失败: paperId={}", id, e);
+        }
         log.info("发布考试: paperId={}, assessmentId={}", id, assessment.getId());
     }
 

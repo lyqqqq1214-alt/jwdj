@@ -23,7 +23,7 @@ import { getStudentOverview, getStudentTrends, getStudentWrongQuestions, getStud
 import { getStudentProfile, toggleFocusStudent, generateAiEvaluation, generateAiSuggestions, getMyPortrait, generateMyAiSuggestions, StudentProfile as StudentProfileData, LearningSuggestion } from "../services/portraitService";
 import { getMyClasses, getClassStudents, createClass, addStudentToClass, removeStudentFromClass, ClassVO as ClsVO, StudentVO } from "../services/classService";
 import { getPendingExams, getExamPapers, getExamPaperById, createExamPaper, updateExamPaper, deleteExamPaper, publishExamPaper, closeExamPaper, getExamResults, submitExam, getStudentExam, getMyExamRecords, getMyExamResult, getGradingList, submitGrade, getPaperQuestions, getPaperGrading, submitStudentGrade, ExamPaper, ExamResultDTO, StudentExamVO, SubmitExamResultDTO, StudentExamRecordVO, StudentExamResultVO, GradingItemVO, PaperGradingVO, PaperQuestionEditVO, StudentGradeItem } from "../services/examService";
-import { sendNotification, getMyNotifications, markNotificationRead, markAllNotificationsRead, getUnreadCount, Notification as NotifItem } from "../services/notificationService";
+import { sendNotification, getMyNotifications, markNotificationRead, markAllNotificationsRead, getUnreadCount, getCourseStudents, Notification as NotifItem, RecipientStudentVO } from "../services/notificationService";
 import { getOperationLogs, OperationLog } from "../services/logService";
 import { getAllConfigs, batchUpdateConfigs, SystemConfig } from "../services/configService";
 import { uploadFile, getImportHistory, downloadTemplate as fetchTemplateBlob, ImportLog } from "../services/importService";
@@ -7153,11 +7153,11 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
 }
 
 // ─── Notification Center (通知中心：教师/管理员发送，全体角色接收) ─────────────
+const rosterClassKey = (r: RecipientStudentVO) => (r.className && r.className.trim() ? r.className.trim() : "");
+
 function NotificationCenter({ mode }: { mode: "teacher" | "admin" | "student" }) {
   const [showSendModal, setShowSendModal] = useState(false);
   const [notificationType, setNotificationType] = useState<string | null>(null);
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [notifTitle, setNotifTitle] = useState("");
   const [notifContent, setNotifContent] = useState("");
@@ -7168,7 +7168,12 @@ function NotificationCenter({ mode }: { mode: "teacher" | "admin" | "student" })
   // API state
   const [notifications, setNotifications] = useState<NotifItem[]>([]);
   const [loadingNotifs, setLoadingNotifs] = useState(true);
-  const [myCourses, setMyCourses] = useState<{ id: number; courseName?: string; className?: string }[]>([]);
+  const [myCourses, setMyCourses] = useState<ClassVO[]>([]);
+  // 三级联动：课程→班级→人
+  const [roster, setRoster] = useState<RecipientStudentVO[]>([]);
+  const [selectedClasses, setSelectedClasses] = useState<string[]>([]); // 显式选中班级（空=未选）
+  const [selectedStudents, setSelectedStudents] = useState<number[]>([]); // 显式选中学生 t_student.id
+  const [studentSearch, setStudentSearch] = useState("");
 
   const canSend = mode !== "student";
 
@@ -7187,31 +7192,36 @@ function NotificationCenter({ mode }: { mode: "teacher" | "admin" | "student" })
     }
   }, [mode]);
 
+  useEffect(() => {
+    if (mode !== "teacher" || notifCourseId === "ALL") {
+      setRoster([]);
+      setSelectedClasses([]);
+      setSelectedStudents([]);
+      return;
+    }
+    getCourseStudents(notifCourseId as number).then(list => {
+      const rs = list || [];
+      setRoster(rs);
+      setSelectedClasses(Array.from(new Set(rs.map(rosterClassKey))));
+      setSelectedStudents(rs.map(r => r.studentId));
+    }).catch(() => {
+      setRoster([]);
+      setSelectedClasses([]);
+      setSelectedStudents([]);
+    });
+  }, [notifCourseId, mode]);
+
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
 
-  const notificationTemplates = [
-    { id: "homework", name: "作业发布提醒", title: "作业发布通知", content: "亲爱的同学，{{班级名称}}的{{作业名称}}已发布，请按时完成并提交。截止时间：{{截止时间}}。如有疑问，请及时联系任课教师。" },
-    { id: "exam", name: "考试提醒", title: "考试通知", content: "亲爱的同学，{{考试名称}}将于{{考试时间}}开始，请提前做好准备，准时参加考试。考试地点：{{考试地点}}。" },
-    { id: "warning", name: "预警提醒", title: "学习预警通知", content: "尊敬的同学，根据数据分析，你近期的{{预警类型}}情况需要关注。请及时调整学习状态，如有困难可联系任课教师寻求帮助。" },
-    { id: "general", name: "通用通知", title: "重要通知", content: "各位同学：\n\n{{通知内容}}\n\n请大家相互转告，如有疑问请联系任课教师。" },
-  ];
-
-  const applyTemplate = (templateId: string) => {
-    const template = notificationTemplates.find(t => t.id === templateId);
-    if (template) {
-      setSelectedTemplate(templateId);
-      setShowTemplateModal(false);
-      showToastMsg(`已应用模板：${template.name}`);
-    }
-  };
-
-  const currentTemplate = notificationTemplates.find(t => t.id === selectedTemplate);
-
   const handleSendNotification = async () => {
-    const title = notifTitle.trim() || currentTemplate?.title || "";
-    const content = notifContent.trim() || currentTemplate?.content || "";
+    const title = notifTitle.trim() || "";
+    const content = notifContent.trim() || "";
     if (!title) { showToastMsg("请输入通知标题"); return; }
     if (!content.trim()) { showToastMsg("请输入通知内容"); return; }
+    if (mode !== "admin" && notifCourseId !== "ALL" && (selectedClasses.length === 0 || selectedStudents.length === 0)) {
+      showToastMsg("请至少选择一个班级和一名学生");
+      return;
+    }
     try {
       if (mode === "admin") {
         await sendNotification({ title, content, recipientScope: notifScope });
@@ -7219,13 +7229,14 @@ function NotificationCenter({ mode }: { mode: "teacher" | "admin" | "student" })
         await sendNotification({
           title, content, recipientScope: "COURSE",
           courseId: notifCourseId === "ALL" ? undefined : (notifCourseId as number),
+          classNames: notifCourseId === "ALL" ? undefined : selectedClasses,
+          studentIds: notifCourseId === "ALL" ? undefined : selectedStudents,
         });
       }
       showToastMsg("通知已发送");
       loadNotifications();
     } catch { showToastMsg("发送失败，请重试"); }
     setShowSendModal(false);
-    setSelectedTemplate(null);
     setNotifTitle("");
     setNotifContent("");
   };
@@ -7247,6 +7258,44 @@ function NotificationCenter({ mode }: { mode: "teacher" | "admin" | "student" })
 
   const filteredNotifications = notifications.filter(n =>
     notificationType ? (notificationType === "system" ? n.senderName === "系统" : n.senderName !== "系统") : true);
+
+  // 班级去重 + 人数
+  const classOptions = (() => {
+    const map = new Map<string, { label: string; count: number }>();
+    roster.forEach(r => {
+      const key = rosterClassKey(r);
+      const label = key || "未分班";
+      const cur = map.get(key) || { label, count: 0 };
+      cur.count += 1;
+      map.set(key, cur);
+    });
+    return Array.from(map.entries()).map(([key, v]) => ({ key, label: v.label, count: v.count }));
+  })();
+
+  const filteredRoster = roster.filter(r => {
+    if (!selectedClasses.includes(rosterClassKey(r))) return false;
+    if (studentSearch.trim()) {
+      const q = studentSearch.trim().toLowerCase();
+      return (r.name || "").toLowerCase().includes(q) || (r.studentNo || "").toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  const allClassesSelected = classOptions.length > 0 && selectedClasses.length === classOptions.length;
+  const allStudentsSelected = filteredRoster.length > 0 && filteredRoster.every(r => selectedStudents.includes(r.studentId));
+
+  const toggleClass = (key: string) => {
+    setSelectedClasses(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  };
+  const toggleAllClasses = () => {
+    setSelectedClasses(allClassesSelected ? [] : classOptions.map(c => c.key));
+  };
+  const toggleStudent = (id: number) => {
+    setSelectedStudents(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+  const toggleAllStudents = () => {
+    setSelectedStudents(allStudentsSelected ? [] : filteredRoster.map(r => r.studentId));
+  };
 
   return (
     <div className="space-y-5">
@@ -7270,14 +7319,9 @@ function NotificationCenter({ mode }: { mode: "teacher" | "admin" | "student" })
             </button>
           )}
           {canSend && (
-            <>
-              <button onClick={() => setShowTemplateModal(true)} className="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
-                <FileText size={14} />模板管理
-              </button>
-              <button onClick={() => setShowSendModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
-                <Plus size={14} />{mode === "admin" ? "发布通知" : "发送通知"}
-              </button>
-            </>
+            <button onClick={() => setShowSendModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
+              <Plus size={14} />{mode === "admin" ? "发布通知" : "发送通知"}
+            </button>
           )}
         </div>
       </div>
@@ -7318,16 +7362,11 @@ function NotificationCenter({ mode }: { mode: "teacher" | "admin" | "student" })
 
       {showSendModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg border border-border w-full max-w-lg p-6 space-y-4">
+          <div className="bg-card rounded-lg border border-border w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">{mode === "admin" ? "发布通知" : "发送通知"}</h3>
               <button onClick={() => setShowSendModal(false)}><X size={16} /></button>
             </div>
-            {selectedTemplate && (
-              <div className="bg-[#969BE7]/20 rounded-lg p-3 text-xs text-[#969BE7]">
-                当前使用模板：{currentTemplate?.name}
-              </div>
-            )}
             <div>
               <label className="text-xs font-medium text-muted-foreground">收件人</label>
               {mode === "admin" ? (
@@ -7337,65 +7376,82 @@ function NotificationCenter({ mode }: { mode: "teacher" | "admin" | "student" })
                   <option value="TEACHERS">全体教师（含助教）</option>
                 </select>
               ) : (
-                <select value={String(notifCourseId)} onChange={e => setNotifCourseId(e.target.value === "ALL" ? "ALL" : Number(e.target.value))}
-                  className="mt-1 w-full px-3 py-2 border border-border rounded-md text-sm bg-background">
-                  <option value="ALL">全部课程学生（名下所有课程）</option>
-                  {myCourses.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.className ? `${c.className} · ` : ""}{c.courseName || `课程${c.id}`}
-                    </option>
-                  ))}
-                </select>
+                <div className="mt-1 space-y-3">
+                  <select value={String(notifCourseId)} onChange={e => setNotifCourseId(e.target.value === "ALL" ? "ALL" : Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background">
+                    <option value="ALL">全部课程学生（名下所有课程）</option>
+                    {myCourses.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.courseName || `课程${c.id}`}{c.semester ? ` · ${c.semester}` : ""}
+                      </option>
+                    ))}
+                  </select>
+
+                  {notifCourseId !== "ALL" && (
+                    <>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-muted-foreground">班级</span>
+                          <label className="flex items-center gap-1 text-xs text-primary cursor-pointer">
+                            <input type="checkbox" checked={allClassesSelected} onChange={toggleAllClasses} /> 全选
+                          </label>
+                        </div>
+                        {classOptions.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">该课程暂无学生</p>
+                        ) : (
+                          <div className="max-h-28 overflow-y-auto border border-border rounded-md p-2 space-y-1">
+                            {classOptions.map(c => (
+                              <label key={c.key} className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={selectedClasses.includes(c.key)} onChange={() => toggleClass(c.key)} />
+                                <span>{c.label}（{c.count}人）</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-muted-foreground">人员</span>
+                          <label className="flex items-center gap-1 text-xs text-primary cursor-pointer">
+                            <input type="checkbox" checked={allStudentsSelected} onChange={toggleAllStudents} /> 全选
+                          </label>
+                        </div>
+                        <input type="text" value={studentSearch} onChange={e => setStudentSearch(e.target.value)}
+                          placeholder="搜索姓名/学号"
+                          className="w-full px-3 py-2 border border-border rounded-md text-sm mb-1" />
+                        <div className="max-h-40 overflow-y-auto border border-border rounded-md p-2 space-y-1">
+                          {filteredRoster.map(r => (
+                            <label key={r.studentId} className="flex items-center gap-2 text-sm">
+                              <input type="checkbox" checked={selectedStudents.includes(r.studentId)} onChange={() => toggleStudent(r.studentId)} />
+                              <span>{r.name}（{r.studentNo}）</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
             <div>
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-muted-foreground">标题</label>
-                {!selectedTemplate && (
-                  <button onClick={() => setShowTemplateModal(true)} className="text-xs text-primary hover:underline">从模板选择</button>
-                )}
-              </div>
+              <label className="text-xs font-medium text-muted-foreground">标题</label>
               <input type="text" value={notifTitle} onChange={e => setNotifTitle(e.target.value)}
-                placeholder={currentTemplate?.title || "请输入通知标题"}
+                placeholder="请输入通知标题"
                 className="mt-1 w-full px-3 py-2 border border-border rounded-md text-sm" />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">正文</label>
               <textarea value={notifContent} onChange={e => setNotifContent(e.target.value)}
-                placeholder={currentTemplate?.content || "请输入通知内容"}
+                placeholder="请输入通知内容"
                 className="mt-1 w-full px-3 py-2 border border-border rounded-md text-sm h-32 resize-none" />
             </div>
             <div className="flex gap-3">
-              <button onClick={() => { setShowSendModal(false); setSelectedTemplate(null); }} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
+              <button onClick={() => setShowSendModal(false)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
               <button onClick={handleSendNotification} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
                 立即发送
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {showTemplateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg border border-border w-full max-w-lg p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">通知模板</h3>
-              <button onClick={() => setShowTemplateModal(false)}><X size={16} /></button>
-            </div>
-            <p className="text-xs text-muted-foreground">选择一个模板，占位符如{"{班级名称}"}将在发送时自动替换</p>
-            <div className="space-y-3">
-              {notificationTemplates.map(t => (
-                <div key={t.id} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-sm">{t.name}</span>
-                    <button onClick={() => applyTemplate(t.id)} className="px-3 py-1.5 text-xs bg-primary text-white rounded-md hover:bg-[#7F84D6]">使用模板</button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{t.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{t.content}</p>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => setShowTemplateModal(false)} className="w-full py-2 border border-border rounded-md text-sm">关闭</button>
           </div>
         </div>
       )}

@@ -12,6 +12,7 @@ import com.example.aitaes.dto.StudentExamResultVO;
 import com.example.aitaes.dto.SubmitExamResultDTO;
 import com.example.aitaes.entity.*;
 import com.example.aitaes.mapper.*;
+import com.example.aitaes.service.NotificationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,6 +51,7 @@ class ExamServiceImplTest {
     @Mock private TeacherMapper teacherMapper;
     @Mock private TeachingAssistantMapper teachingAssistantMapper;
     @Mock private UserMapper userMapper;
+    @Mock private NotificationService notificationService;
     @Spy private ObjectMapper objectMapper = new ObjectMapper();
     @InjectMocks private ExamServiceImpl examService;
 
@@ -156,6 +158,7 @@ class ExamServiceImplTest {
 
             verify(assessmentMapper).insert(any(Assessment.class));
             verify(examPaperMapper).updateById(any(ExamPaper.class));
+            verify(notificationService).notifyExamPublished(paper);
             assertEquals("PUBLISHED", paper.getStatus());
         }
 

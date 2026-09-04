@@ -1,27 +1,39 @@
 package com.example.aitaes.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.example.aitaes.common.BusinessException;
+import com.example.aitaes.dto.NotificationSendDTO;
+import com.example.aitaes.dto.RecipientStudentVO;
+import com.example.aitaes.entity.Course;
 import com.example.aitaes.entity.CourseStudent;
+import com.example.aitaes.entity.ExamPaper;
 import com.example.aitaes.entity.Notification;
 import com.example.aitaes.entity.NotificationRecipient;
 import com.example.aitaes.entity.Student;
+import com.example.aitaes.entity.Teacher;
 import com.example.aitaes.entity.User;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.aitaes.mapper.CourseMapper;
 import com.example.aitaes.mapper.CourseStudentMapper;
 import com.example.aitaes.mapper.NotificationMapper;
 import com.example.aitaes.mapper.NotificationRecipientMapper;
 import com.example.aitaes.mapper.StudentMapper;
+import com.example.aitaes.mapper.TeacherMapper;
+import com.example.aitaes.mapper.TeachingAssistantMapper;
 import com.example.aitaes.mapper.UserMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -37,7 +49,85 @@ class NotificationServiceImplTest {
     @Mock private StudentMapper studentMapper;
     @Mock private CourseStudentMapper courseStudentMapper;
     @Mock private CourseMapper courseMapper;
+    @Mock private TeacherMapper teacherMapper;
+    @Mock private TeachingAssistantMapper teachingAssistantMapper;
     @InjectMocks private NotificationServiceImpl notificationService;
+
+    // ===== helpers =====
+
+    private NotificationSendDTO dto(String scope, Long courseId, List<String> classNames, List<Long> studentIds) {
+        NotificationSendDTO d = new NotificationSendDTO();
+        d.setTitle("标题");
+        d.setContent("内容");
+        d.setRecipientScope(scope);
+        d.setCourseId(courseId);
+        d.setClassNames(classNames);
+        d.setStudentIds(studentIds);
+        return d;
+    }
+
+    private void stubNotificationInsert(Long id) {
+        when(notificationMapper.insert(any(Notification.class))).thenAnswer(inv -> {
+            inv.getArgument(0, Notification.class).setId(id);
+            return 1;
+        });
+    }
+
+    /** resolveTeacherId(userId) 返回 teacherId（TEACHER 角色） */
+    private void stubTeacher(Long userId, Long teacherId) {
+        User u = new User();
+        u.setId(userId);
+        u.setRole("TEACHER");
+        when(userMapper.selectById(userId)).thenReturn(u);
+        Teacher t = new Teacher();
+        t.setId(teacherId);
+        when(teacherMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(t);
+    }
+
+    private void stubCourse(Long courseId, Long teacherId) {
+        Course c = new Course();
+        c.setId(courseId);
+        c.setTeacherId(teacherId);
+        when(courseMapper.selectById(courseId)).thenReturn(c);
+    }
+
+    private CourseStudent link(Long studentId, String className) {
+        CourseStudent cs = new CourseStudent();
+        cs.setStudentId(studentId);
+        cs.setClassName(className);
+        return cs;
+    }
+
+    private Student student(Long id, Long userId) {
+        Student s = new Student();
+        s.setId(id);
+        s.setUserId(userId);
+        return s;
+    }
+
+    /** selectBatchIds 按传入的 id 集合返回对应学生（模拟 DB 过滤） */
+    private void stubStudents(Map<Long, Long> idToUserId) {
+        when(studentMapper.selectBatchIds(anyCollection())).thenAnswer(inv -> {
+            @SuppressWarnings("unchecked")
+            Collection<Long> ids = inv.getArgument(0);
+            return ids.stream()
+                    .filter(idToUserId::containsKey)
+                    .map(id -> student(id, idToUserId.get(id)))
+                    .toList();
+        });
+    }
+
+    private ExamPaper examPaper(Long courseId, Long teacherId, String paperName, String targetStudents) {
+        ExamPaper p = new ExamPaper();
+        p.setId(1L);
+        p.setCourseId(courseId);
+        p.setTeacherId(teacherId);
+        p.setPaperName(paperName);
+        p.setTargetStudents(targetStudents);
+        p.setStartTime(LocalDateTime.of(2026, 9, 10, 9, 0));
+        p.setEndTime(LocalDateTime.of(2026, 9, 10, 11, 0));
+        return p;
+    }
 
     @Nested
     @DisplayName("send — 发送通知")
@@ -46,17 +136,11 @@ class NotificationServiceImplTest {
         @Test
         @DisplayName("NT-01: STUDENTS 范围应为每个指定接收者创建记录")
         void shouldCreateNotificationAndRecipients() {
-            when(notificationMapper.insert(any(Notification.class))).thenAnswer(inv -> {
-                Notification n = inv.getArgument(0);
-                n.setId(1L);
-                return 1;
-            });
+            stubNotificationInsert(1L);
 
-            Notification result = notificationService.send(1L, "张老师", "测试标题",
-                    "测试内容", "STUDENTS", null, List.of(100L, 101L));
+            notificationService.send(1L, "张老师",
+                    dto("STUDENTS", null, null, List.of(100L, 101L)));
 
-            assertNotNull(result);
-            // 发送者 1L 不在接收列表中，应为 100/101 各插一行
             verify(notificationRecipientMapper, times(2)).insert(any(NotificationRecipient.class));
         }
 
@@ -66,33 +150,22 @@ class NotificationServiceImplTest {
             when(notificationMapper.insert(any(Notification.class))).thenReturn(1);
             when(userMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
 
-            notificationService.send(1L, "管理员", "标题", "内容", "ALL", null, null);
+            notificationService.send(1L, "管理员", dto("ALL", null, null, null));
 
             verify(notificationRecipientMapper, never()).insert(any(NotificationRecipient.class));
         }
 
         @Test
-        @DisplayName("NT-02b: COURSE 范围应展开为选课学生的 userId")
+        @DisplayName("NT-02b: COURSE 范围应展开为选课学生的 userId（默认全量）")
         void shouldExpandCourseRecipients() {
-            when(notificationMapper.insert(any(Notification.class))).thenAnswer(inv -> {
-                inv.getArgument(0, Notification.class).setId(2L);
-                return 1;
-            });
-            CourseStudent link1 = new CourseStudent();
-            link1.setStudentId(10L);
-            CourseStudent link2 = new CourseStudent();
-            link2.setStudentId(11L);
+            stubNotificationInsert(2L);
+            stubTeacher(1L, 90L);
+            stubCourse(3L, 90L);
             when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
-                    .thenReturn(List.of(link1, link2));
-            Student s1 = new Student();
-            s1.setId(10L);
-            s1.setUserId(100L);
-            Student s2 = new Student();
-            s2.setId(11L);
-            s2.setUserId(101L);
-            when(studentMapper.selectBatchIds(anyCollection())).thenReturn(List.of(s1, s2));
+                    .thenReturn(List.of(link(10L, "计科2401"), link(11L, "应数2401")));
+            stubStudents(Map.of(10L, 100L, 11L, 101L));
 
-            notificationService.send(1L, "张老师", "标题", "内容", "COURSE", 3L, null);
+            notificationService.send(1L, "张老师", dto("COURSE", 3L, null, null));
 
             verify(notificationRecipientMapper, times(2)).insert(any(NotificationRecipient.class));
         }
@@ -100,17 +173,171 @@ class NotificationServiceImplTest {
         @Test
         @DisplayName("NT-02c: TEACHERS 范围应展开为教师/助教用户")
         void shouldExpandTeachersRecipients() {
-            when(notificationMapper.insert(any(Notification.class))).thenAnswer(inv -> {
-                inv.getArgument(0, Notification.class).setId(3L);
-                return 1;
-            });
+            stubNotificationInsert(3L);
             User t1 = new User();
             t1.setId(200L);
             when(userMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(t1));
 
-            notificationService.send(1L, "管理员", "标题", "内容", "TEACHERS", null, null);
+            notificationService.send(1L, "管理员", dto("TEACHERS", null, null, null));
 
             verify(notificationRecipientMapper, times(1)).insert(any(NotificationRecipient.class));
+        }
+
+        @Test
+        @DisplayName("NT-02d: COURSE 按班级过滤应只发给该班学生")
+        void shouldFilterByClassNames() {
+            stubNotificationInsert(4L);
+            stubTeacher(1L, 90L);
+            stubCourse(3L, 90L);
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
+                    .thenReturn(List.of(link(10L, "计科2401"), link(11L, "应数2401")));
+            stubStudents(Map.of(10L, 100L, 11L, 101L));
+
+            notificationService.send(1L, "张老师", dto("COURSE", 3L, List.of("计科2401"), null));
+
+            ArgumentCaptor<NotificationRecipient> captor = ArgumentCaptor.forClass(NotificationRecipient.class);
+            verify(notificationRecipientMapper, times(1)).insert(captor.capture());
+            assertEquals(100L, captor.getValue().getRecipientId());
+        }
+
+        @Test
+        @DisplayName("NT-02e: COURSE 按学生过滤应只发给指定学生")
+        void shouldFilterByStudentIds() {
+            stubNotificationInsert(5L);
+            stubTeacher(1L, 90L);
+            stubCourse(3L, 90L);
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
+                    .thenReturn(List.of(link(10L, "计科2401"), link(11L, "应数2401")));
+            stubStudents(Map.of(10L, 100L, 11L, 101L));
+
+            notificationService.send(1L, "张老师", dto("COURSE", 3L, null, List.of(11L)));
+
+            ArgumentCaptor<NotificationRecipient> captor = ArgumentCaptor.forClass(NotificationRecipient.class);
+            verify(notificationRecipientMapper, times(1)).insert(captor.capture());
+            assertEquals(101L, captor.getValue().getRecipientId());
+        }
+
+        @Test
+        @DisplayName("NT-02f: COURSE 班级+学生同时过滤应取交集")
+        void shouldFilterByBoth() {
+            stubNotificationInsert(6L);
+            stubTeacher(1L, 90L);
+            stubCourse(3L, 90L);
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
+                    .thenReturn(List.of(link(10L, "计科2401"), link(11L, "应数2401")));
+
+            // 计科2401 对应学生 10，但 studentIds 只要 11 → 交集为空
+            notificationService.send(1L, "张老师", dto("COURSE", 3L, List.of("计科2401"), List.of(11L)));
+
+            verify(notificationRecipientMapper, never()).insert(any(NotificationRecipient.class));
+        }
+
+        @Test
+        @DisplayName("NT-02g: 向他人课程发送应抛 FORBIDDEN")
+        void shouldRejectOtherTeachersCourse() {
+            when(notificationMapper.insert(any(Notification.class))).thenReturn(1);
+            stubTeacher(1L, 90L);
+            stubCourse(3L, 999L);
+
+            assertThrows(BusinessException.class,
+                    () -> notificationService.send(1L, "张老师", dto("COURSE", 3L, null, null)));
+
+            verify(notificationRecipientMapper, never()).insert(any(NotificationRecipient.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("listCourseStudents — 课程学生名单")
+    class ListCourseStudents {
+
+        @Test
+        @DisplayName("NT-08: 应返回课程学生并带行政班名")
+        void shouldListStudentsWithClassName() {
+            stubTeacher(1L, 90L);
+            stubCourse(3L, 90L);
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
+                    .thenReturn(List.of(link(10L, "计科2401"), link(11L, "应数2401")));
+            Student s10 = student(10L, 100L);
+            s10.setStudentNo("2024001");
+            s10.setName("张三");
+            Student s11 = student(11L, 101L);
+            s11.setStudentNo("2024002");
+            s11.setName("李四");
+            when(studentMapper.selectBatchIds(anyCollection())).thenReturn(List.of(s10, s11));
+
+            List<RecipientStudentVO> result = notificationService.listCourseStudents(3L, 1L);
+
+            assertEquals(2, result.size());
+            RecipientStudentVO zhang = result.stream()
+                    .filter(v -> v.getStudentId() == 10L).findFirst().orElseThrow();
+            assertEquals("计科2401", zhang.getClassName());
+            assertEquals("2024001", zhang.getStudentNo());
+            assertEquals("张三", zhang.getName());
+        }
+
+        @Test
+        @DisplayName("NT-09: 查看他人课程名单应抛 FORBIDDEN")
+        void shouldRejectOtherTeachersCourse() {
+            stubTeacher(1L, 90L);
+            stubCourse(3L, 999L);
+
+            assertThrows(BusinessException.class, () -> notificationService.listCourseStudents(3L, 1L));
+        }
+    }
+
+    @Nested
+    @DisplayName("notifyExamPublished — 考试发布自动通知")
+    class NotifyExamPublished {
+
+        @Test
+        @DisplayName("NT-10: 指定目标学生时应发送通知并含试卷/课程/时间")
+        void shouldNotifyExplicitTargetStudents() {
+            stubNotificationInsert(1L);
+            Teacher t = new Teacher();
+            t.setId(90L);
+            t.setName("张老师");
+            when(teacherMapper.selectById(90L)).thenReturn(t);
+            Course c = new Course();
+            c.setId(3L);
+            c.setCourseName("数据结构");
+            when(courseMapper.selectById(3L)).thenReturn(c);
+            when(studentMapper.selectBatchIds(anyCollection())).thenReturn(
+                    List.of(student(100L, 1000L), student(101L, 1001L)));
+
+            notificationService.notifyExamPublished(examPaper(3L, 90L, "期中考试", "100,101"));
+
+            ArgumentCaptor<Notification> notifCaptor = ArgumentCaptor.forClass(Notification.class);
+            verify(notificationMapper).insert(notifCaptor.capture());
+            Notification n = notifCaptor.getValue();
+            assertEquals("EXAM_REMIND", n.getNotificationType());
+            assertNull(n.getSenderId());
+            assertEquals("张老师", n.getSenderName());
+            assertEquals("考试通知：期中考试", n.getTitle());
+            assertEquals("试卷：期中考试\n课程：数据结构\n时间：2026-09-10 09:00 至 2026-09-10 11:00", n.getContent());
+            verify(notificationRecipientMapper, times(2)).insert(any(NotificationRecipient.class));
+        }
+
+        @Test
+        @DisplayName("NT-11: 未指定学生时应按课程选课学生发送通知")
+        void shouldNotifyCourseStudents() {
+            stubNotificationInsert(2L);
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class)))
+                    .thenReturn(List.of(link(10L, "计科2401"), link(11L, "应数2401")));
+            when(studentMapper.selectBatchIds(anyCollection())).thenReturn(
+                    List.of(student(10L, 100L), student(11L, 101L)));
+
+            notificationService.notifyExamPublished(examPaper(3L, 90L, "期中考试", null));
+
+            verify(notificationRecipientMapper, times(2)).insert(any(NotificationRecipient.class));
+        }
+
+        @Test
+        @DisplayName("NT-12: 无目标学生且无课程时应跳过通知")
+        void shouldSkipWhenNoTargets() {
+            notificationService.notifyExamPublished(examPaper(null, 90L, "期中考试", null));
+
+            verify(notificationMapper, never()).insert(any(Notification.class));
+            verify(notificationRecipientMapper, never()).insert(any(NotificationRecipient.class));
         }
     }
 
@@ -129,7 +356,6 @@ class NotificationServiceImplTest {
             Notification n = new Notification();
             n.setId(1L);
             n.setSenderId(2L);
-            // 第一次 selectList 查"我发送的"（返回空），第二次查"我收到的"（返回 n）
             when(notificationMapper.selectList(any(LambdaQueryWrapper.class)))
                     .thenReturn(List.of())
                     .thenReturn(List.of(n));

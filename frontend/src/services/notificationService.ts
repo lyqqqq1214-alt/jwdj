@@ -22,7 +22,15 @@ export interface SendNotificationParams {
   content: string;
   recipientScope?: string;
   courseId?: number;
+  classNames?: string[];
   studentIds?: number[];
+}
+
+export interface RecipientStudentVO {
+  studentId: number;
+  studentNo: string;
+  name: string;
+  className?: string;
 }
 
 export async function getMyNotifications(pageNum: number, pageSize: number) {
@@ -38,6 +46,11 @@ export async function getUnreadCount() {
 export async function sendNotification(params: SendNotificationParams) {
   const res = await api.post('/notifications', params);
   return res.data as Notification;
+}
+
+export async function getCourseStudents(courseId: number) {
+  const res = await api.get(`/notifications/courses/${courseId}/students`);
+  return res.data as RecipientStudentVO[];
 }
 
 export async function markNotificationRead(id: number) {
