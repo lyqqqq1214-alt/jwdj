@@ -75,3 +75,8 @@ export async function getKnowledgeTree(courseId: number) {
   const res = await api.get('/question-bank/knowledge-tree', { params: { courseId } });
   return res.data as KnowledgePoint[];
 }
+
+export async function updateQuestionLabels(id: number, knowledgePoints: string, difficulty: string) {
+  const res = await api.patch(`/question-bank/${id}/labels`, { knowledgePoints, difficulty });
+  return res.data as QuestionBank;
+}

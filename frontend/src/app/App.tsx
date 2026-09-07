@@ -22,14 +22,15 @@ import { getTeacherList, createTeacher, updateTeacher, deleteTeacher, updateTeac
 import { getStudentOverview, getStudentTrends, getStudentWrongQuestions, getStudentCourses, createStudentWrongQuestion, analyzeWrongQuestion, generateSimilarQuestions, StudentOverview, StudentCourse, StudentWrongQuestion } from "../services/studentService";
 import { getStudentProfile, toggleFocusStudent, generateAiEvaluation, generateAiSuggestions, getMyPortrait, generateMyAiSuggestions, StudentProfile as StudentProfileData, LearningSuggestion } from "../services/portraitService";
 import { getMyClasses, getClassStudents, createClass, addStudentToClass, removeStudentFromClass, ClassVO as ClsVO, StudentVO } from "../services/classService";
-import { getPendingExams, getExamPapers, getExamPaperById, createExamPaper, updateExamPaper, deleteExamPaper, publishExamPaper, closeExamPaper, getExamResults, submitExam, getStudentExam, getMyExamRecords, getMyExamResult, getGradingList, submitGrade, getPaperQuestions, getPaperGrading, submitStudentGrade, ExamPaper, ExamResultDTO, StudentExamVO, SubmitExamResultDTO, StudentExamRecordVO, StudentExamResultVO, GradingItemVO, PaperGradingVO, PaperQuestionEditVO, StudentGradeItem } from "../services/examService";
+import { getPendingExams, getExamPapers, getExamPaperById, createExamPaper, updateExamPaper, deleteExamPaper, publishExamPaper, closeExamPaper, getExamResults, submitExam, getStudentExam, getMyExamRecords, getMyExamResult, getGradingList, submitGrade, getAiGradeSuggestion, getPaperQuestions, getPaperGrading, submitStudentGrade, ExamPaper, ExamResultDTO, StudentExamVO, SubmitExamResultDTO, StudentExamRecordVO, StudentExamResultVO, GradingItemVO, PaperGradingVO, PaperQuestionEditVO, StudentGradeItem } from "../services/examService";
 import { sendNotification, getMyNotifications, markNotificationRead, markAllNotificationsRead, getUnreadCount, getCourseStudents, Notification as NotifItem, RecipientStudentVO } from "../services/notificationService";
 import { getOperationLogs, OperationLog } from "../services/logService";
 import { getAllConfigs, batchUpdateConfigs, SystemConfig } from "../services/configService";
 import { uploadFile, getImportHistory, downloadTemplate as fetchTemplateBlob, ImportLog } from "../services/importService";
 import { generateQuestions } from "../services/aiQuizService";
-import { getQuestionList, deleteQuestion, QuestionBank } from "../services/questionBankService";
+import { getQuestionList, createQuestion, deleteQuestion, updateQuestionLabels, QuestionBank } from "../services/questionBankService";
 import { getAiAnalysisReport, getQuestionBankAudit, assessmentTypeLabel, questionTypeLabel, AiAnalysisReport, QuestionBankAudit } from "../services/aiAnalysisService";
+import { askTeacherAi } from "../services/teacherAiChatService";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Role = "admin" | "teacher" | "teaching-assistant" | "student";
@@ -6763,17 +6764,22 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
   const [loading, setLoading] = useState(false);
   const [courses, setCourses] = useState<ClassVO[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
   const [selectedSourceType, setSelectedSourceType] = useState<string | null>(filterSourceType || null);
   const [searchText, setSearchText] = useState("");
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showManualQuestionModal, setShowManualQuestionModal] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
   const [aiExtracting, setAiExtracting] = useState(false);
   const [extractedCount, setExtractedCount] = useState(0);
   const [selectedQuestions, setSelectedQuestions] = useState<number[]>([]);
   const [toast, setToast] = useState<string | null>(null);
+  const [editingLabels, setEditingLabels] = useState<QuestionBank | null>(null);
+  const [labelDraft, setLabelDraft] = useState({ knowledgePoints: "", difficulty: "MEDIUM" });
+  const [manualQuestion, setManualQuestion] = useState({ courseId: "", questionType: "SINGLE", stem: "", optionA: "", optionB: "", optionC: "", optionD: "", answer: "", explanation: "", knowledgePoints: "", difficulty: "MEDIUM" });
 
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
 
@@ -6805,7 +6811,13 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
   };
 
   const filteredQuestions = questions.filter(q => {
-    if (selectedTopic && !(q.knowledgePoints || "").includes(selectedTopic)) return false;
+    const tags = (q.knowledgePoints || "").split(/[,，、]/).map(tag => tag.trim()).filter(Boolean);
+    const tagParts = tags.map(tag => {
+      const [category, ...rest] = tag.split('/');
+      return { category: rest.length ? category : '未分类', topic: rest.length ? rest.join('/') : category };
+    });
+    if (selectedCategory && !tagParts.some(tag => tag.category === selectedCategory)) return false;
+    if (selectedTopic && !tagParts.some(tag => tag.topic === selectedTopic)) return false;
     if (selectedTypes.length > 0 && !selectedTypes.includes(q.questionType || "")) return false;
     if (selectedDifficulties.length > 0 && !selectedDifficulties.includes(q.difficulty || "")) return false;
     if (selectedSourceType === "ai-generated" && q.aiGenerated !== 1) return false;
@@ -6844,6 +6856,26 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
     }).catch(() => showToastMsg("删除失败"));
   };
 
+  const openLabelEditor = (question: QuestionBank) => {
+    setEditingLabels(question);
+    setLabelDraft({ knowledgePoints: question.knowledgePoints || "", difficulty: question.difficulty || "MEDIUM" });
+  };
+
+  const saveLabels = async () => {
+    if (!editingLabels || !labelDraft.knowledgePoints.trim()) {
+      showToastMsg("请填写至少一个知识点");
+      return;
+    }
+    try {
+      await updateQuestionLabels(editingLabels.id, labelDraft.knowledgePoints, labelDraft.difficulty);
+      setEditingLabels(null);
+      showToastMsg("知识点和难度标签已更新");
+      loadQuestions();
+    } catch (err: any) {
+      showToastMsg(err?.message || "标签更新失败");
+    }
+  };
+
   const handleUploadExam = () => {
     setUploadedFile("计算机网络考研真题.pdf");
     showToastMsg("文件上传成功");
@@ -6863,6 +6895,23 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
     setShowUploadModal(false);
     setUploadedFile(null);
     setExtractedCount(0);
+  };
+
+  const openManualQuestionModal = () => {
+    setManualQuestion({ courseId: selectedCourseId ? String(selectedCourseId) : (courses[0] ? String(courses[0].id) : ""), questionType: "SINGLE", stem: "", optionA: "", optionB: "", optionC: "", optionD: "", answer: "", explanation: "", knowledgePoints: "", difficulty: "MEDIUM" });
+    setShowManualQuestionModal(true);
+  };
+
+  const saveManualQuestion = async () => {
+    const isChoice = ["SINGLE", "MULTI"].includes(manualQuestion.questionType);
+    if (!manualQuestion.courseId || !manualQuestion.stem.trim() || !manualQuestion.answer.trim() || !manualQuestion.explanation.trim() || !manualQuestion.knowledgePoints.trim()) return showToastMsg("请填写课程、题干、答案、解析和知识点");
+    if (!/^([^/]+\/[^/]+)(\s*[,，、]\s*[^/]+\/[^/]+){0,2}$/.test(manualQuestion.knowledgePoints.trim())) return showToastMsg("知识点请使用“一级模块/二级知识点”格式");
+    const options = isChoice ? { A: manualQuestion.optionA.trim(), B: manualQuestion.optionB.trim(), C: manualQuestion.optionC.trim(), D: manualQuestion.optionD.trim() } : {};
+    if (isChoice && Object.values(options).some(value => !value)) return showToastMsg("选择题请填写 A、B、C、D 四个选项");
+    try {
+      await createQuestion({ courseId: Number(manualQuestion.courseId), questionType: manualQuestion.questionType, difficulty: manualQuestion.difficulty, knowledgePoints: manualQuestion.knowledgePoints.trim(), aiGenerated: 0, status: "APPROVED", content: JSON.stringify({ stem: manualQuestion.stem.trim(), options, answer: manualQuestion.answer.trim(), explanation: manualQuestion.explanation.trim() }) });
+      setShowManualQuestionModal(false); showToastMsg("题目已手动录入题库"); loadQuestions();
+    } catch (err: any) { showToastMsg(err?.message || "题目录入失败"); }
   };
 
   const questionTypes = [
@@ -6894,10 +6943,20 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
     ai: questions.filter(q => q.aiGenerated === 1).length,
   };
 
-  // 知识点选项：从题库数据中提取
-  const knowledgeOptions = Array.from(new Set(
-    questions.flatMap(q => (q.knowledgePoints || "").split(/[,，、]/).map(s => s.trim()).filter(Boolean))
-  )).sort((a, b) => a.localeCompare(b, "zh"));
+  // 两级知识点树：标签统一为“一级模块/二级知识点”。
+  const knowledgeTree = useMemo(() => {
+    const tree = new Map<string, Set<string>>();
+    questions.forEach(q => (q.knowledgePoints || "").split(/[,，、]/).map(s => s.trim()).filter(Boolean).forEach(tag => {
+      const [category, ...rest] = tag.split('/');
+      const parent = rest.length ? category : '未分类';
+      const child = rest.length ? rest.join('/') : category;
+      if (!tree.has(parent)) tree.set(parent, new Set());
+      tree.get(parent)!.add(child);
+    }));
+    return Array.from(tree.entries()).map(([category, topics]) => ({ category, topics: Array.from(topics).sort((a, b) => a.localeCompare(b, 'zh')) }))
+      .sort((a, b) => a.category.localeCompare(b.category, 'zh'));
+  }, [questions]);
+  const topicOptions = selectedCategory ? knowledgeTree.find(item => item.category === selectedCategory)?.topics || [] : [];
 
   return (
     <div className="space-y-5">
@@ -6929,6 +6988,9 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
         <div className="flex items-center gap-3">
           <button onClick={() => onNav("teacher-ai-quiz")} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
             <Plus size={14} />AI生成题目
+          </button>
+          <button onClick={openManualQuestionModal} className="flex items-center gap-2 px-4 py-2 border border-primary text-primary rounded-md text-sm hover:bg-primary/5">
+            <Edit2 size={14} />手动录题
           </button>
           <button onClick={() => setShowUploadModal(true)} className="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
             <Upload size={14} />导入试卷
@@ -7020,18 +7082,30 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
           </div>
 
           <div className="bg-card rounded-lg border border-border p-4">
-            <h3 className="font-medium text-sm mb-3">知识点筛选</h3>
+            <h3 className="font-medium text-sm mb-3">一级模块筛选</h3>
             <div className="space-y-1 max-h-64 overflow-y-auto">
-              {knowledgeOptions.length === 0 && (
+              {knowledgeTree.length === 0 && (
                 <p className="text-xs text-muted-foreground">暂无知识点数据</p>
               )}
-              {knowledgeOptions.map(kp => (
-                <button key={kp} onClick={() => setSelectedTopic(selectedTopic === kp ? null : kp)} className={`w-full text-left text-sm hover:bg-accent rounded px-2 py-1.5 ${selectedTopic === kp ? "bg-primary/10 text-primary" : ""}`}>
-                  {kp}
+              {knowledgeTree.map(item => (
+                <button key={item.category} onClick={() => { const next = selectedCategory === item.category ? null : item.category; setSelectedCategory(next); setSelectedTopic(null); }} className={`w-full text-left text-sm hover:bg-accent rounded px-2 py-1.5 ${selectedCategory === item.category ? "bg-primary/10 text-primary" : ""}`}>
+                  {item.category}
                 </button>
               ))}
             </div>
           </div>
+          {selectedCategory && (
+            <div className="bg-card rounded-lg border border-border p-4">
+              <h3 className="font-medium text-sm mb-3">二级知识点筛选</h3>
+              <div className="space-y-1 max-h-64 overflow-y-auto">
+                {topicOptions.map(topic => (
+                  <button key={topic} onClick={() => setSelectedTopic(selectedTopic === topic ? null : topic)} className={`w-full text-left text-sm hover:bg-accent rounded px-2 py-1.5 ${selectedTopic === topic ? "bg-primary/10 text-primary" : ""}`}>
+                    {topic}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="lg:col-span-3 space-y-4">
@@ -7069,7 +7143,7 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
                       <button onClick={() => { toggleQuestionSelection(q.id); setTimeout(() => handleAddToQuiz(), 100); }} className="px-3 py-1.5 text-xs bg-primary/10 text-primary rounded-md hover:bg-primary/20">
                         加入组卷
                       </button>
-                      <button className="px-3 py-1.5 text-xs border border-border rounded-md hover:bg-accent">编辑</button>
+                      <button onClick={() => openLabelEditor(q)} className="px-3 py-1.5 text-xs border border-border rounded-md hover:bg-accent">编辑标签</button>
                       <button onClick={() => handleDelete(q.id)} className="px-3 py-1.5 text-xs text-[#DD7373] hover:bg-[#E88383]/20 rounded-md">删除</button>
                     </div>
                   </div>
@@ -7086,6 +7160,43 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
           </div>
         </div>
       </div>
+
+      {editingLabels && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-lg p-5">
+            <h3 className="font-semibold text-base">编辑题目标签</h3>
+            <p className="text-xs text-muted-foreground mt-1">知识点最多 3 个，用逗号分隔；每个标签使用“一级模块/二级知识点”格式。</p>
+            <label className="block text-sm mt-4 mb-1">知识点</label>
+            <input value={labelDraft.knowledgePoints} onChange={e => setLabelDraft({ ...labelDraft, knowledgePoints: e.target.value })} className="w-full px-3 py-2 border border-border rounded-md text-sm" placeholder="例如：传输层/TCP拥塞控制" />
+            <label className="block text-sm mt-4 mb-1">难度</label>
+            <select value={labelDraft.difficulty} onChange={e => setLabelDraft({ ...labelDraft, difficulty: e.target.value })} className="w-full px-3 py-2 border border-border rounded-md text-sm">
+              <option value="EASY">简单</option><option value="MEDIUM">中等</option><option value="HARD">困难</option>
+            </select>
+            <div className="flex justify-end gap-2 mt-5">
+              <button onClick={() => setEditingLabels(null)} className="px-4 py-2 text-sm border border-border rounded-md">取消</button>
+              <button onClick={saveLabels} className="px-4 py-2 text-sm bg-primary text-white rounded-md">保存标签</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showManualQuestionModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-2xl p-5 my-6">
+            <h3 className="font-semibold text-base">手动录入题目</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+              <label className="text-sm">所属课程<select value={manualQuestion.courseId} onChange={e => setManualQuestion({ ...manualQuestion, courseId: e.target.value })} className="mt-1 w-full px-3 py-2 border border-border rounded-md"><option value="">请选择课程</option>{courses.map(course => <option key={course.id} value={course.id}>{course.courseName || course.className}</option>)}</select></label>
+              <label className="text-sm">题型<select value={manualQuestion.questionType} onChange={e => setManualQuestion({ ...manualQuestion, questionType: e.target.value })} className="mt-1 w-full px-3 py-2 border border-border rounded-md">{questionTypes.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}</select></label>
+              <label className="text-sm">难度<select value={manualQuestion.difficulty} onChange={e => setManualQuestion({ ...manualQuestion, difficulty: e.target.value })} className="mt-1 w-full px-3 py-2 border border-border rounded-md">{difficulties.map(difficulty => <option key={difficulty.value} value={difficulty.value}>{difficulty.label}</option>)}</select></label>
+            </div>
+            <label className="block text-sm mt-3">题干<textarea value={manualQuestion.stem} onChange={e => setManualQuestion({ ...manualQuestion, stem: e.target.value })} className="mt-1 w-full px-3 py-2 border border-border rounded-md" rows={3} /></label>
+            {["SINGLE", "MULTI"].includes(manualQuestion.questionType) && <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">{([['optionA','A'],['optionB','B'],['optionC','C'],['optionD','D']] as const).map(([key,label]) => <label key={key} className="text-sm">选项 {label}<input value={manualQuestion[key]} onChange={e => setManualQuestion({ ...manualQuestion, [key]: e.target.value })} className="mt-1 w-full px-3 py-2 border border-border rounded-md" /></label>)}</div>}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3"><label className="text-sm">正确答案<input value={manualQuestion.answer} onChange={e => setManualQuestion({ ...manualQuestion, answer: e.target.value })} className="mt-1 w-full px-3 py-2 border border-border rounded-md" placeholder="单选如 B，多选如 A,C" /></label><label className="text-sm">知识点<input value={manualQuestion.knowledgePoints} onChange={e => setManualQuestion({ ...manualQuestion, knowledgePoints: e.target.value })} className="mt-1 w-full px-3 py-2 border border-border rounded-md" placeholder="例如：传输层/TCP拥塞控制" /></label></div>
+            <label className="block text-sm mt-3">答案解析<textarea value={manualQuestion.explanation} onChange={e => setManualQuestion({ ...manualQuestion, explanation: e.target.value })} className="mt-1 w-full px-3 py-2 border border-border rounded-md" rows={3} /></label>
+            <div className="flex justify-end gap-2 mt-5"><button onClick={() => setShowManualQuestionModal(false)} className="px-4 py-2 text-sm border border-border rounded-md">取消</button><button onClick={saveManualQuestion} className="px-4 py-2 text-sm bg-primary text-white rounded-md">保存到题库</button></div>
+          </div>
+        </div>
+      )}
 
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -8559,12 +8670,14 @@ function StudentWrongBook() {
         id: index,
         question: formatMathText(q.stem),
         options: Object.values(q.options || {}).map(formatMathText),
-        answer: typeof q.answer === "string" && /^[A-D]$/i.test(q.answer.trim()) ? q.answer.trim().toUpperCase().charCodeAt(0) - 65 : 0,
+        answer: typeof q.answer === "string" && /^[A-D]$/i.test(q.answer.trim()) ? q.answer.trim().toUpperCase().charCodeAt(0) - 65 : -1,
+        answerText: formatMathText(q.answer || ""),
+        questionType: q.questionType || "",
         explain: formatMathText(q.explanation),
         knowledgePoints: (q.knowledgeTags || []).join(",") || selectedQuestion?.chapter || "AI 相似题",
       })));
-    } catch {
-      alert("相似题生成失败，请稍后重试");
+    } catch (e) {
+      alert(e instanceof Error ? `相似题生成失败：${e.message}` : "相似题生成失败，请稍后重试");
     } finally {
       setAiGenerating(false);
     }
@@ -8852,13 +8965,17 @@ function StudentWrongBook() {
                 </div>
               ) : aiGeneratedQuestions.length > 0 ? (
                 <div className="space-y-4">
-                  <button onClick={() => {
-                    setPracticeQuestionsList(aiGeneratedQuestions);
-                    setPracticeIdx(0);
-                    setPracticeAnswers({});
-                    setShowAIGenerateModal(false);
-                    setPracticeMode(true);
-                  }} className="w-full py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">开始相似题练习</button>
+                  {aiGeneratedQuestions.every(q => q.options.length > 0) ? (
+                    <button onClick={() => {
+                      setPracticeQuestionsList(aiGeneratedQuestions);
+                      setPracticeIdx(0);
+                      setPracticeAnswers({});
+                      setShowAIGenerateModal(false);
+                      setPracticeMode(true);
+                    }} className="w-full py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">开始相似题练习</button>
+                  ) : (
+                    <p className="text-xs text-muted-foreground bg-muted rounded-md p-3">本次为简答/综合类相似题，请自行作答后查看下方参考答案与解析。</p>
+                  )}
                   {aiGeneratedQuestions.map((q, i) => (
                     <div key={i} className="border border-border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
@@ -8874,7 +8991,7 @@ function StudentWrongBook() {
                         ))}
                       </div>
                       <div className="mt-3 bg-[#969BE7]/20 rounded-lg p-3">
-                        <p className="text-xs font-medium text-[#969BE7]">答案：{String.fromCharCode(65 + q.answer)}</p>
+                        <p className="text-xs font-medium text-[#969BE7]">答案：{q.answerText || (q.answer >= 0 ? String.fromCharCode(65 + q.answer) : "未提供")}</p>
                         <p className="text-xs text-[#969BE7] mt-1">{formatMathText(q.explain)}</p>
                       </div>
                       <p className="mt-3 text-xs text-muted-foreground">在练习中答错后，会自动加入错题本。</p>
@@ -9230,6 +9347,7 @@ function TA_Grading() {
   const [selectedAnswerId, setSelectedAnswerId] = useState<number | null>(null);
   const [score, setScore] = useState("");
   const [comment, setComment] = useState("");
+  const [aiGrading, setAiGrading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
@@ -9274,6 +9392,21 @@ function TA_Grading() {
       setComment("");
     } catch (e) {
       showToastMsg(e instanceof Error ? e.message : "批阅失败");
+    }
+  };
+
+  const handleAiSuggestion = async () => {
+    if (!currentItem) return;
+    setAiGrading(true);
+    try {
+      const suggestion = await getAiGradeSuggestion(currentItem.answerId);
+      setScore(String(suggestion.suggestedScore));
+      setComment(suggestion.comment || "");
+      showToastMsg("AI 预评分已填入，请确认或修改后再提交");
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "AI 预评分失败");
+    } finally {
+      setAiGrading(false);
     }
   };
 
@@ -9360,6 +9493,14 @@ function TA_Grading() {
                     placeholder={`满分 ${currentItem.maxScore ?? "—"}`}
                     className="w-28 px-3 py-2 border border-border rounded-md text-sm"
                   />
+                  <button
+                    type="button"
+                    onClick={handleAiSuggestion}
+                    disabled={aiGrading}
+                    className="px-3 py-2 rounded-md text-sm border border-primary text-primary hover:bg-primary/10 disabled:opacity-50"
+                  >
+                    {aiGrading ? "AI 评分中…" : "AI 预评分"}
+                  </button>
                   <span className="text-xs text-muted-foreground">/ {currentItem.maxScore ?? "—"} 分</span>
                 </div>
                 <div>
@@ -9440,6 +9581,7 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
   const [gradingLoading, setGradingLoading] = useState(false);
   const [activeStudentIdx, setActiveStudentIdx] = useState(0);
   const [gradeInputs, setGradeInputs] = useState<Record<number, { score: string; comment: string }>>({});
+  const [aiScoringAnswerId, setAiScoringAnswerId] = useState<number | null>(null);
 
   // 结果排序
   const [sortKey, setSortKey] = useState<"score" | "studentNo" | "submitTime" | null>(null);
@@ -9845,6 +9987,19 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
     setGradeInputs(prev => ({ ...prev, [answerId]: { score: "", comment: "", ...(prev[answerId] || {}), ...patch } }));
   };
 
+  const suggestGradeWithAi = async (answerId: number) => {
+    setAiScoringAnswerId(answerId);
+    try {
+      const suggestion = await getAiGradeSuggestion(answerId);
+      updateGradeInput(answerId, { score: String(suggestion.suggestedScore), comment: suggestion.comment || "" });
+      showToastMsg("AI 预评分已填入，请确认或修改后再提交");
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "AI 预评分失败");
+    } finally {
+      setAiScoringAnswerId(null);
+    }
+  };
+
   const submitGrading = async (recordId: number) => {
     const grades: StudentGradeItem[] = Object.entries(gradeInputs)
       .filter(([, v]) => v.score !== "" && !Number.isNaN(Number(v.score)))
@@ -10037,6 +10192,9 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
                           <div className="flex items-center gap-3 pt-1 flex-wrap">
                             <label className="text-xs text-muted-foreground whitespace-nowrap">评分（0~{q.maxScore ?? 0}）</label>
                             <input type="number" min={0} max={q.maxScore ?? undefined} value={g?.score ?? ""} onChange={e => updateGradeInput(q.answerId, { score: e.target.value })} className="w-24 px-2 py-1 border border-border rounded-md text-sm" />
+                            <button type="button" onClick={() => suggestGradeWithAi(q.answerId)} disabled={aiScoringAnswerId === q.answerId} className="px-2 py-1 text-xs border border-primary text-primary rounded-md hover:bg-primary/10 disabled:opacity-50">
+                              {aiScoringAnswerId === q.answerId ? "AI 评分中…" : "AI 预评分"}
+                            </button>
                             <input placeholder="评语（可选）" value={g?.comment ?? ""} onChange={e => updateGradeInput(q.answerId, { comment: e.target.value })} className="flex-1 min-w-[160px] px-2 py-1 border border-border rounded-md text-sm" />
                           </div>
                         )}
@@ -10558,6 +10716,18 @@ function StudentExam() {
     }
   };
 
+  const viewSubmittedPaper = async () => {
+    if (!activeExam) return;
+    try {
+      const result = await getMyExamResult(activeExam.paperId);
+      setReviewResult(result);
+      setSubmittedResult(null);
+      setActiveExam(null);
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "试卷已提交，请稍后在“已完成”中查看");
+    }
+  };
+
   const q = activeExam?.questions[currentQuestion];
   const qType = q?.questionType || "";
   const isMulti = qType === "MULTI";
@@ -10667,7 +10837,10 @@ function StudentExam() {
               <p className="text-sm text-muted-foreground mt-1">主观题待批阅</p>
             </div>
           </div>
-          <button onClick={exitExam} className="mt-6 px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">返回列表</button>
+          <div className="mt-6 flex justify-center gap-3">
+            <button onClick={viewSubmittedPaper} className="px-4 py-2 rounded-md text-sm border border-primary text-primary hover:bg-primary/10">查看试卷与答案</button>
+            <button onClick={() => { setTab("completed"); exitExam(); }} className="px-4 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">前往已完成</button>
+          </div>
         </div>
       </div>
     );
@@ -11374,15 +11547,20 @@ function AIAssistant() {
       files: files.map(f => ({ name: f.name, type: f.type, size: f.size }))
     });
 
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    setIsTyping(false);
-    setMessages(prev => [...prev, {
-      role: "ai",
-      content: files.length > 0 
-        ? `收到您上传的 ${files.length} 个文件：${files.map(f => f.name).join('、')}\n\n我已经分析了这些文件的内容，以下是我的分析结果：\n\n1. 文件内容摘要\n2. 关键信息提取\n3. 相关建议\n\n如果您需要更详细的分析，请告诉我！`
-        : `感谢您的提问！关于"${message}"，我的回答如下：\n\n这是一个很好的问题。根据我的分析：\n\n1. 核心要点一\n2. 核心要点二\n3. 核心要点三\n\n希望这个回答对您有帮助！`
-    }]);
+    try {
+      const current = getCurrentUser();
+      const isTeacher = current?.role === "TEACHER" || current?.role === "teacher";
+      const answer = files.length > 0
+        ? "当前教师端助手暂不支持文件解析，请先将文件内容导入系统后再提问。"
+        : isTeacher
+          ? await askTeacherAi(message)
+          : "学生端 AI 对话助手已按第四周计划降级，您可通过错题本的 AI 错因分析和相似题练习获得学习帮助。";
+      setMessages(prev => [...prev, { role: "ai", content: answer || "AI 未返回有效内容，请稍后重试。" }]);
+    } catch (err: any) {
+      setMessages(prev => [...prev, { role: "ai", content: err?.message || "AI 服务暂不可用，请确认 Ollama 已启动后重试。" }]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -11391,6 +11569,12 @@ function AIAssistant() {
       handleSend();
     }
   };
+
+  // 第四周计划：学生端气泡取消，仅保留教师端基础问答入口。
+  const currentUser = getCurrentUser();
+  if (currentUser?.role !== "TEACHER" && currentUser?.role !== "teacher") {
+    return null;
+  }
 
   return (
     <>

@@ -5,6 +5,8 @@ import com.example.aitaes.annotation.RequireRole;
 import com.example.aitaes.common.Result;
 import com.example.aitaes.entity.KnowledgePoint;
 import com.example.aitaes.entity.QuestionBank;
+import com.example.aitaes.dto.QuestionLabelUpdateRequest;
+import jakarta.validation.Valid;
 import com.example.aitaes.service.QuestionBankService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +64,14 @@ public class QuestionBankController {
     @PutMapping("/{id}")
     public Result<QuestionBank> update(@PathVariable Long id, @RequestBody QuestionBank entity) {
         return Result.success("题目更新成功", questionBankService.update(id, entity));
+    }
+
+    /** 教师在题库列表中维护知识点和难度双维标签。 */
+    @PatchMapping("/{id}/labels")
+    public Result<QuestionBank> updateLabels(@PathVariable Long id,
+                                             @RequestAttribute("userId") Long userId,
+                                             @Valid @RequestBody QuestionLabelUpdateRequest request) {
+        return Result.success("题目标签已更新", questionBankService.updateLabels(id, userId, request));
     }
 
     /**
