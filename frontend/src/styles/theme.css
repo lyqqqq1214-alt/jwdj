@@ -1,86 +1,87 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * 马卡龙浅色主题（Macaron Light Theme）
- * 背景 #FCF8FB / 主色 薰衣草紫 #969BE7 / 点缀 淡玫瑰粉 #EEC1DD / 浅紫灰 #D1D0EF
- * 标题文字 #4A4A6A / 正文文字 #7A7A9A / 大圆角 / 柔和阴影
+ * 科技蓝白主题（Tech Blue & White Theme）
+ * 背景 #F8FAFC 极浅蓝灰白 / 主色 #2563EB 专业蓝 / 点缀 #0EA5E9 青蓝
+ * 标题 #0F172A 深蓝黑 / 正文 #475569 蓝灰 / 大圆角 / 柔和阴影
+ * AI 教学系统专业风格，清爽可信护眼
  */
 :root {
   --font-size: 14px;
-  --background: #FCF8FB;
-  --foreground: #4A4A6A;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
   --card: #FFFFFF;
-  --card-foreground: #4A4A6A;
+  --card-foreground: #0F172A;
   --popover: #FFFFFF;
-  --popover-foreground: #4A4A6A;
-  --primary: #969BE7;
+  --popover-foreground: #0F172A;
+  --primary: #2563EB;
   --primary-foreground: #FFFFFF;
-  --secondary: #D1D0EF;
-  --secondary-foreground: #4A4A6A;
-  --muted: #F3F0FA;
-  --muted-foreground: #7A7A9A;
-  --accent: #FBEFF6;
-  --accent-foreground: #C972A8;
-  --destructive: #E57373;
+  --secondary: #DBEAFE;
+  --secondary-foreground: #1E40AF;
+  --muted: #F1F5F9;
+  --muted-foreground: #475569;
+  --accent: #EFF6FF;
+  --accent-foreground: #0E7490;
+  --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
-  --border: rgba(150, 155, 231, 0.20);
+  --border: rgba(37, 99, 235, 0.18);
   --input: transparent;
-  --input-background: #F7F5FC;
-  --switch-background: #D1D0EF;
+  --input-background: #F1F5F9;
+  --switch-background: #DBEAFE;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #969BE7;
-  --chart-1: #969BE7;
-  --chart-2: #EEC1DD;
-  --chart-3: #A9D8CB;
-  --chart-4: #F5D5A8;
-  --chart-5: #F0A8B8;
-  --radius: 1rem;
-  --sidebar: #F7F4FC;
-  --sidebar-foreground: #7A7A9A;
-  --sidebar-primary: #969BE7;
+  --ring: #2563EB;
+  --chart-1: #2563EB;
+  --chart-2: #0EA5E9;
+  --chart-3: #10B981;
+  --chart-4: #F59E0B;
+  --chart-5: #8B5CF6;
+  --radius: 0.75rem;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #475569;
+  --sidebar-primary: #2563EB;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #969BE7;
+  --sidebar-accent: #2563EB;
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: rgba(150, 155, 231, 0.12);
-  --sidebar-ring: #969BE7;
+  --sidebar-border: rgba(37, 99, 235, 0.10);
+  --sidebar-ring: #2563EB;
 }
 
 .dark {
-  --background: #FCF8FB;
-  --foreground: #4A4A6A;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
   --card: #FFFFFF;
-  --card-foreground: #4A4A6A;
+  --card-foreground: #0F172A;
   --popover: #FFFFFF;
-  --popover-foreground: #4A4A6A;
-  --primary: #969BE7;
+  --popover-foreground: #0F172A;
+  --primary: #2563EB;
   --primary-foreground: #FFFFFF;
-  --secondary: #D1D0EF;
-  --secondary-foreground: #4A4A6A;
-  --muted: #F3F0FA;
-  --muted-foreground: #7A7A9A;
-  --accent: #FBEFF6;
-  --accent-foreground: #C972A8;
-  --destructive: #E57373;
+  --secondary: #DBEAFE;
+  --secondary-foreground: #1E40AF;
+  --muted: #F1F5F9;
+  --muted-foreground: #475569;
+  --accent: #EFF6FF;
+  --accent-foreground: #0E7490;
+  --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
-  --border: rgba(150, 155, 231, 0.20);
-  --input: rgba(150, 155, 231, 0.20);
-  --ring: #969BE7;
+  --border: rgba(37, 99, 235, 0.18);
+  --input: rgba(37, 99, 235, 0.18);
+  --ring: #2563EB;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --chart-1: #969BE7;
-  --chart-2: #EEC1DD;
-  --chart-3: #A9D8CB;
-  --chart-4: #F5D5A8;
-  --chart-5: #F0A8B8;
-  --sidebar: #F7F4FC;
-  --sidebar-foreground: #7A7A9A;
-  --sidebar-primary: #969BE7;
+  --chart-1: #2563EB;
+  --chart-2: #0EA5E9;
+  --chart-3: #10B981;
+  --chart-4: #F59E0B;
+  --chart-5: #8B5CF6;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #475569;
+  --sidebar-primary: #2563EB;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #969BE7;
+  --sidebar-accent: #2563EB;
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: rgba(150, 155, 231, 0.12);
-  --sidebar-ring: #969BE7;
+  --sidebar-border: rgba(37, 99, 235, 0.10);
+  --sidebar-ring: #2563EB;
 }
 
 @theme inline {
@@ -133,9 +134,9 @@
     @apply bg-background text-foreground;
   }
 
-  /* 卡片柔和阴影（马卡龙软糯感） */
+  /* 卡片柔和阴影（科技蓝调） */
   .bg-card {
-    box-shadow: 0 4px 20px rgba(150, 155, 231, 0.10);
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.06);
   }
 
   /**

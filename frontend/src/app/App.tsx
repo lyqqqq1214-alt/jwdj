@@ -9,7 +9,8 @@ import {
   FileSearch, Wifi, WifiOff, Server, BarChart3, PieChart as PieChartIcon, History,
   Shield, Database, AlertTriangle, ArrowUpRight, ArrowDownRight,
   Building2, GitCompare, Send, Code, GripVertical,
-  Minimize2, Maximize2, Paperclip, RefreshCw, Sparkles
+  Minimize2, Maximize2, Paperclip, RefreshCw, Sparkles,
+  PanelLeftClose, PanelLeftOpen, Info
 } from "lucide-react";
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -30,6 +31,7 @@ import { uploadFile, getImportHistory, downloadTemplate as fetchTemplateBlob, Im
 import { generateQuestions } from "../services/aiQuizService";
 import { getQuestionList, deleteQuestion, QuestionBank } from "../services/questionBankService";
 import { getAiAnalysisReport, getQuestionBankAudit, assessmentTypeLabel, questionTypeLabel, AiAnalysisReport, QuestionBankAudit } from "../services/aiAnalysisService";
+import { NeuralNetworkBackground } from "./components/NeuralNetworkBackground";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Role = "admin" | "teacher" | "teaching-assistant" | "student";
@@ -50,7 +52,7 @@ const collegePie = [
   { name: "计算机学院", value: 38 }, { name: "数学学院", value: 22 },
   { name: "物理学院", value: 18 }, { name: "经管学院", value: 14 }, { name: "其他", value: 8 },
 ];
-const PIE_COLORS = ["#969BE7", "#A9C3EF", "#8FD0B8", "#F5D5A8", "#B8B8CE"];
+const PIE_COLORS = ["#2563EB", "#A9C3EF", "#8FD0B8", "#F5D5A8", "#B8B8CE"];
 
 // 考勤状态归一化（英文→中文，中文原样返回）
 const normalizeAttendanceStatus = (status: string): string => {
@@ -1196,12 +1198,12 @@ const scoreTrendWithClass = [
 // ─── Utility components ───────────────────────────────────────────────────────
 const Tag = ({ color, children }: { color: string; children: React.ReactNode }) => {
   const map: Record<string, string> = {
-    blue: "bg-[#969BE7]/20 text-[#969BE7] border border-[#969BE7]/40",
-    green: "bg-[#74C2A0]/20 text-[#57AE8F] border border-[#74C2A0]/40",
-    orange: "bg-[#F2A56B]/20 text-[#E8945C] border border-[#F2A56B]/40",
-    red: "bg-[#E88383]/20 text-[#DD7373] border border-[#E88383]/40",
-    gray: "bg-[#EEECF9] text-[#9A9AB4] border border-[#E6E2F5]",
-    yellow: "bg-[#EEC1DD]/30 text-[#C972A8] border border-[#EEC1DD]/60",
+    blue: "bg-[#2563EB]/20 text-[#2563EB] border border-[#2563EB]/40",
+    green: "bg-[#10B981]/20 text-[#059669] border border-[#10B981]/40",
+    orange: "bg-[#F59E0B]/20 text-[#D97706] border border-[#F59E0B]/40",
+    red: "bg-[#DC2626]/20 text-[#EF4444] border border-[#DC2626]/40",
+    gray: "bg-[#F1F5F9] text-[#94A3B8] border border-[#E2E8F0]",
+    yellow: "bg-[#0EA5E9]/30 text-[#0E7490] border border-[#0EA5E9]/60",
   };
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${map[color] || map.gray}`}>
@@ -1212,8 +1214,8 @@ const Tag = ({ color, children }: { color: string; children: React.ReactNode }) 
 
 const StatCard = ({ count, label, icon: Icon, color }: { count: string | number; label: string; icon: any; color: string }) => {
   const colors: Record<string, string> = {
-    blue: "text-[#969BE7] bg-[#969BE7]/20", green: "text-[#57AE8F] bg-[#74C2A0]/20",
-    orange: "text-[#E8945C] bg-[#F2A56B]/20", purple: "text-[#969BE7] bg-[#969BE7]/20",
+    blue: "text-[#2563EB] bg-[#2563EB]/20", green: "text-[#059669] bg-[#10B981]/20",
+    orange: "text-[#D97706] bg-[#F59E0B]/20", purple: "text-[#2563EB] bg-[#2563EB]/20",
   };
   return (
     <div className="bg-card rounded-lg border border-border p-5 flex items-center gap-4">
@@ -1302,7 +1304,7 @@ function Sidebar({ role, page, onNav, onLogout, dark, onToggleDark, collapsed, o
           <Brain size={16} className="text-white" />
         </div>
         {!collapsed && (
-          <span className="text-sm font-semibold text-[#4A4A6A] leading-tight">AI教学评价<br />系统</span>
+          <span className="text-sm font-semibold text-[#0F172A] leading-tight">AI教学评价<br />系统</span>
         )}
         <button onClick={onToggleCollapse} className="ml-auto text-sidebar-foreground hover:text-primary">
           <Menu size={16} />
@@ -1376,13 +1378,13 @@ function Sidebar({ role, page, onNav, onLogout, dark, onToggleDark, collapsed, o
           {dark ? <Sun size={14} /> : <Moon size={14} />}
           {!collapsed && <span>{dark ? "浅色模式" : "深色模式"}</span>}
         </button>
-        <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-sidebar-foreground hover:text-[#DD7373] rounded transition-colors">
+        <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-sidebar-foreground hover:text-[#EF4444] rounded transition-colors">
           <LogOut size={14} />
           {!collapsed && <span>退出登录</span>}
         </button>
         {!collapsed && userData && (
           <div className="px-3 pt-2 border-t border-sidebar-border mt-1">
-            <p className="text-xs font-medium text-[#4A4A6A]">{userData.displayName || userData.username}</p>
+            <p className="text-xs font-medium text-[#0F172A]">{userData.displayName || userData.username}</p>
             <p className="text-xs text-sidebar-foreground font-mono">{userData.username}</p>
           </div>
         )}
@@ -1430,7 +1432,7 @@ function Topbar({ title, breadcrumb, role, onNav }: { title: string; breadcrumb:
         <button onClick={() => { setShowNotifications(!showNotifications); if (!showNotifications) loadBell(); }} className="relative text-muted-foreground hover:text-foreground transition-colors">
           <Bell size={18} />
           {unread > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-[#E88383] rounded-full text-white text-[10px] flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-[#DC2626] rounded-full text-white text-[10px] flex items-center justify-center">
               {unread > 99 ? "99+" : unread}
             </span>
           )}
@@ -1441,7 +1443,7 @@ function Topbar({ title, breadcrumb, role, onNav }: { title: string; breadcrumb:
             <div className="fixed inset-0 bg-black/20 z-40" onClick={() => setShowNotifications(false)} />
             <div className="absolute top-full right-0 mt-2 w-80 bg-card rounded-lg border border-border shadow-lg z-50 overflow-hidden">
               <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                <h4 className="font-medium text-sm">通知中心{unread > 0 && <span className="ml-2 text-xs text-[#DD7373]">{unread} 条未读</span>}</h4>
+                <h4 className="font-medium text-sm">通知中心{unread > 0 && <span className="ml-2 text-xs text-[#EF4444]">{unread} 条未读</span>}</h4>
                 <button onClick={() => setShowNotifications(false)} className="text-muted-foreground hover:text-foreground">
                   <X size={14} />
                 </button>
@@ -1454,12 +1456,12 @@ function Topbar({ title, breadcrumb, role, onNav }: { title: string; breadcrumb:
                     <div key={n.id} onClick={() => handleClickItem(n)}
                       className={`px-4 py-3 border-b border-border last:border-0 hover:bg-accent/30 cursor-pointer transition-colors ${n.isRead === 0 ? "bg-primary/5" : ""}`}>
                       <div className="flex items-start gap-2">
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-[#969BE7]/25">
-                          <Bell size={12} className="text-[#969BE7]" />
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-[#2563EB]/25">
+                          <Bell size={12} className="text-[#2563EB]" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium line-clamp-2 flex items-center gap-1.5">
-                            {n.isRead === 0 && <span className="w-1.5 h-1.5 bg-[#E88383] rounded-full flex-shrink-0" />}
+                            {n.isRead === 0 && <span className="w-1.5 h-1.5 bg-[#DC2626] rounded-full flex-shrink-0" />}
                             {n.title}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{n.content}</p>
@@ -1525,42 +1527,44 @@ function LoginPage({ onLogin }: { onLogin: (role: Role, user: any) => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F3EFFB] via-[#FCF8FB] to-[#FBEFF6] flex" style={{ fontFamily: "Inter, sans-serif" }}>
+    <div className="min-h-screen bg-gradient-to-br from-[#F3EFFB] via-[#F8FAFC] to-[#FBEFF6] flex" style={{ fontFamily: "Inter, sans-serif" }}>
       {/* Left panel */}
-      <div className="hidden lg:flex flex-1 flex-col justify-between p-12 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10"
-          style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(150,155,231,.12) 39px,rgba(150,155,231,.12) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(150,155,231,.12) 39px,rgba(150,155,231,.12) 40px)" }} />
+      <div className="hidden lg:flex flex-1 flex-col justify-between p-12 relative overflow-hidden bg-gradient-to-br from-[#0B1220] via-[#0F172A] to-[#1E293B]">
+        {/* 3D 神经网络粒子背景 */}
+        <NeuralNetworkBackground />
+        <div className="absolute inset-0 opacity-20 pointer-events-none"
+          style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(56,189,248,.18) 39px,rgba(56,189,248,.18) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(56,189,248,.18) 39px,rgba(56,189,248,.18) 40px)" }} />
         <div className="relative flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-[#2563EB] flex items-center justify-center shadow-lg shadow-[#2563EB]/40">
             <Brain size={20} className="text-white" />
           </div>
-          <span className="text-[#7F84D6] font-semibold text-lg">AI教学评价系统</span>
+          <span className="text-white font-semibold text-lg">AI教学评价系统</span>
         </div>
         <div className="relative space-y-6">
-          <h1 className="text-4xl font-bold text-[#7F84D6] leading-tight">
+          <h1 className="text-4xl font-bold text-white leading-tight">
             智能分析学情<br />个性化学习路径
           </h1>
-          <p className="text-[#9A9AB4] max-w-sm">
+          <p className="text-[#CBD5E1] max-w-sm">
             基于AI技术，为每位学生提供精准的知识点掌握度分析与针对性练习推荐，助力教学质量提升。
           </p>
           <div className="flex gap-8">
             {[{ n: "1,284", l: "注册用户" }, { n: "86%", l: "平均分析覆盖率" }, { n: "12+", l: "接入学院" }].map(({ n, l }) => (
               <div key={l}>
-                <p className="text-2xl font-mono font-bold text-[#7F84D6]">{n}</p>
-                <p className="text-xs text-[#9A9AB4]">{l}</p>
+                <p className="text-2xl font-mono font-bold text-[#38BDF8]">{n}</p>
+                <p className="text-xs text-[#94A3B8]">{l}</p>
               </div>
             ))}
           </div>
         </div>
-        <p className="relative text-[#9A9AB4] text-xs">© 2025 AI教学评价系统 · 版权所有</p>
+        <p className="relative text-[#64748B] text-xs">© 2025 AI教学评价系统 · 版权所有</p>
       </div>
 
       {/* Right panel */}
       <div className="w-full lg:w-[420px] flex items-center justify-center bg-white/80 backdrop-blur-sm p-8">
         <div className="w-full max-w-sm space-y-6">
           <div>
-            <h2 className="text-2xl font-semibold text-[#4A4A6A]">欢迎登录</h2>
-            <p className="text-[#9A9AB4] text-sm mt-1">请输入账号密码</p>
+            <h2 className="text-2xl font-semibold text-[#0F172A]">欢迎登录</h2>
+            <p className="text-[#94A3B8] text-sm mt-1">请输入账号密码</p>
           </div>
 
           {/* Inputs */}
@@ -1568,7 +1572,7 @@ function LoginPage({ onLogin }: { onLogin: (role: Role, user: any) => void }) {
             <input
               value={uid} onChange={e => setUid(e.target.value)}
               placeholder="请输入学号/工号"
-              className="w-full bg-[#F7F5FC] border border-[#D6D2F0] rounded-md px-4 py-3 text-[#4A4A6A] text-sm placeholder-[#B0B0CC] focus:outline-none focus:border-primary transition-colors"
+              className="w-full bg-[#F7F5FC] border border-[#D6D2F0] rounded-md px-4 py-3 text-[#0F172A] text-sm placeholder-[#B0B0CC] focus:outline-none focus:border-primary transition-colors"
             />
             <div className="relative">
               <input
@@ -1576,29 +1580,29 @@ function LoginPage({ onLogin }: { onLogin: (role: Role, user: any) => void }) {
                 type={showPwd ? "text" : "password"}
                 placeholder="请输入密码（不少于6位）"
                 onKeyDown={e => e.key === "Enter" && handleLogin()}
-                className="w-full bg-[#F7F5FC] border border-[#D6D2F0] rounded-md px-4 py-3 text-[#4A4A6A] text-sm placeholder-[#B0B0CC] focus:outline-none focus:border-primary transition-colors pr-10"
+                className="w-full bg-[#F7F5FC] border border-[#D6D2F0] rounded-md px-4 py-3 text-[#0F172A] text-sm placeholder-[#B0B0CC] focus:outline-none focus:border-primary transition-colors pr-10"
               />
-              <button onClick={() => setShowPwd(s => !s)} className="absolute right-3 top-3.5 text-[#9A9AB4] hover:text-primary text-xs">
+              <button onClick={() => setShowPwd(s => !s)} className="absolute right-3 top-3.5 text-[#94A3B8] hover:text-primary text-xs">
                 {showPwd ? "隐藏" : "显示"}
               </button>
             </div>
-            {error && <p className="text-[#DD7373] text-xs">{error}</p>}
+            {error && <p className="text-[#EF4444] text-xs">{error}</p>}
           </div>
 
           <div className="flex items-center gap-2">
             <input type="checkbox" id="remember" className="rounded" />
-            <label htmlFor="remember" className="text-[#9A9AB4] text-sm">记住账号</label>
+            <label htmlFor="remember" className="text-[#94A3B8] text-sm">记住账号</label>
           </div>
 
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="w-full py-3 bg-primary hover:bg-[#7F84D6] text-white font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 bg-primary hover:bg-[#1D4ED8] text-white font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "登录中..." : "登录"}
           </button>
 
-          <div className="text-center text-[#9A9AB4] text-xs space-y-1">
+          <div className="text-center text-[#94A3B8] text-xs space-y-1">
             <p>测试账号（密码统一 123456）：</p>
             <p>管理员: admin</p>
             <p>教师: T00001 | T00002</p>
@@ -1791,22 +1795,22 @@ function AdminTeacherManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-[#969BE7] to-[#C8A2E8] rounded-lg p-6 text-white">
+      <div className="bg-gradient-to-r from-[#2563EB] to-[#C8A2E8] rounded-lg p-6 text-white">
         <h2 className="text-xl font-semibold">教师账号管理</h2>
         <p className="text-white/90 text-sm mt-1">管理教师账号、组织架构与角色权限</p>
       </div>
 
       <div className="flex items-center gap-2 p-1 bg-card rounded-lg border border-border">
         <button onClick={() => setActiveTab("teachers")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "teachers" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#7F84D6]"}`}>
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "teachers" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#1D4ED8]"}`}>
           教师账号
         </button>
         <button onClick={() => setActiveTab("departments")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "departments" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#7F84D6]"}`}>
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "departments" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#1D4ED8]"}`}>
           组织架构
         </button>
         <button onClick={() => setActiveTab("roles")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "roles" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#7F84D6]"}`}>
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "roles" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#1D4ED8]"}`}>
           角色权限模板
         </button>
       </div>
@@ -1839,7 +1843,7 @@ function AdminTeacherManagement() {
               <Upload size={13} />导入教师
             </button>
             <button onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-primary text-white rounded-md hover:bg-[#7F84D6]">
+              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-primary text-white rounded-md hover:bg-[#1D4ED8]">
               <Plus size={13} />添加教师
             </button>
           </div>
@@ -1882,13 +1886,13 @@ function AdminTeacherManagement() {
                         <button onClick={() => {
                           setConfirmAction({ type: t.status === "ACTIVE" ? "disable" : "enable", teacher: t });
                           setShowConfirmModal(true);
-                        }} className={`hover:underline text-xs ${t.status === "ACTIVE" ? "text-[#E8945C]" : "text-[#57AE8F]"}`}>
+                        }} className={`hover:underline text-xs ${t.status === "ACTIVE" ? "text-[#D97706]" : "text-[#059669]"}`}>
                           {t.status === "ACTIVE" ? "禁用" : "启用"}
                         </button>
                         <button onClick={() => {
                           setEditingTeacher(t);
                           setShowResetModal(true);
-                        }} className="text-[#969BE7] hover:underline text-xs">重置密码</button>
+                        }} className="text-[#2563EB] hover:underline text-xs">重置密码</button>
                       </div>
                     </td>
                   </tr>
@@ -1979,7 +1983,7 @@ function AdminTeacherManagement() {
                   <p className="text-xs text-muted-foreground">{role.description}</p>
                 </button>
               ))}
-              <button className="w-full text-left p-4 rounded-lg border border-dashed text-sm text-muted-foreground hover:border-primary hover:text-[#7F84D6] transition-colors">
+              <button className="w-full text-left p-4 rounded-lg border border-dashed text-sm text-muted-foreground hover:border-primary hover:text-[#1D4ED8] transition-colors">
                 <div className="flex items-center justify-center gap-2">
                   <Plus size={16} />
                   自定义角色
@@ -2028,13 +2032,13 @@ function AdminTeacherManagement() {
             </div>
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">工号 <span className="text-[#DD7373]">*</span></label>
+                <label className="text-xs text-muted-foreground mb-1 block">工号 <span className="text-[#EF4444]">*</span></label>
                 <input value={newTeacher.staffId} onChange={e => setNewTeacher({ ...newTeacher, staffId: e.target.value })}
                   placeholder="请输入工号"
                   className="w-full px-3 py-2 text-sm bg-input-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary" />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">姓名 <span className="text-[#DD7373]">*</span></label>
+                <label className="text-xs text-muted-foreground mb-1 block">姓名 <span className="text-[#EF4444]">*</span></label>
                 <input value={newTeacher.name} onChange={e => setNewTeacher({ ...newTeacher, name: e.target.value })}
                   placeholder="请输入姓名"
                   className="w-full px-3 py-2 text-sm bg-input-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary" />
@@ -2060,7 +2064,7 @@ function AdminTeacherManagement() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">初始密码 <span className="text-[#DD7373]">*</span></label>
+                <label className="text-xs text-muted-foreground mb-1 block">初始密码 <span className="text-[#EF4444]">*</span></label>
                 <div className="flex gap-2">
                   <input value={newTeacher.password} onChange={e => setNewTeacher({ ...newTeacher, password: e.target.value })}
                     type="password"
@@ -2068,12 +2072,12 @@ function AdminTeacherManagement() {
                     className="flex-1 px-3 py-2 text-sm bg-input-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary" />
                   <button onClick={generateRandomPassword} className="px-3 py-2 text-sm border border-border rounded-md hover:bg-accent">生成</button>
                 </div>
-                {generatedPassword && <p className="text-xs text-[#57AE8F] mt-1">生成密码：{generatedPassword}</p>}
+                {generatedPassword && <p className="text-xs text-[#059669] mt-1">生成密码：{generatedPassword}</p>}
               </div>
             </div>
             <div className="flex gap-3 pt-2">
               <button onClick={() => { setShowAddModal(false); setNewTeacher({ staffId: "", name: "", password: "", department: "", role: "" }); }} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
-              <button onClick={handleAddTeacher} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">保存</button>
+              <button onClick={handleAddTeacher} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">保存</button>
             </div>
           </div>
         </div>
@@ -2093,7 +2097,7 @@ function AdminTeacherManagement() {
                   className="w-full px-3 py-2 text-sm bg-input-background border border-border rounded-md text-muted-foreground" />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">姓名 <span className="text-[#DD7373]">*</span></label>
+                <label className="text-xs text-muted-foreground mb-1 block">姓名 <span className="text-[#EF4444]">*</span></label>
                 <input value={newTeacher.name} onChange={e => setNewTeacher({ ...newTeacher, name: e.target.value })}
                   placeholder="请输入姓名"
                   className="w-full px-3 py-2 text-sm bg-input-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary" />
@@ -2121,7 +2125,7 @@ function AdminTeacherManagement() {
             </div>
             <div className="flex gap-3 pt-2">
               <button onClick={() => { setShowEditModal(false); setEditingTeacher(null); }} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
-              <button onClick={handleEditTeacher} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">保存</button>
+              <button onClick={handleEditTeacher} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">保存</button>
             </div>
           </div>
         </div>
@@ -2145,12 +2149,12 @@ function AdminTeacherManagement() {
                     className="flex-1 px-3 py-2 text-sm bg-input-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary" />
                   <button onClick={generateRandomPassword} className="px-3 py-2 text-sm border border-border rounded-md hover:bg-accent">生成随机密码</button>
                 </div>
-                {generatedPassword && <p className="text-xs text-[#57AE8F] mt-1">新密码：{generatedPassword}</p>}
+                {generatedPassword && <p className="text-xs text-[#059669] mt-1">新密码：{generatedPassword}</p>}
               </div>
             </div>
             <div className="flex gap-3 pt-2">
               <button onClick={handleResetPasswordCancel} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
-              <button onClick={handleResetPasswordConfirm} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">确认重置</button>
+              <button onClick={handleResetPasswordConfirm} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">确认重置</button>
             </div>
           </div>
         </div>
@@ -2160,8 +2164,8 @@ function AdminTeacherManagement() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card rounded-lg border border-border w-full max-w-sm p-6 space-y-4">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${confirmAction.type === "disable" ? "bg-[#E88383]/20" : "bg-[#74C2A0]/20"}`}>
-                {confirmAction.type === "disable" ? <XCircle size={20} className="text-[#DD7373]" /> : <CheckCircle size={20} className="text-[#57AE8F]" />}
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${confirmAction.type === "disable" ? "bg-[#DC2626]/20" : "bg-[#10B981]/20"}`}>
+                {confirmAction.type === "disable" ? <XCircle size={20} className="text-[#EF4444]" /> : <CheckCircle size={20} className="text-[#059669]" />}
               </div>
               <div>
                 <h3 className="font-semibold">{confirmAction.type === "disable" ? "禁用账号" : "启用账号"}</h3>
@@ -2171,7 +2175,7 @@ function AdminTeacherManagement() {
             <div className="flex gap-3 pt-2">
               <button onClick={() => { setShowConfirmModal(false); setConfirmAction(null); }} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
               <button onClick={() => handleStatusChange(confirmAction.type, confirmAction.teacher)}
-                className={`flex-1 py-2 rounded-md text-sm ${confirmAction.type === "disable" ? "bg-[#E88383] text-white hover:bg-[#E07070]" : "bg-[#74C2A0] text-white hover:bg-[#5FAF8E]"}`}>
+                className={`flex-1 py-2 rounded-md text-sm ${confirmAction.type === "disable" ? "bg-[#DC2626] text-white hover:bg-[#E07070]" : "bg-[#10B981] text-white hover:bg-[#0EA5E9]"}`}>
                 确定{confirmAction.type === "disable" ? "禁用" : "启用"}
               </button>
             </div>
@@ -2196,39 +2200,39 @@ function AdminTeacherManagement() {
                   <p className="text-sm text-muted-foreground">拖拽或点击上传 Excel 文件</p>
                   <p className="text-xs text-muted-foreground mt-1">.xlsx, .xls, .csv 格式</p>
                 </div>
-                <button onClick={handleImport} className="w-full py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">开始导入</button>
+                <button onClick={handleImport} className="w-full py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">开始导入</button>
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="flex items-center justify-center gap-6 py-4">
                   <div className="text-center">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#74C2A0]/20 mx-auto mb-2">
-                      <CheckCircle size={24} className="text-[#57AE8F]" />
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#10B981]/20 mx-auto mb-2">
+                      <CheckCircle size={24} className="text-[#059669]" />
                     </div>
-                    <p className="font-mono text-xl font-bold text-[#57AE8F]">{importResult.success}</p>
+                    <p className="font-mono text-xl font-bold text-[#059669]">{importResult.success}</p>
                     <p className="text-xs text-muted-foreground">成功</p>
                   </div>
                   <div className="w-px h-12 bg-border" />
                   <div className="text-center">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#E88383]/20 mx-auto mb-2">
-                      <XCircle size={24} className="text-[#DD7373]" />
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#DC2626]/20 mx-auto mb-2">
+                      <XCircle size={24} className="text-[#EF4444]" />
                     </div>
-                    <p className="font-mono text-xl font-bold text-[#DD7373]">{importResult.fail}</p>
+                    <p className="font-mono text-xl font-bold text-[#EF4444]">{importResult.fail}</p>
                     <p className="text-xs text-muted-foreground">失败</p>
                   </div>
                 </div>
                 {importResult.errors.length > 0 && (
-                  <div className="bg-[#E88383]/20 rounded-lg p-3 space-y-1">
-                    <p className="text-xs font-medium text-[#DD7373]">失败记录：</p>
+                  <div className="bg-[#DC2626]/20 rounded-lg p-3 space-y-1">
+                    <p className="text-xs font-medium text-[#EF4444]">失败记录：</p>
                     {importResult.errors.map((err, i) => (
-                      <p key={i} className="text-xs text-[#DD7373]">{err}</p>
+                      <p key={i} className="text-xs text-[#EF4444]">{err}</p>
                     ))}
-                    <button onClick={handleDownloadErrorLog} className="mt-2 w-full py-1.5 text-xs border border-[#E88383]/40 text-[#DD7373] rounded hover:bg-[#E88383]/25">
+                    <button onClick={handleDownloadErrorLog} className="mt-2 w-full py-1.5 text-xs border border-[#DC2626]/40 text-[#EF4444] rounded hover:bg-[#DC2626]/25">
                       下载错误日志
                     </button>
                   </div>
                 )}
-                <button onClick={() => { setShowImportModal(false); setImportResult(null); }} className="w-full py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">完成</button>
+                <button onClick={() => { setShowImportModal(false); setImportResult(null); }} className="w-full py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">完成</button>
               </div>
             )}
           </div>
@@ -2252,9 +2256,9 @@ function AdminDashboard() {
   };
 
   const healthData = [
-    { label: "大模型服务", status: "online", value: "正常运行", icon: Wifi, color: "bg-[#74C2A0]" },
-    { label: "数据库连接", status: "online", value: "已连接", icon: Database, color: "bg-[#74C2A0]" },
-    { label: "系统运行天数", status: "online", value: "156天", icon: Server, color: "bg-[#969BE7]" },
+    { label: "大模型服务", status: "online", value: "正常运行", icon: Wifi, color: "bg-[#10B981]" },
+    { label: "数据库连接", status: "online", value: "已连接", icon: Database, color: "bg-[#10B981]" },
+    { label: "系统运行天数", status: "online", value: "156天", icon: Server, color: "bg-[#2563EB]" },
     { label: "缓存服务", status: "degraded", value: "性能降级", icon: Activity, color: "bg-[#F5C069]" },
   ];
 
@@ -2302,7 +2306,7 @@ function AdminDashboard() {
           </div>
         </div>
       )}
-      <div className="bg-gradient-to-r from-[#969BE7] to-[#C8A2E8] rounded-lg p-6 text-white">
+      <div className="bg-gradient-to-r from-[#2563EB] to-[#C8A2E8] rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold">系统总览</h2>
@@ -2320,10 +2324,10 @@ function AdminDashboard() {
           <button key={item.label} onClick={() => handleCardClick(item.label)}
             className="bg-card rounded-lg border border-border p-4 text-left transition-all duration-200 hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 active:scale-[0.98]">
             <div className="flex items-center justify-between mb-3">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.status === "online" ? "bg-[#74C2A0]/20" : item.status === "degraded" ? "bg-[#EEC1DD]/30" : "bg-[#E88383]/20"}`}>
-                {item.status === "online" ? <Wifi size={18} className="text-[#57AE8F]" /> : item.status === "degraded" ? <Wifi size={18} className="text-[#C972A8]" /> : <WifiOff size={18} className="text-[#DD7373]" />}
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.status === "online" ? "bg-[#10B981]/20" : item.status === "degraded" ? "bg-[#0EA5E9]/30" : "bg-[#DC2626]/20"}`}>
+                {item.status === "online" ? <Wifi size={18} className="text-[#059669]" /> : item.status === "degraded" ? <Wifi size={18} className="text-[#0E7490]" /> : <WifiOff size={18} className="text-[#EF4444]" />}
               </div>
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${item.status === "online" ? "bg-[#74C2A0]/25 text-[#57AE8F]" : item.status === "degraded" ? "bg-[#EEC1DD]/40 text-[#C972A8]" : "bg-[#E88383]/25 text-[#DD7373]"}`}>
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${item.status === "online" ? "bg-[#10B981]/25 text-[#059669]" : item.status === "degraded" ? "bg-[#0EA5E9]/40 text-[#0E7490]" : "bg-[#DC2626]/25 text-[#EF4444]"}`}>
                 {item.status === "online" ? "正常" : item.status === "degraded" ? "降级" : "离线"}
               </span>
             </div>
@@ -2341,7 +2345,7 @@ function AdminDashboard() {
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <item.icon size={16} className="text-primary" />
               </div>
-              <span className="text-xs text-[#57AE8F]">
+              <span className="text-xs text-[#059669]">
                 {item.change.startsWith("+") ? <ArrowUpRight size={12} className="inline mr-0.5" /> : <ArrowDownRight size={12} className="inline mr-0.5" />}
                 {item.change}
               </span>
@@ -2378,7 +2382,7 @@ function AdminDashboard() {
               <span className="text-muted-foreground">活跃教师</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 bg-[#74C2A0] rounded" />
+              <span className="w-3 h-0.5 bg-[#10B981] rounded" />
               <span className="text-muted-foreground">活跃学生</span>
             </div>
           </div>
@@ -2389,7 +2393,7 @@ function AdminDashboard() {
             <XAxis dataKey="day" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip />
-            <Line type="monotone" dataKey="teachers" stroke="#969BE7" strokeWidth={2} dot={{ r: 4 }} name="活跃教师" />
+            <Line type="monotone" dataKey="teachers" stroke="#2563EB" strokeWidth={2} dot={{ r: 4 }} name="活跃教师" />
             <Line type="monotone" dataKey="students" stroke="#8FD0B8" strokeWidth={2} dot={{ r: 4 }} name="活跃学生" />
           </LineChart>
         </ResponsiveContainer>
@@ -2404,8 +2408,8 @@ function AdminDashboard() {
           {recentEvents.map((event, i) => (
             <button key={i} onClick={() => showToast(`已查看异常事件：${event.message}`)}
               className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-accent/30 transition-colors text-left">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${event.severity === "error" ? "bg-[#E88383]/20" : event.severity === "warning" ? "bg-[#EEC1DD]/30" : "bg-[#969BE7]/20"}`}>
-                {event.severity === "error" ? <XCircle size={14} className="text-[#DD7373]" /> : event.severity === "warning" ? <AlertCircle size={14} className="text-[#E9B45C]" /> : <CheckCircle size={14} className="text-[#969BE7]" />}
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${event.severity === "error" ? "bg-[#DC2626]/20" : event.severity === "warning" ? "bg-[#0EA5E9]/30" : "bg-[#2563EB]/20"}`}>
+                {event.severity === "error" ? <XCircle size={14} className="text-[#EF4444]" /> : event.severity === "warning" ? <AlertCircle size={14} className="text-[#E9B45C]" /> : <CheckCircle size={14} className="text-[#2563EB]" />}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm truncate">{event.message}</p>
@@ -2473,7 +2477,7 @@ function AdminUsers() {
           <Download size={13} />导出
         </button>
         <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-primary text-white rounded-md hover:bg-[#7F84D6]">
+          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-primary text-white rounded-md hover:bg-[#1D4ED8]">
           <Plus size={13} />新增用户
         </button>
       </div>
@@ -2514,8 +2518,8 @@ function AdminUsers() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <button className="text-primary hover:underline text-xs">编辑</button>
-                        <button className="text-[#E8945C] hover:underline text-xs">重置密码</button>
-                        <button className="text-[#DD7373] hover:underline text-xs">删除</button>
+                        <button className="text-[#D97706] hover:underline text-xs">重置密码</button>
+                        <button className="text-[#EF4444] hover:underline text-xs">删除</button>
                       </div>
                     </td>
                   </tr>
@@ -2561,7 +2565,7 @@ function AdminUsers() {
             </div>
             <div className="flex gap-3 pt-2">
               <button onClick={() => setShowModal(false)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
-              <button onClick={() => setShowModal(false)} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">确认新增</button>
+              <button onClick={() => setShowModal(false)} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">确认新增</button>
             </div>
           </div>
         </div>
@@ -2606,7 +2610,7 @@ function AdminCourses() {
         <select className="py-2 px-3 text-sm bg-card border border-border rounded-md">
           <option>全部状态</option><option>进行中</option><option>已结束</option>
         </select>
-        <button className="flex items-center gap-1.5 px-3 py-2 text-sm bg-primary text-white rounded-md hover:bg-[#7F84D6]">
+        <button className="flex items-center gap-1.5 px-3 py-2 text-sm bg-primary text-white rounded-md hover:bg-[#1D4ED8]">
           <Plus size={13} />新增课程
         </button>
       </div>
@@ -2634,7 +2638,7 @@ function AdminCourses() {
                     <div className="flex items-center gap-2">
                       <button className="text-primary hover:underline text-xs">编辑</button>
                       <button className="text-primary hover:underline text-xs">详情</button>
-                      <button className="text-[#DD7373] hover:underline text-xs">删除</button>
+                      <button className="text-[#EF4444] hover:underline text-xs">删除</button>
                     </div>
                   </td>
                 </tr>
@@ -2718,7 +2722,7 @@ function AdminAIOpsCenter() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-[#969BE7] to-[#C8A2E8] rounded-lg p-6 text-white">
+      <div className="bg-gradient-to-r from-[#2563EB] to-[#C8A2E8] rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold">AI运维中心</h2>
@@ -2757,7 +2761,7 @@ function AdminAIOpsCenter() {
             </button>
           </div>
           {testResult && (
-            <div className={`mb-4 p-3 rounded-lg text-sm ${testResult.includes("成功") ? "bg-[#74C2A0]/20 text-[#57AE8F]" : "bg-[#E88383]/20 text-[#DD7373]"}`}>
+            <div className={`mb-4 p-3 rounded-lg text-sm ${testResult.includes("成功") ? "bg-[#10B981]/20 text-[#059669]" : "bg-[#DC2626]/20 text-[#EF4444]"}`}>
               {testResult}
             </div>
           )}
@@ -2768,7 +2772,7 @@ function AdminAIOpsCenter() {
                   <p className="font-medium text-sm">{model.name}</p>
                   <p className="text-xs text-muted-foreground">模型大小：{model.size}</p>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${model.status === "online" ? "bg-[#74C2A0]/25 text-[#57AE8F]" : model.status === "degraded" ? "bg-[#EEC1DD]/40 text-[#C972A8]" : "bg-[#E88383]/25 text-[#DD7373]"}`}>
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${model.status === "online" ? "bg-[#10B981]/25 text-[#059669]" : model.status === "degraded" ? "bg-[#0EA5E9]/40 text-[#0E7490]" : "bg-[#DC2626]/25 text-[#EF4444]"}`}>
                   {model.status === "online" ? "在线" : model.status === "degraded" ? "降级" : "离线"}
                 </span>
               </div>
@@ -2787,7 +2791,7 @@ function AdminAIOpsCenter() {
               <XAxis dataKey="request" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 10 }} />
               <Tooltip formatter={(v: any) => `${v}ms`} />
-              <Bar dataKey="time" fill="#969BE7" />
+              <Bar dataKey="time" fill="#2563EB" />
             </BarChart>
           </ResponsiveContainer>
           <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
@@ -2892,7 +2896,7 @@ function AdminAIOpsCenter() {
                 <button onClick={handleTestTemplate} className="px-3 py-1.5 border border-border text-sm rounded-md hover:bg-accent">
                   测试运行
                 </button>
-                <button className="px-3 py-1.5 bg-primary text-white text-sm rounded-md hover:bg-[#7F84D6]">
+                <button className="px-3 py-1.5 bg-primary text-white text-sm rounded-md hover:bg-[#1D4ED8]">
                   保存模板
                 </button>
               </div>
@@ -2957,7 +2961,7 @@ function AdminAuditLogs() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-[#969BE7] to-[#C8A2E8] rounded-lg p-6 text-white">
+      <div className="bg-gradient-to-r from-[#2563EB] to-[#C8A2E8] rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold">系统审计日志</h2>
@@ -2980,8 +2984,8 @@ function AdminAuditLogs() {
         </div>
         <div className="bg-card rounded-lg border border-border p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#E88383]/20 flex items-center justify-center">
-              <AlertCircle size={18} className="text-[#DD7373]" />
+            <div className="w-10 h-10 rounded-lg bg-[#DC2626]/20 flex items-center justify-center">
+              <AlertCircle size={18} className="text-[#EF4444]" />
             </div>
             <div>
               <p className="font-mono text-xl font-bold">{abnormalEvents.filter(e => e.severity === "error").length}</p>
@@ -2991,7 +2995,7 @@ function AdminAuditLogs() {
         </div>
         <div className="bg-card rounded-lg border border-border p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#EEC1DD]/30 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-[#0EA5E9]/30 flex items-center justify-center">
               <AlertTriangle size={18} className="text-[#E9B45C]" />
             </div>
             <div>
@@ -3061,12 +3065,12 @@ function AdminAuditLogs() {
                       {log.type === "import" ? "数据导入" : log.type === "export" ? "数据导出" : log.type === "view" ? "查看" : log.type === "ai" ? "AI操作" : log.type === "login" ? "登录" : "系统配置"}
                     </td>
                     <td className="px-4 py-3">
-                      {log.privacy && <span className="inline-flex items-center gap-1 mr-1"><Shield size={10} className="text-[#E8945C]" /></span>}
+                      {log.privacy && <span className="inline-flex items-center gap-1 mr-1"><Shield size={10} className="text-[#D97706]" /></span>}
                       {log.action}
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{log.ip}</td>
                     <td className="px-4 py-3">
-                      {log.status === "success" ? <span className="text-[#57AE8F] text-xs font-medium">成功</span> : <span className="text-[#DD7373] text-xs font-medium">失败</span>}
+                      {log.status === "success" ? <span className="text-[#059669] text-xs font-medium">成功</span> : <span className="text-[#EF4444] text-xs font-medium">失败</span>}
                     </td>
                   </tr>
                 ))}
@@ -3089,9 +3093,9 @@ function AdminAuditLogs() {
           </div>
           <div className="space-y-3">
             {abnormalEvents.map(event => (
-              <div key={event.id} className={`p-3 rounded-lg ${event.severity === "error" ? "bg-[#E88383]/20 border border-[#E88383]/30" : event.severity === "warning" ? "bg-[#EEC1DD]/30 border border-[#EEC1DD]/50" : "bg-[#969BE7]/20 border border-[#969BE7]/30"}`}>
+              <div key={event.id} className={`p-3 rounded-lg ${event.severity === "error" ? "bg-[#DC2626]/20 border border-[#DC2626]/30" : event.severity === "warning" ? "bg-[#0EA5E9]/30 border border-[#0EA5E9]/50" : "bg-[#2563EB]/20 border border-[#2563EB]/30"}`}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className={`text-xs font-medium ${event.severity === "error" ? "text-[#DD7373]" : event.severity === "warning" ? "text-[#C972A8]" : "text-[#969BE7]"}`}>
+                  <span className={`text-xs font-medium ${event.severity === "error" ? "text-[#EF4444]" : event.severity === "warning" ? "text-[#0E7490]" : "text-[#2563EB]"}`}>
                     {event.severity === "error" ? "严重" : event.severity === "warning" ? "警告" : "提示"}
                   </span>
                   <span className="text-xs text-muted-foreground">{event.time}</span>
@@ -3159,7 +3163,7 @@ function AdminConfig() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-[#969BE7] to-[#C8A2E8] rounded-lg p-6 text-white">
+      <div className="bg-gradient-to-r from-[#2563EB] to-[#C8A2E8] rounded-lg p-6 text-white">
         <h2 className="text-xl font-semibold">系统配置</h2>
         <p className="text-white/90 text-sm mt-1">管理系统全局参数设置</p>
       </div>
@@ -3167,7 +3171,7 @@ function AdminConfig() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-card rounded-lg border border-border p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Brain size={16} className="text-[#969BE7]" />
+            <Brain size={16} className="text-[#2563EB]" />
             <h3 className="font-medium text-sm">大模型配置</h3>
           </div>
           <div className="space-y-4">
@@ -3193,7 +3197,7 @@ function AdminConfig() {
 
         <div className="bg-card rounded-lg border border-border p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Users size={16} className="text-[#969BE7]" />
+            <Users size={16} className="text-[#2563EB]" />
             <h3 className="font-medium text-sm">教师导入配置</h3>
           </div>
           <div className="space-y-4">
@@ -3211,7 +3215,7 @@ function AdminConfig() {
 
       <div className="bg-card rounded-lg border border-border p-5">
         <div className="flex items-center gap-2 mb-4">
-          <AlertCircle size={16} className="text-[#E8945C]" />
+          <AlertCircle size={16} className="text-[#D97706]" />
           <h3 className="font-medium text-sm">预警规则全局管理</h3>
           <span className="text-xs text-muted-foreground ml-auto">教师可在默认规则基础上自定义</span>
         </div>
@@ -3279,33 +3283,33 @@ function AdminConfig() {
             </div>
             <div className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
               <span className="text-xs text-muted-foreground">权重总和</span>
-              <span className={`text-xs font-medium ${riskWeights.attendance + riskWeights.scoreDrop + riskWeights.homework + riskWeights.activity === 100 ? "text-[#57AE8F]" : "text-[#DD7373]"}`}>
+              <span className={`text-xs font-medium ${riskWeights.attendance + riskWeights.scoreDrop + riskWeights.homework + riskWeights.activity === 100 ? "text-[#059669]" : "text-[#EF4444]"}`}>
                 {riskWeights.attendance + riskWeights.scoreDrop + riskWeights.homework + riskWeights.activity}%
               </span>
             </div>
           </div>
           <div className="space-y-4">
             <h4 className="text-xs font-medium text-muted-foreground">预警等级划分</h4>
-            <div className="p-3 bg-[#E88383]/20 rounded-lg border border-[#E88383]/30">
+            <div className="p-3 bg-[#DC2626]/20 rounded-lg border border-[#DC2626]/30">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-[#DD7373]">高风险</span>
-                <span className="text-xs text-[#DD7373]">评分 ≥ 70分</span>
+                <span className="text-xs font-medium text-[#EF4444]">高风险</span>
+                <span className="text-xs text-[#EF4444]">评分 ≥ 70分</span>
               </div>
-              <p className="text-xs text-[#DD7373]">需要重点关注，建议及时沟通</p>
+              <p className="text-xs text-[#EF4444]">需要重点关注，建议及时沟通</p>
             </div>
-            <div className="p-3 bg-[#EEC1DD]/30 rounded-lg border border-[#EEC1DD]/50">
+            <div className="p-3 bg-[#0EA5E9]/30 rounded-lg border border-[#0EA5E9]/50">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-[#C972A8]">中风险</span>
-                <span className="text-xs text-[#C972A8]">40分 ≤ 评分 {'<'} 70分</span>
+                <span className="text-xs font-medium text-[#0E7490]">中风险</span>
+                <span className="text-xs text-[#0E7490]">40分 ≤ 评分 {'<'} 70分</span>
               </div>
-              <p className="text-xs text-[#C972A8]">需要持续观察学习状态</p>
+              <p className="text-xs text-[#0E7490]">需要持续观察学习状态</p>
             </div>
-            <div className="p-3 bg-[#74C2A0]/20 rounded-lg border border-[#74C2A0]/30">
+            <div className="p-3 bg-[#10B981]/20 rounded-lg border border-[#10B981]/30">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-[#57AE8F]">低风险</span>
-                <span className="text-xs text-[#57AE8F]">评分 {'<'} 40分</span>
+                <span className="text-xs font-medium text-[#059669]">低风险</span>
+                <span className="text-xs text-[#059669]">评分 {'<'} 40分</span>
               </div>
-              <p className="text-xs text-[#57AE8F]">学习状态良好，继续保持</p>
+              <p className="text-xs text-[#059669]">学习状态良好，继续保持</p>
             </div>
           </div>
         </div>
@@ -3315,7 +3319,7 @@ function AdminConfig() {
 
       <div className="bg-card rounded-lg border border-border p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Settings size={16} className="text-[#9A9AB4]" />
+          <Settings size={16} className="text-[#94A3B8]" />
           <h3 className="font-medium text-sm">系统维护</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -3343,11 +3347,11 @@ function AdminConfig() {
           <button className="px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
             重置为默认
           </button>
-          <button onClick={save} className="px-5 py-2 bg-primary text-white text-sm rounded-md hover:bg-[#7F84D6] flex items-center gap-2">
+          <button onClick={save} className="px-5 py-2 bg-primary text-white text-sm rounded-md hover:bg-[#1D4ED8] flex items-center gap-2">
             <Save size={14} />
             保存配置
           </button>
-          {saved && <span className="text-[#57AE8F] text-sm flex items-center gap-1"><CheckCircle size={14} />保存成功</span>}
+          {saved && <span className="text-[#059669] text-sm flex items-center gap-1"><CheckCircle size={14} />保存成功</span>}
         </div>
       </div>
     </div>
@@ -3514,7 +3518,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                       <p className="text-xs text-muted-foreground mt-1">{c.semester}</p>
                     </div>
                     {warningCount > 0 && (
-                      <span className="px-2 py-1 bg-[#E88383]/25 text-[#DD7373] text-xs font-medium rounded-full">{warningCount} 预警</span>
+                      <span className="px-2 py-1 bg-[#DC2626]/25 text-[#EF4444] text-xs font-medium rounded-full">{warningCount} 预警</span>
                     )}
                   </div>
                   <div className="grid grid-cols-4 gap-3">
@@ -3523,15 +3527,15 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                       <p className="text-xs text-muted-foreground">人数</p>
                     </div>
                     <div className="text-center">
-                      <p className="font-mono font-bold text-[#57AE8F]">{c.avgScore != null && c.avgScore > 0 ? Number(c.avgScore).toFixed(1) : "—"}</p>
+                      <p className="font-mono font-bold text-[#059669]">{c.avgScore != null && c.avgScore > 0 ? Number(c.avgScore).toFixed(1) : "—"}</p>
                       <p className="text-xs text-muted-foreground">平均分</p>
                     </div>
                     <div className="text-center">
-                      <p className="font-mono font-bold text-[#969BE7]">{c.attendanceRate != null && c.attendanceRate > 0 ? Number(c.attendanceRate).toFixed(1) + "%" : "—"}</p>
+                      <p className="font-mono font-bold text-[#2563EB]">{c.attendanceRate != null && c.attendanceRate > 0 ? Number(c.attendanceRate).toFixed(1) + "%" : "—"}</p>
                       <p className="text-xs text-muted-foreground">出勤率</p>
                     </div>
                     <div className="text-center">
-                      <p className="font-mono font-bold text-[#57AE8F]">{c.homeworkRate != null && c.homeworkRate > 0 ? Number(c.homeworkRate).toFixed(1) + "%" : "—"}</p>
+                      <p className="font-mono font-bold text-[#059669]">{c.homeworkRate != null && c.homeworkRate > 0 ? Number(c.homeworkRate).toFixed(1) + "%" : "—"}</p>
                       <p className="text-xs text-muted-foreground">作业率</p>
                     </div>
                   </div>
@@ -3566,29 +3570,29 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                 )}
                 <div className="flex bg-card border border-border rounded-lg p-0.5">
                   <button onClick={() => setViewMode("single")}
-                    className={`px-3 py-1.5 text-xs rounded-md transition-colors ${viewMode === "single" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#7F84D6]"}`}>
+                    className={`px-3 py-1.5 text-xs rounded-md transition-colors ${viewMode === "single" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#1D4ED8]"}`}>
                     单班查看
                   </button>
                   <button onClick={() => setViewMode("compare")}
-                    className={`px-3 py-1.5 text-xs rounded-md transition-colors ${viewMode === "compare" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#7F84D6]"}`}>
+                    className={`px-3 py-1.5 text-xs rounded-md transition-colors ${viewMode === "compare" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#1D4ED8]"}`}>
                     班级对比
                   </button>
                 </div>
                 <div className="flex bg-card border border-border rounded-lg p-0.5 ml-2">
                   <button onClick={() => setAssessmentType(null)}
-                    className={`px-3 py-1.5 text-xs rounded-md transition-colors ${!assessmentType ? "bg-primary text-white" : "text-muted-foreground hover:text-[#7F84D6]"}`}>
+                    className={`px-3 py-1.5 text-xs rounded-md transition-colors ${!assessmentType ? "bg-primary text-white" : "text-muted-foreground hover:text-[#1D4ED8]"}`}>
                     全部类型
                   </button>
                   <button onClick={() => setAssessmentType("homework")}
-                    className={`px-3 py-1.5 text-xs rounded-md transition-colors ${assessmentType === "homework" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#7F84D6]"}`}>
+                    className={`px-3 py-1.5 text-xs rounded-md transition-colors ${assessmentType === "homework" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#1D4ED8]"}`}>
                     作业
                   </button>
                   <button onClick={() => setAssessmentType("test")}
-                    className={`px-3 py-1.5 text-xs rounded-md transition-colors ${assessmentType === "test" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#7F84D6]"}`}>
+                    className={`px-3 py-1.5 text-xs rounded-md transition-colors ${assessmentType === "test" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#1D4ED8]"}`}>
                     测试
                   </button>
                   <button onClick={() => setAssessmentType("experiment")}
-                    className={`px-3 py-1.5 text-xs rounded-md transition-colors ${assessmentType === "experiment" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#7F84D6]"}`}>
+                    className={`px-3 py-1.5 text-xs rounded-md transition-colors ${assessmentType === "experiment" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#1D4ED8]"}`}>
                     实验
                   </button>
                 </div>
@@ -3617,7 +3621,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                       <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                       <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
                       <Tooltip formatter={(v: any) => `${v}分`} />
-                      <Bar dataKey="value" fill="#969BE7" radius={[2, 2, 0, 0]} name="平均分" />
+                      <Bar dataKey="value" fill="#2563EB" radius={[2, 2, 0, 0]} name="平均分" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -3653,11 +3657,11 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                           <td className="px-4 py-2.5 font-medium">{d.className}</td>
                           <td className="px-4 py-2.5 font-mono">{d.overview?.studentCount ?? 0}</td>
                           <td className="px-4 py-2.5 font-mono text-primary">{d.overview?.averageScore != null && Number(d.overview.averageScore) > 0 ? Number(d.overview.averageScore).toFixed(1) : "—"}</td>
-                          <td className="px-4 py-2.5 font-mono text-[#57AE8F]">{d.overview?.attendanceRate != null && Number(d.overview.attendanceRate) > 0 ? Number(d.overview.attendanceRate).toFixed(1) + "%" : "—"}</td>
-                          <td className="px-4 py-2.5 font-mono text-[#969BE7]">{d.overview?.homeworkRate != null && Number(d.overview.homeworkRate) > 0 ? Number(d.overview.homeworkRate).toFixed(1) + "%" : "—"}</td>
+                          <td className="px-4 py-2.5 font-mono text-[#059669]">{d.overview?.attendanceRate != null && Number(d.overview.attendanceRate) > 0 ? Number(d.overview.attendanceRate).toFixed(1) + "%" : "—"}</td>
+                          <td className="px-4 py-2.5 font-mono text-[#2563EB]">{d.overview?.homeworkRate != null && Number(d.overview.homeworkRate) > 0 ? Number(d.overview.homeworkRate).toFixed(1) + "%" : "—"}</td>
                           <td className="px-4 py-2.5">
                             {(d.overview?.warningCount ?? 0) > 0
-                              ? <span className="px-2 py-0.5 bg-[#E88383]/25 text-[#DD7373] text-xs font-medium rounded-full">{d.overview!.warningCount}</span>
+                              ? <span className="px-2 py-0.5 bg-[#DC2626]/25 text-[#EF4444] text-xs font-medium rounded-full">{d.overview!.warningCount}</span>
                               : <span className="text-xs text-muted-foreground">0</span>}
                           </td>
                         </tr>
@@ -3683,14 +3687,14 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                     { label: "作业提交率", value: currentOverview?.homeworkRate != null ? Number(currentOverview.homeworkRate).toFixed(1) + "%" : "—", icon: CheckCircle, color: "green" },
                     { label: "预警人数", value: warningCount.toString(), icon: AlertCircle, color: "red", highlight: warningCount > 0 },
                   ].map(item => (
-                    <div key={item.label} className={`bg-card rounded-lg border border-border p-4 transition-all duration-200 hover:shadow-md ${item.highlight ? "border-[#E88383]/40 bg-[#E88383]/15" : ""}`}>
+                    <div key={item.label} className={`bg-card rounded-lg border border-border p-4 transition-all duration-200 hover:shadow-md ${item.highlight ? "border-[#DC2626]/40 bg-[#DC2626]/15" : ""}`}>
                       <div className="flex items-center justify-between mb-2">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${item.color === "red" ? "bg-[#E88383]/25" : item.color === "green" ? "bg-[#74C2A0]/25" : "bg-[#969BE7]/25"}`}>
-                          <item.icon size={16} className={item.color === "red" ? "text-[#DD7373]" : item.color === "green" ? "text-[#57AE8F]" : "text-[#969BE7]"} />
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${item.color === "red" ? "bg-[#DC2626]/25" : item.color === "green" ? "bg-[#10B981]/25" : "bg-[#2563EB]/25"}`}>
+                          <item.icon size={16} className={item.color === "red" ? "text-[#EF4444]" : item.color === "green" ? "text-[#059669]" : "text-[#2563EB]"} />
                         </div>
-                        {item.highlight && <span className="text-xs text-[#DD7373] font-medium">点击查看</span>}
+                        {item.highlight && <span className="text-xs text-[#EF4444] font-medium">点击查看</span>}
                       </div>
-                      <p className={`font-mono text-xl font-bold ${item.highlight ? "text-[#DD7373]" : "text-primary"}`}>{item.value}</p>
+                      <p className={`font-mono text-xl font-bold ${item.highlight ? "text-[#EF4444]" : "text-primary"}`}>{item.value}</p>
                       <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
                     </div>
                   ))}
@@ -3709,7 +3713,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                             <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                             <YAxis tick={{ fontSize: 11 }} />
                             <Tooltip formatter={(v: any) => `${v}人`} />
-                            <Bar dataKey="value" fill="#969BE7" radius={[2, 2, 0, 0]} name="人数" />
+                            <Bar dataKey="value" fill="#2563EB" radius={[2, 2, 0, 0]} name="人数" />
                           </BarChart>
                         </ResponsiveContainer>
                         <div className="overflow-auto max-h-[220px]">
@@ -3749,7 +3753,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                           <YAxis tick={{ fontSize: 11 }} />
                           <Tooltip formatter={(v: any) => `${v}人`} />
-                          <Bar dataKey="value" fill="#969BE7" radius={[2, 2, 0, 0]} name="人数" />
+                          <Bar dataKey="value" fill="#2563EB" radius={[2, 2, 0, 0]} name="人数" />
                         </BarChart>
                       </ResponsiveContainer>
                     )}
@@ -3768,7 +3772,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                             <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                             <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
                             <Tooltip formatter={(v: any) => `${v}分`} />
-                            <Line type="monotone" dataKey="value" stroke="#969BE7" strokeWidth={2} dot={{ r: 4 }} name="班级平均分" />
+                            <Line type="monotone" dataKey="value" stroke="#2563EB" strokeWidth={2} dot={{ r: 4 }} name="班级平均分" />
                           </LineChart>
                         </ResponsiveContainer>
                         <div className="overflow-auto max-h-[220px]">
@@ -3789,7 +3793,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                                     <td className="py-2 px-2 font-medium">{item.name}</td>
                                     <td className="text-center py-2 px-2 text-primary font-mono">{item.value}</td>
                                     <td className="text-center py-2 px-2">
-                                      <span className={`px-2 py-0.5 text-xs rounded-full ${rank <= 3 ? "bg-[#74C2A0]/25 text-[#57AE8F]" : "bg-muted text-muted-foreground"}`}>
+                                      <span className={`px-2 py-0.5 text-xs rounded-full ${rank <= 3 ? "bg-[#10B981]/25 text-[#059669]" : "bg-muted text-muted-foreground"}`}>
                                         第{rank}名
                                       </span>
                                     </td>
@@ -3812,7 +3816,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                           <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                           <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
                           <Tooltip formatter={(v: any) => `${v}分`} />
-                          <Line type="monotone" dataKey="value" stroke="#969BE7" strokeWidth={2} dot={{ r: 4 }} name="班级平均分" />
+                          <Line type="monotone" dataKey="value" stroke="#2563EB" strokeWidth={2} dot={{ r: 4 }} name="班级平均分" />
                         </LineChart>
                       </ResponsiveContainer>
                     )}
@@ -3872,9 +3876,9 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                                 return (
                                   <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/30">
                                     <td className="py-2 px-2 font-medium">{hw.homeworkName}</td>
-                                    <td className="text-center py-2 px-2 text-[#57AE8F]">{hw.onTimeCount}</td>
-                                    <td className="text-center py-2 px-2 text-[#C972A8]">{hw.lateCount}</td>
-                                    <td className="text-center py-2 px-2 text-[#DD7373]">{hw.absentCount}</td>
+                                    <td className="text-center py-2 px-2 text-[#059669]">{hw.onTimeCount}</td>
+                                    <td className="text-center py-2 px-2 text-[#0E7490]">{hw.lateCount}</td>
+                                    <td className="text-center py-2 px-2 text-[#EF4444]">{hw.absentCount}</td>
                                     <td className="text-center py-2 px-2 font-medium">{rate}%</td>
                                   </tr>
                                 );
@@ -3916,7 +3920,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                             <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
                             <Tooltip formatter={(v: any) => `${v}分`} />
                             <Legend />
-                            <Bar dataKey="avgScore" fill="#969BE7" name="平均分" radius={[2, 2, 0, 0]} />
+                            <Bar dataKey="avgScore" fill="#2563EB" name="平均分" radius={[2, 2, 0, 0]} />
                           </BarChart>
                         </ResponsiveContainer>
                         <div className="overflow-auto max-h-[200px]">
@@ -3933,7 +3937,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                               {(currentCharts?.experimentStats || []).map((exp, i) => (
                                 <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/30">
                                   <td className="py-2 px-2 font-medium">{exp.experimentName}</td>
-                                  <td className="text-center py-2 px-2 text-[#969BE7] font-mono">{exp.avgScore}</td>
+                                  <td className="text-center py-2 px-2 text-[#2563EB] font-mono">{exp.avgScore}</td>
                                   <td className="text-center py-2 px-2 font-medium">{exp.submitRate}%</td>
                                   <td className="text-center py-2 px-2 text-muted-foreground text-xs">{exp.submittedCount}/{exp.totalCount}</td>
                                 </tr>
@@ -3955,7 +3959,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                           <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
                           <Tooltip formatter={(v: any) => `${v}分`} />
                           <Legend />
-                          <Bar dataKey="avgScore" fill="#969BE7" name="平均分" radius={[2, 2, 0, 0]} />
+                          <Bar dataKey="avgScore" fill="#2563EB" name="平均分" radius={[2, 2, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     )}
@@ -3968,7 +3972,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                   <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-wrap gap-3">
                     <div className="flex items-center gap-3">
                       <h3 className="font-medium text-sm">预警学生列表</h3>
-                      <span className="px-2 py-0.5 bg-[#E88383]/25 text-[#DD7373] text-xs font-medium rounded-full">{filteredWarnings.length} 条</span>
+                      <span className="px-2 py-0.5 bg-[#DC2626]/25 text-[#EF4444] text-xs font-medium rounded-full">{filteredWarnings.length} 条</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <button onClick={() => setShowAutoWarningModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 border border-border text-xs rounded-md hover:bg-accent">
@@ -3981,7 +3985,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                       </div>
                       {selectedWarnings.length > 0 && (
                         <>
-                          <button onClick={() => setShowNotificationModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs rounded-md hover:bg-[#7F84D6]">
+                          <button onClick={() => setShowNotificationModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs rounded-md hover:bg-[#1D4ED8]">
                             <Bell size={12} />发送通知 ({selectedWarnings.length})
                           </button>
                           <button onClick={() => { setSelectedWarnings([]); showToastMsg("已取消选择"); }} className="flex items-center gap-1.5 px-3 py-1.5 border border-border text-xs rounded-md hover:bg-accent">
@@ -4034,7 +4038,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                                 <button onClick={() => { setSelectedStudentId(w.studentId); setSelectedCourseId(selectedClass); onNav("teacher-profile"); }} className="flex items-center gap-1 text-primary hover:underline text-xs">
                                   <Eye size={12} />查看详情
                                 </button>
-                                <button onClick={() => showToastMsg(`已标记 ${w.name} 的预警为已处理`)} className="flex items-center gap-1 text-[#57AE8F] hover:text-[#57AE8F] hover:bg-[#74C2A0]/20 px-2 py-1 rounded text-xs">
+                                <button onClick={() => showToastMsg(`已标记 ${w.name} 的预警为已处理`)} className="flex items-center gap-1 text-[#059669] hover:text-[#059669] hover:bg-[#10B981]/20 px-2 py-1 rounded text-xs">
                                   <CheckCircle size={12} />标记处理
                                 </button>
                               </div>
@@ -4070,8 +4074,8 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                         { label: "教学周期", value: classInfo?.semester || "—", icon: Calendar, color: "orange" },
                       ].map(item => (
                         <div key={item.label} className="bg-muted/50 rounded-lg p-3 flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${item.color === "blue" ? "bg-[#969BE7]/25" : item.color === "green" ? "bg-[#74C2A0]/25" : item.color === "purple" ? "bg-[#969BE7]/25" : "bg-[#F2A56B]/25"}`}>
-                            <item.icon size={14} className={item.color === "blue" ? "text-[#969BE7]" : item.color === "green" ? "text-[#57AE8F]" : item.color === "purple" ? "text-[#969BE7]" : "text-[#E8945C]"} />
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${item.color === "blue" ? "bg-[#2563EB]/25" : item.color === "green" ? "bg-[#10B981]/25" : item.color === "purple" ? "bg-[#2563EB]/25" : "bg-[#F59E0B]/25"}`}>
+                            <item.icon size={14} className={item.color === "blue" ? "text-[#2563EB]" : item.color === "green" ? "text-[#059669]" : item.color === "purple" ? "text-[#2563EB]" : "text-[#D97706]"} />
                           </div>
                           <div>
                             <p className="text-xs text-muted-foreground">{item.label}</p>
@@ -4089,9 +4093,9 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                             <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                             <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
                             <Tooltip formatter={(v: any) => `${v}%`} />
-                            <Bar dataKey="value" fill="#969BE7" radius={[4, 4, 0, 0]}>
+                            <Bar dataKey="value" fill="#2563EB" radius={[4, 4, 0, 0]}>
                               {(currentCharts?.knowledgeRadar || []).map((item, i) => (
-                                <Cell key={`cell-${i}`} fill={item.value >= 80 ? "#8FD0B8" : item.value >= 70 ? "#969BE7" : item.value >= 60 ? "#F5D5A8" : "#E8909A"} />
+                                <Cell key={`cell-${i}`} fill={item.value >= 80 ? "#8FD0B8" : item.value >= 70 ? "#2563EB" : item.value >= 60 ? "#F5D5A8" : "#E8909A"} />
                               ))}
                             </Bar>
                           </BarChart>
@@ -4102,7 +4106,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                         <h4 className="text-xs font-medium text-muted-foreground mb-3">知识点掌握情况说明</h4>
                         <div className="space-y-2 text-xs text-muted-foreground">
                           <p className="flex items-center gap-2"><span className="inline-block w-2.5 h-2.5 rounded bg-[#8FD0B8]" />掌握度 ≥ 80%：已掌握，无需重点复习</p>
-                          <p className="flex items-center gap-2"><span className="inline-block w-2.5 h-2.5 rounded bg-[#969BE7]" />70% – 80%：基本掌握，可适量巩固</p>
+                          <p className="flex items-center gap-2"><span className="inline-block w-2.5 h-2.5 rounded bg-[#2563EB]" />70% – 80%：基本掌握，可适量巩固</p>
                           <p className="flex items-center gap-2"><span className="inline-block w-2.5 h-2.5 rounded bg-[#F5D5A8]" />60% – 70%：建议安排强化练习</p>
                           <p className="flex items-center gap-2"><span className="inline-block w-2.5 h-2.5 rounded bg-[#E8909A]" />&lt; 60%：薄弱知识点，建议重新讲解</p>
                         </div>
@@ -4157,7 +4161,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                     
                     <div className="flex gap-3">
                       <button onClick={() => setShowAutoWarningModal(false)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
-                      <button onClick={() => { setShowAutoWarningModal(false); showToastMsg("自动预警设置已保存"); }} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">保存设置</button>
+                      <button onClick={() => { setShowAutoWarningModal(false); showToastMsg("自动预警设置已保存"); }} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">保存设置</button>
                     </div>
                   </div>
                 </div>
@@ -4267,14 +4271,14 @@ function TA_Dashboard({ onNav }: { onNav: (p: Page) => void }) {
           { label: "作业提交率", value: "90%", icon: CheckCircle, color: "green" },
           { label: "预警人数", value: warningCount.toString(), icon: AlertCircle, color: "red", highlight: warningCount > 0 },
         ].map(item => (
-          <div key={item.label} className={`bg-card rounded-lg border border-border p-4 ${item.highlight ? "border-[#E88383]/40 bg-[#E88383]/15" : ""}`}>
+          <div key={item.label} className={`bg-card rounded-lg border border-border p-4 ${item.highlight ? "border-[#DC2626]/40 bg-[#DC2626]/15" : ""}`}>
             <div className="flex items-center justify-between mb-2">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${item.color === "red" ? "bg-[#E88383]/25" : item.color === "green" ? "bg-[#74C2A0]/25" : "bg-[#969BE7]/25"}`}>
-                <item.icon size={16} className={item.color === "red" ? "text-[#DD7373]" : item.color === "green" ? "text-[#57AE8F]" : "text-[#969BE7]"} />
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${item.color === "red" ? "bg-[#DC2626]/25" : item.color === "green" ? "bg-[#10B981]/25" : "bg-[#2563EB]/25"}`}>
+                <item.icon size={16} className={item.color === "red" ? "text-[#EF4444]" : item.color === "green" ? "text-[#059669]" : "text-[#2563EB]"} />
               </div>
-              {item.highlight && <span className="text-xs text-[#DD7373] font-medium">点击查看</span>}
+              {item.highlight && <span className="text-xs text-[#EF4444] font-medium">点击查看</span>}
             </div>
-            <p className={`font-mono text-xl font-bold ${item.highlight ? "text-[#DD7373]" : "text-primary"}`}>{item.value}</p>
+            <p className={`font-mono text-xl font-bold ${item.highlight ? "text-[#EF4444]" : "text-primary"}`}>{item.value}</p>
             <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
           </div>
         ))}
@@ -4289,7 +4293,7 @@ function TA_Dashboard({ onNav }: { onNav: (p: Page) => void }) {
               <XAxis dataKey="range" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip formatter={(v: any) => `${v}人`} />
-              <Bar dataKey="count" fill="#969BE7" radius={[2, 2, 0, 0]} name="人数" />
+              <Bar dataKey="count" fill="#2563EB" radius={[2, 2, 0, 0]} name="人数" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -4301,7 +4305,7 @@ function TA_Dashboard({ onNav }: { onNav: (p: Page) => void }) {
               <XAxis dataKey="exam" tick={{ fontSize: 10 }} />
               <YAxis domain={[60, 100]} tick={{ fontSize: 11 }} />
               <Tooltip formatter={(v: any) => `${v}分`} />
-              <Line type="monotone" dataKey="score" stroke="#969BE7" strokeWidth={2} dot={{ r: 4 }} name="班级平均分" />
+              <Line type="monotone" dataKey="score" stroke="#2563EB" strokeWidth={2} dot={{ r: 4 }} name="班级平均分" />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -4486,7 +4490,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
         <>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">班级管理</h2>
-            <button onClick={() => setShowAddClassModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
+            <button onClick={() => setShowAddClassModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">
               <Plus size={14} />新增班级
             </button>
           </div>
@@ -4496,9 +4500,9 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
               <p className="text-sm text-muted-foreground">加载中...</p>
             </div>
           ) : loadError ? (
-            <div className="bg-card rounded-lg border border-[#E88383]/40 p-12 text-center">
-              <AlertCircle size={32} className="mx-auto mb-3 text-[#DD7373]" />
-              <p className="text-sm text-[#DD7373] font-medium">加载失败</p>
+            <div className="bg-card rounded-lg border border-[#DC2626]/40 p-12 text-center">
+              <AlertCircle size={32} className="mx-auto mb-3 text-[#EF4444]" />
+              <p className="text-sm text-[#EF4444] font-medium">加载失败</p>
               <p className="text-xs text-muted-foreground mt-1">{loadError}</p>
             </div>
           ) : classList.length === 0 ? (
@@ -4554,7 +4558,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
                 <input type="text" placeholder="搜索学号或姓名..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                   className="pl-9 pr-4 py-2 bg-card border border-border rounded-md text-sm w-64" />
               </div>
-              <button onClick={() => setShowAddStudentModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
+              <button onClick={() => setShowAddStudentModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">
                 <Plus size={14} />添加学生
               </button>
               <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
@@ -4594,7 +4598,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
                       </td>
                       <td className="px-4 py-3">
                         <button onClick={() => { setSelectedStudentId(s.studentId); setSelectedCourseId(selectedClassId); onNav("teacher-profile"); }} className="text-primary hover:underline text-xs mr-3">学生画像</button>
-                        <button className="text-[#DD7373] hover:underline text-xs">移除</button>
+                        <button className="text-[#EF4444] hover:underline text-xs">移除</button>
                       </td>
                     </tr>
                   ))}
@@ -4633,7 +4637,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowAddClassModal(false)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
-              <button onClick={handleAddClass} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">创建班级</button>
+              <button onClick={handleAddClass} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">创建班级</button>
             </div>
           </div>
         </div>
@@ -4657,7 +4661,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowAddStudentModal(false)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
-              <button onClick={handleAddStudent} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">添加学生</button>
+              <button onClick={handleAddStudent} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">添加学生</button>
             </div>
           </div>
         </div>
@@ -4698,7 +4702,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
             </div>
             <div className="flex gap-3">
               <button onClick={() => { setShowTAConfigModal(false); setSelectedTA(""); setTaPerms({ canImport: false, canGrade: false, canViewProfile: false }); }} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
-              <button onClick={handleTAConfig} disabled={!selectedTA} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6] disabled:opacity-50 disabled:cursor-not-allowed">保存设置</button>
+              <button onClick={handleTAConfig} disabled={!selectedTA} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed">保存设置</button>
             </div>
           </div>
         </div>
@@ -4854,7 +4858,7 @@ function TeacherDataImport() {
     }
   };
 
-  const toastStyle = toast?.variant === "error" ? "bg-[#E07070]" : toast?.variant === "warn" ? "bg-[#F0B968]" : "bg-[#5FAF8E]";
+  const toastStyle = toast?.variant === "error" ? "bg-[#E07070]" : toast?.variant === "warn" ? "bg-[#F0B968]" : "bg-[#0EA5E9]";
 
   return (
     <div className="space-y-5">
@@ -4871,7 +4875,7 @@ function TeacherDataImport() {
       <div className="bg-card rounded-lg border border-border p-4">
         <div className="flex flex-wrap items-end gap-4">
           <div>
-            <label className="block text-xs text-muted-foreground mb-1.5">归属课程 <span className="text-[#DD7373]">*</span></label>
+            <label className="block text-xs text-muted-foreground mb-1.5">归属课程 <span className="text-[#EF4444]">*</span></label>
             <select value={selectedCourseId} onChange={e => setSelectedCourseId(e.target.value)}
               className="min-w-[260px] px-3 py-2 text-sm border border-border rounded-md bg-background">
               <option value="">请选择课程</option>
@@ -4884,7 +4888,7 @@ function TeacherDataImport() {
           </div>
           {needsAssessment && (
             <div>
-              <label className="block text-xs text-muted-foreground mb-1.5">考核名称 <span className="text-[#DD7373]">*</span></label>
+              <label className="block text-xs text-muted-foreground mb-1.5">考核名称 <span className="text-[#EF4444]">*</span></label>
               <input type="text" value={assessmentName} onChange={e => setAssessmentName(e.target.value)}
                 placeholder={activeTab === "exam" ? "如：期中考试" : activeTab === "quiz" ? "如：第1次测验" : "如：第1次作业"}
                 className="min-w-[200px] px-3 py-2 text-sm border border-border rounded-md bg-background" />
@@ -4892,7 +4896,7 @@ function TeacherDataImport() {
           )}
           {activeTab === "exam" && (
             <div>
-              <label className="block text-xs text-muted-foreground mb-1.5">考试类型 <span className="text-[#DD7373]">*</span></label>
+              <label className="block text-xs text-muted-foreground mb-1.5">考试类型 <span className="text-[#EF4444]">*</span></label>
               <div className="flex gap-3 py-2">
                 {([["MIDTERM", "期中"], ["FINAL", "期末"]] as const).map(([val, label]) => (
                   <label key={val} className="flex items-center gap-1.5 text-sm cursor-pointer">
@@ -4987,8 +4991,8 @@ function TeacherDataImport() {
                   <td className="px-4 py-3 font-medium text-xs">{h.fileName || '-'}</td>
                   <td className="px-4 py-3"><Tag color="blue">{h.importType || '-'}</Tag></td>
                   <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{h.createTime || '-'}</td>
-                  <td className="px-4 py-3 font-mono text-[#57AE8F]">{h.successRows ?? 0}</td>
-                  <td className="px-4 py-3 font-mono text-[#DD7373]">{h.failRows ?? 0}</td>
+                  <td className="px-4 py-3 font-mono text-[#059669]">{h.successRows ?? 0}</td>
+                  <td className="px-4 py-3 font-mono text-[#EF4444]">{h.failRows ?? 0}</td>
                   <td className="px-4 py-3">
                     {h.status === "SUCCESS" ? <Tag color="green">成功</Tag>
                       : h.status === "PARTIAL" ? <Tag color="orange">部分失败</Tag>
@@ -5017,17 +5021,17 @@ function TeacherDataImport() {
                 <p className="text-xs text-muted-foreground">总行数</p>
                 <p className="text-sm font-bold text-primary">{importResult.totalRows}</p>
               </div>
-              <div className="bg-[#74C2A0]/20 rounded-lg p-3 text-center">
-                <p className="text-xs text-[#57AE8F]">成功</p>
-                <p className="text-sm font-bold text-[#57AE8F]">{importResult.successRows}</p>
+              <div className="bg-[#10B981]/20 rounded-lg p-3 text-center">
+                <p className="text-xs text-[#059669]">成功</p>
+                <p className="text-sm font-bold text-[#059669]">{importResult.successRows}</p>
               </div>
-              <div className="bg-[#E88383]/20 rounded-lg p-3 text-center">
-                <p className="text-xs text-[#DD7373]">失败</p>
-                <p className="text-sm font-bold text-[#DD7373]">{importResult.failRows}</p>
+              <div className="bg-[#DC2626]/20 rounded-lg p-3 text-center">
+                <p className="text-xs text-[#EF4444]">失败</p>
+                <p className="text-sm font-bold text-[#EF4444]">{importResult.failRows}</p>
               </div>
-              <div className="bg-[#EEC1DD]/30 rounded-lg p-3 text-center">
-                <p className="text-xs text-[#C972A8]">跳过</p>
-                <p className="text-sm font-bold text-[#C972A8]">{importResult.skippedRows}</p>
+              <div className="bg-[#0EA5E9]/30 rounded-lg p-3 text-center">
+                <p className="text-xs text-[#0E7490]">跳过</p>
+                <p className="text-sm font-bold text-[#0E7490]">{importResult.skippedRows}</p>
               </div>
             </div>
             {(importResult.errors.length > 0 || importResult.warnings.length > 0) && (
@@ -5037,8 +5041,8 @@ function TeacherDataImport() {
                     <h4 className="font-medium text-sm mb-2">错误详情</h4>
                     <div className="space-y-2">
                       {importResult.errors.map((msg, i) => (
-                        <div key={i} className="bg-[#E88383]/20 border border-[#E88383]/40 rounded-lg px-3 py-2">
-                          <span className="text-xs text-[#DD7373]">{msg}</span>
+                        <div key={i} className="bg-[#DC2626]/20 border border-[#DC2626]/40 rounded-lg px-3 py-2">
+                          <span className="text-xs text-[#EF4444]">{msg}</span>
                         </div>
                       ))}
                     </div>
@@ -5049,8 +5053,8 @@ function TeacherDataImport() {
                     <h4 className="font-medium text-sm mb-2">跳过明细</h4>
                     <div className="space-y-2">
                       {importResult.warnings.map((msg, i) => (
-                        <div key={i} className="bg-[#EEC1DD]/30 border border-[#EEC1DD]/60 rounded-lg px-3 py-2">
-                          <span className="text-xs text-[#C972A8]">{msg}</span>
+                        <div key={i} className="bg-[#0EA5E9]/30 border border-[#0EA5E9]/60 rounded-lg px-3 py-2">
+                          <span className="text-xs text-[#0E7490]">{msg}</span>
                         </div>
                       ))}
                     </div>
@@ -5139,8 +5143,8 @@ function TA_DataImport() {
                 <td className="px-4 py-3 font-medium">{h.fileName}</td>
                 <td className="px-4 py-3"><Tag color="blue">{h.dataType}</Tag></td>
                 <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{h.uploadTime}</td>
-                <td className="px-4 py-3 font-mono text-[#57AE8F]">{h.success}</td>
-                <td className="px-4 py-3 font-mono text-[#DD7373]">{h.fail}</td>
+                <td className="px-4 py-3 font-mono text-[#059669]">{h.success}</td>
+                <td className="px-4 py-3 font-mono text-[#EF4444]">{h.fail}</td>
                 <td className="px-4 py-3">
                   {h.status === "success" ? <Tag color="green">成功</Tag> : h.status === "partial" ? <Tag color="orange">部分失败</Tag> : <Tag color="red">失败</Tag>}
                 </td>
@@ -5333,27 +5337,27 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setPrivacyMode(!privacyMode)} className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
-            privacyMode ? "bg-[#969BE7]/25 text-[#969BE7] border border-[#969BE7]/40" : "bg-muted hover:bg-accent border border-transparent"
+            privacyMode ? "bg-[#2563EB]/25 text-[#2563EB] border border-[#2563EB]/40" : "bg-muted hover:bg-accent border border-transparent"
           }`}>
             <Eye size={14} />
             {privacyMode ? "隐私模式：开启" : "隐私模式：关闭"}
           </button>
           <button onClick={handleFocusToggle} className={`px-4 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${
-            isFocused ? "bg-[#E88383] text-white" : "bg-muted hover:bg-accent"
+            isFocused ? "bg-[#DC2626] text-white" : "bg-muted hover:bg-accent"
           }`}>
             <Star size={14} />
             {isFocused ? "已重点关注" : "重点关注"}
           </button>
-          <button onClick={handleExportReport} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
+          <button onClick={handleExportReport} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">
             <Download size={14} />导出报告
           </button>
         </div>
       </div>
 
       {privacyMode && (
-        <div className="bg-[#969BE7]/20 border border-[#969BE7]/40 rounded-lg p-3 flex items-center gap-2">
-          <Eye size={14} className="text-[#969BE7]" />
-          <span className="text-xs text-[#969BE7]">隐私保护模式已开启，班级排名和对比数据已隐藏</span>
+        <div className="bg-[#2563EB]/20 border border-[#2563EB]/40 rounded-lg p-3 flex items-center gap-2">
+          <Eye size={14} className="text-[#2563EB]" />
+          <span className="text-xs text-[#2563EB]">隐私保护模式已开启，班级排名和对比数据已隐藏</span>
         </div>
       )}
 
@@ -5375,9 +5379,9 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
               </div>
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">出勤率</span><span className="font-medium">{profile.attendanceRate}%</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">缺勤</span><span className="font-medium text-[#DD7373]">{profile.absentCount}次</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">缺勤</span><span className="font-medium text-[#EF4444]">{profile.absentCount}次</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">迟到</span><span className="font-medium text-[#E9B45C]">{profile.lateCount}次</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">请假</span><span className="font-medium text-[#969BE7]">{profile.leaveCount}次</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">请假</span><span className="font-medium text-[#2563EB]">{profile.leaveCount}次</span></div>
               </div>
             </>
           )}
@@ -5411,7 +5415,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                   <div key={item.label} className="bg-card rounded-lg border border-border p-4 text-center">
                     <p className="font-mono text-xl font-bold text-primary">{item.value}</p>
                     <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
-                    <p className={`text-xs mt-1 ${privacyMode && item.label === "总分" ? "text-[#969BE7]" : "text-muted-foreground"}`}>{item.subtext}</p>
+                    <p className={`text-xs mt-1 ${privacyMode && item.label === "总分" ? "text-[#2563EB]" : "text-muted-foreground"}`}>{item.subtext}</p>
                   </div>
                 ))}
               </div>
@@ -5424,7 +5428,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                     <YAxis domain={[40, 100]} tick={{ fontSize: 11 }} />
                     <Tooltip formatter={(v: any) => `${v}分`} />
                     <Legend />
-                    <Line type="monotone" dataKey="score" stroke="#969BE7" strokeWidth={2} dot={{ r: 4 }} name="个人成绩" />
+                    <Line type="monotone" dataKey="score" stroke="#2563EB" strokeWidth={2} dot={{ r: 4 }} name="个人成绩" />
                     {!privacyMode && <Line type="monotone" dataKey="classAvg" stroke="#B8B8CE" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="5 5" name="班级均值" />}
                   </LineChart>
                 </ResponsiveContainer>
@@ -5475,7 +5479,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                   <div key={h.name} className="flex items-center gap-4">
                     <div className="w-28 text-sm font-medium">{h.name}</div>
                     <div className="flex-1 bg-muted rounded-full h-3">
-                      <div className={`h-3 rounded-full ${h.status === "按时" ? "bg-[#74C2A0]" : h.status === "迟交" ? "bg-[#F5C069]" : "bg-[#E88383]"}`}
+                      <div className={`h-3 rounded-full ${h.status === "按时" ? "bg-[#10B981]" : h.status === "迟交" ? "bg-[#F5C069]" : "bg-[#DC2626]"}`}
                         style={{ width: h.score ? `${h.score}%` : "0%" }} />
                     </div>
                     <div className="w-16 text-right">
@@ -5523,7 +5527,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                     <PolarGrid stroke="var(--border)" />
                     <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
                     <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10 }} />
-                    <Radar dataKey="value" stroke="#969BE7" fill="#969BE7" fillOpacity={0.3} name="个人掌握度" strokeWidth={2} />
+                    <Radar dataKey="value" stroke="#2563EB" fill="#2563EB" fillOpacity={0.3} name="个人掌握度" strokeWidth={2} />
                     {!privacyMode && (
                       <Radar dataKey="value" stroke="#B8B8CE" strokeWidth={1.5} strokeDasharray="4 4" fill="transparent" name="班级均值" />
                     )}
@@ -5543,11 +5547,11 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                       <div key={i} className="flex items-center gap-4">
                         <div className="w-28 text-sm font-medium">{k.subject}</div>
                         <div className="flex-1 bg-muted rounded-full h-3">
-                          <div className={`h-3 rounded-full transition-all ${isWeak ? "bg-[#E88383]" : isStrong ? "bg-[#74C2A0]" : "bg-primary"}`}
+                          <div className={`h-3 rounded-full transition-all ${isWeak ? "bg-[#DC2626]" : isStrong ? "bg-[#10B981]" : "bg-primary"}`}
                             style={{ width: `${k.value}%` }} />
                         </div>
                         <div className="w-16 text-right font-mono font-semibold">
-                          <span className={isWeak ? "text-[#DD7373]" : isStrong ? "text-[#57AE8F]" : "text-primary"}>{k.value}%</span>
+                          <span className={isWeak ? "text-[#EF4444]" : isStrong ? "text-[#059669]" : "text-primary"}>{k.value}%</span>
                         </div>
                         <Tag color={isWeak ? "red" : isStrong ? "green" : "blue"}>
                           {isWeak ? "需加强" : isStrong ? "优秀" : "良好"}
@@ -5558,12 +5562,12 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                 </div>
 
                 {profileData.knowledgeData.filter(k => k.value < 70).length > 0 && (
-                  <div className="mt-4 p-3 bg-[#E88383]/20 border border-[#E88383]/40 rounded-lg">
+                  <div className="mt-4 p-3 bg-[#DC2626]/20 border border-[#DC2626]/40 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle size={14} className="text-[#DD7373]" />
-                      <span className="text-xs font-medium text-[#DD7373]">薄弱知识点提醒</span>
+                      <AlertTriangle size={14} className="text-[#EF4444]" />
+                      <span className="text-xs font-medium text-[#EF4444]">薄弱知识点提醒</span>
                     </div>
-                    <p className="text-xs text-[#DD7373]">
+                    <p className="text-xs text-[#EF4444]">
                       以下知识点掌握度低于70%：{profileData.knowledgeData.filter(k => k.value < 70).map(k => k.subject).join("、")}
                     </p>
                   </div>
@@ -5576,10 +5580,10 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
             <div className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: "综合评分", value: Math.round((Number(profileData.stats.avgScore) || 0) * 1.1), color: "bg-[#969BE7]/20 text-[#969BE7]", icon: <Award size={16} /> },
-                  { label: "学习态度", value: profileData.homeworkRecords.length > 0 ? Math.round((profileData.homeworkRecords.filter(h => h.status === "按时").length / profileData.homeworkRecords.length) * 100) : 0, color: "bg-[#74C2A0]/20 text-[#57AE8F]", icon: <Target size={16} /> },
-                  { label: "知识掌握", value: profileData.knowledgeData.length > 0 ? Math.round(profileData.knowledgeData.reduce((sum, k) => sum + k.value, 0) / profileData.knowledgeData.length) : 0, color: "bg-[#969BE7]/20 text-[#969BE7]", icon: <BookOpen size={16} /> },
-                  { label: "进步空间", value: 100 - Math.round(Number(profileData.stats.avgScore) || 0), color: "bg-[#F2A56B]/20 text-[#E8945C]", icon: <TrendingUp size={16} /> },
+                  { label: "综合评分", value: Math.round((Number(profileData.stats.avgScore) || 0) * 1.1), color: "bg-[#2563EB]/20 text-[#2563EB]", icon: <Award size={16} /> },
+                  { label: "学习态度", value: profileData.homeworkRecords.length > 0 ? Math.round((profileData.homeworkRecords.filter(h => h.status === "按时").length / profileData.homeworkRecords.length) * 100) : 0, color: "bg-[#10B981]/20 text-[#059669]", icon: <Target size={16} /> },
+                  { label: "知识掌握", value: profileData.knowledgeData.length > 0 ? Math.round(profileData.knowledgeData.reduce((sum, k) => sum + k.value, 0) / profileData.knowledgeData.length) : 0, color: "bg-[#2563EB]/20 text-[#2563EB]", icon: <BookOpen size={16} /> },
+                  { label: "进步空间", value: 100 - Math.round(Number(profileData.stats.avgScore) || 0), color: "bg-[#F59E0B]/20 text-[#D97706]", icon: <TrendingUp size={16} /> },
                 ].map((stat, i) => (
                   <div key={i} className={`${stat.color} rounded-lg p-3`}>
                     <div className="flex items-center gap-2 mb-1">{stat.icon}<span className="text-xs font-medium">{stat.label}</span></div>
@@ -5597,7 +5601,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                   <button
                     onClick={handleGenerateAi}
                     disabled={generatingAi}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {generatingAi ? (
                       <>
@@ -5617,16 +5621,16 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                     )}
                   </button>
                 </div>
-                <div className="bg-gradient-to-br from-[#969BE7]/10 to-[#969BE7]/5 rounded-lg p-4 border border-[#969BE7]/40 min-h-[120px]">
+                <div className="bg-gradient-to-br from-[#2563EB]/10 to-[#2563EB]/5 rounded-lg p-4 border border-[#2563EB]/40 min-h-[120px]">
                   {generatingAi ? (
-                    <div className="flex flex-col items-center justify-center py-6 text-[#969BE7]">
-                      <div className="w-8 h-8 border-3 border-[#969BE7]/40 border-t-blue-600 rounded-full animate-spin mb-3" />
+                    <div className="flex flex-col items-center justify-center py-6 text-[#2563EB]">
+                      <div className="w-8 h-8 border-3 border-[#2563EB]/40 border-t-blue-600 rounded-full animate-spin mb-3" />
                       <p className="text-sm">AI正在分析学生数据，生成评价中...</p>
                     </div>
                   ) : profileData.aiEvaluation ? (
                     <p className="text-sm text-[#6E719E] leading-relaxed whitespace-pre-wrap">{profileData.aiEvaluation}</p>
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-6 text-[#969BE7]">
+                    <div className="flex flex-col items-center justify-center py-6 text-[#2563EB]">
                       <Brain size={32} className="mb-2 opacity-50" />
                       <p className="text-sm">点击上方按钮生成AI综合评价</p>
                     </div>
@@ -5641,7 +5645,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                 )}
                 <div className="mt-4 flex gap-2">
                   <button onClick={handleExportReport} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">导出评价</button>
-                  <button className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">发送通知</button>
+                  <button className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">发送通知</button>
                 </div>
               </div>
 
@@ -5659,8 +5663,8 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                   {learningSuggestions.map((s, i) => (
                     <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${
-                        s.type === "strong" ? "bg-[#74C2A0]/25 text-[#57AE8F]" : 
-                        s.type === "weak" ? "bg-[#E88383]/25 text-[#DD7373]" : "bg-[#969BE7]/25 text-[#969BE7]"
+                        s.type === "strong" ? "bg-[#10B981]/25 text-[#059669]" : 
+                        s.type === "weak" ? "bg-[#DC2626]/25 text-[#EF4444]" : "bg-[#2563EB]/25 text-[#2563EB]"
                       }`}>
                         {s.type === "strong" ? "优" : s.type === "weak" ? "弱" : "改"}
                       </div>
@@ -5680,7 +5684,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                   <button
                     onClick={handleGenerateSuggestions}
                     disabled={generatingSuggestions}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white text-sm rounded-md hover:bg-[#7F84D6] disabled:opacity-50 disabled:cursor-not-allowed">
+                    className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white text-sm rounded-md hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed">
                     {generatingSuggestions ? (
                       <>
                         <RefreshCw size={14} className="animate-spin" />
@@ -5705,7 +5709,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                       <span className="font-medium">{Math.round((profileData.homeworkRecords.filter(h => h.status === "按时").length / profileData.homeworkRecords.length) * 100)}%</span>
                     </div>
                     <div className="bg-muted rounded-full h-2">
-                      <div className="bg-[#74C2A0] h-2 rounded-full" style={{ width: `${(profileData.homeworkRecords.filter(h => h.status === "按时").length / profileData.homeworkRecords.length) * 100}%` }} />
+                      <div className="bg-[#10B981] h-2 rounded-full" style={{ width: `${(profileData.homeworkRecords.filter(h => h.status === "按时").length / profileData.homeworkRecords.length) * 100}%` }} />
                     </div>
                   </div>
                   <div>
@@ -5714,7 +5718,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                       <span className="font-medium">{Math.round((profileData.attendanceRecords.filter(a => normalizeAttendanceStatus(a.status) === "出勤").length / profileData.attendanceRecords.length) * 100)}%</span>
                     </div>
                     <div className="bg-muted rounded-full h-2">
-                      <div className="bg-[#969BE7] h-2 rounded-full" style={{ width: `${(profileData.attendanceRecords.filter(a => normalizeAttendanceStatus(a.status) === "出勤").length / profileData.attendanceRecords.length) * 100}%` }} />
+                      <div className="bg-[#2563EB] h-2 rounded-full" style={{ width: `${(profileData.attendanceRecords.filter(a => normalizeAttendanceStatus(a.status) === "出勤").length / profileData.attendanceRecords.length) * 100}%` }} />
                     </div>
                   </div>
                   <div>
@@ -5723,7 +5727,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                       <span className="font-medium">100%</span>
                     </div>
                     <div className="bg-muted rounded-full h-2">
-                      <div className="bg-[#969BE7] h-2 rounded-full" style={{ width: "100%" }} />
+                      <div className="bg-[#2563EB] h-2 rounded-full" style={{ width: "100%" }} />
                     </div>
                   </div>
                   <div>
@@ -5766,7 +5770,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                       </select>
                       <button onClick={() => {
                         setEditingSuggestions(editingSuggestions.filter((_, idx) => idx !== i));
-                      }} className="text-xs text-[#DD7373] hover:text-[#DD7373]">删除</button>
+                      }} className="text-xs text-[#EF4444] hover:text-[#EF4444]">删除</button>
                     </div>
                     <input type="text" value={s.title} onChange={(e) => {
                       const newSuggestions = [...editingSuggestions];
@@ -5806,7 +5810,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                   finally { setSavingSuggestions(false); }
                 }}
                 disabled={savingSuggestions}
-                className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6] disabled:opacity-50">
+                className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8] disabled:opacity-50">
                 {savingSuggestions ? "保存中..." : "保存修改"}
               </button>
             </div>
@@ -5976,7 +5980,7 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
                     <YAxis domain={[40, 100]} tick={{ fontSize: 11 }} />
                     <Tooltip formatter={(v: any) => `${v}分`} />
                     <Legend />
-                    <Line type="monotone" dataKey="score" stroke="#969BE7" strokeWidth={2} dot={{ r: 4 }} name="个人成绩" />
+                    <Line type="monotone" dataKey="score" stroke="#2563EB" strokeWidth={2} dot={{ r: 4 }} name="个人成绩" />
                     <Line type="monotone" dataKey="classAvg" stroke="#B8B8CE" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="5 5" name="班级均值" />
                   </LineChart>
                 </ResponsiveContainer>
@@ -6027,7 +6031,7 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
                   <div key={h.name} className="flex items-center gap-4">
                     <div className="w-28 text-sm font-medium">{h.name}</div>
                     <div className="flex-1 bg-muted rounded-full h-3">
-                      <div className={`h-3 rounded-full ${h.status === "按时" ? "bg-[#74C2A0]" : h.status === "迟交" ? "bg-[#F5C069]" : "bg-[#E88383]"}`}
+                      <div className={`h-3 rounded-full ${h.status === "按时" ? "bg-[#10B981]" : h.status === "迟交" ? "bg-[#F5C069]" : "bg-[#DC2626]"}`}
                         style={{ width: h.score ? `${h.score}%` : "0%" }} />
                     </div>
                     <div className="w-16 text-right">
@@ -6070,7 +6074,7 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
                 <RadarChart data={profileData.knowledgeData}>
                   <PolarGrid stroke="var(--border)" />
                   <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
-                  <Radar dataKey="value" stroke="#969BE7" fill="#969BE7" fillOpacity={0.2} name="个人掌握度" />
+                  <Radar dataKey="value" stroke="#2563EB" fill="#2563EB" fillOpacity={0.2} name="个人掌握度" />
                   <Radar dataKey="value" stroke="#B8B8CE" strokeWidth={1} strokeDasharray="3 3" name="班级均值" />
                   <Tooltip formatter={(v: any) => `${v}%`} />
                   <Legend />
@@ -6083,10 +6087,10 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
             <div className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: "综合评分", value: Math.round((Number(profileData.stats.avgScore) || 0) * 1.1), color: "bg-[#969BE7]/20 text-[#969BE7]", icon: <Award size={16} /> },
-                  { label: "学习态度", value: profileData.homeworkRecords.length > 0 ? Math.round((profileData.homeworkRecords.filter(h => h.status === "按时").length / profileData.homeworkRecords.length) * 100) : 0, color: "bg-[#74C2A0]/20 text-[#57AE8F]", icon: <Target size={16} /> },
-                  { label: "知识掌握", value: profileData.knowledgeData.length > 0 ? Math.round(profileData.knowledgeData.reduce((sum, k) => sum + k.value, 0) / profileData.knowledgeData.length) : 0, color: "bg-[#969BE7]/20 text-[#969BE7]", icon: <BookOpen size={16} /> },
-                  { label: "进步空间", value: 100 - Math.round(Number(profileData.stats.avgScore) || 0), color: "bg-[#F2A56B]/20 text-[#E8945C]", icon: <TrendingUp size={16} /> },
+                  { label: "综合评分", value: Math.round((Number(profileData.stats.avgScore) || 0) * 1.1), color: "bg-[#2563EB]/20 text-[#2563EB]", icon: <Award size={16} /> },
+                  { label: "学习态度", value: profileData.homeworkRecords.length > 0 ? Math.round((profileData.homeworkRecords.filter(h => h.status === "按时").length / profileData.homeworkRecords.length) * 100) : 0, color: "bg-[#10B981]/20 text-[#059669]", icon: <Target size={16} /> },
+                  { label: "知识掌握", value: profileData.knowledgeData.length > 0 ? Math.round(profileData.knowledgeData.reduce((sum, k) => sum + k.value, 0) / profileData.knowledgeData.length) : 0, color: "bg-[#2563EB]/20 text-[#2563EB]", icon: <BookOpen size={16} /> },
+                  { label: "进步空间", value: 100 - Math.round(Number(profileData.stats.avgScore) || 0), color: "bg-[#F59E0B]/20 text-[#D97706]", icon: <TrendingUp size={16} /> },
                 ].map((stat, i) => (
                   <div key={i} className={`${stat.color} rounded-lg p-3`}>
                     <div className="flex items-center gap-2 mb-1">{stat.icon}<span className="text-xs font-medium">{stat.label}</span></div>
@@ -6104,7 +6108,7 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
                   <button
                     onClick={handleGenerateAi}
                     disabled={generatingAi}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {generatingAi ? (
                       <>
@@ -6124,16 +6128,16 @@ function TA_StudentProfile({ onNav }: { onNav: (p: Page) => void }) {
                     )}
                   </button>
                 </div>
-                <div className="bg-gradient-to-br from-[#969BE7]/10 to-[#969BE7]/5 rounded-lg p-4 border border-[#969BE7]/40 min-h-[120px]">
+                <div className="bg-gradient-to-br from-[#2563EB]/10 to-[#2563EB]/5 rounded-lg p-4 border border-[#2563EB]/40 min-h-[120px]">
                   {generatingAi ? (
-                    <div className="flex flex-col items-center justify-center py-6 text-[#969BE7]">
-                      <div className="w-8 h-8 border-3 border-[#969BE7]/40 border-t-blue-600 rounded-full animate-spin mb-3" />
+                    <div className="flex flex-col items-center justify-center py-6 text-[#2563EB]">
+                      <div className="w-8 h-8 border-3 border-[#2563EB]/40 border-t-blue-600 rounded-full animate-spin mb-3" />
                       <p className="text-sm">AI正在分析学生数据，生成评价中...</p>
                     </div>
                   ) : profileData.aiEvaluation ? (
                     <p className="text-sm text-[#6E719E] leading-relaxed whitespace-pre-wrap">{profileData.aiEvaluation}</p>
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-6 text-[#969BE7]">
+                    <div className="flex flex-col items-center justify-center py-6 text-[#2563EB]">
                       <Brain size={32} className="mb-2 opacity-50" />
                       <p className="text-sm">点击上方按钮生成AI综合评价</p>
                     </div>
@@ -6285,7 +6289,7 @@ function TA_GradingLegacy() {
 
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1.5 block">学生答案</label>
-                    <div className="bg-[#E88383]/20 border border-[#E88383]/40 rounded-lg p-4">
+                    <div className="bg-[#DC2626]/20 border border-[#DC2626]/40 rounded-lg p-4">
                       <p className="text-sm text-[#E8909A]">{currentQuestion.myAnswer}</p>
                     </div>
                   </div>
@@ -6298,9 +6302,9 @@ function TA_GradingLegacy() {
                       </button>
                     </div>
                     {showAISuggestion && (
-                      <div className="bg-[#969BE7]/20 border border-[#969BE7]/40 rounded-lg p-4">
+                      <div className="bg-[#2563EB]/20 border border-[#2563EB]/40 rounded-lg p-4">
                         <p className="text-sm text-[#6E719E]">{currentQuestion.aiSuggestion}</p>
-                        <button onClick={handleApplyAISuggestion} className="mt-3 px-3 py-1.5 bg-[#969BE7] text-white text-xs rounded-md hover:bg-[#7F84D6]">
+                        <button onClick={handleApplyAISuggestion} className="mt-3 px-3 py-1.5 bg-[#2563EB] text-white text-xs rounded-md hover:bg-[#1D4ED8]">
                           应用建议分数
                         </button>
                       </div>
@@ -6324,7 +6328,7 @@ function TA_GradingLegacy() {
 
                   <div className="flex gap-3 pt-2">
                     <button onClick={handleSubmitGrade} disabled={!score || currentQuestion.graded}
-                      className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6] disabled:opacity-50 disabled:cursor-not-allowed">
+                      className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed">
                       提交评分
                     </button>
                     <button onClick={() => { setSelectedQuestion(null); setScore(""); setComment(""); setShowAISuggestion(false); }}
@@ -6351,7 +6355,7 @@ function TA_GradingLegacy() {
 function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
   const [params, setParams] = useState({
     topics: [] as string[],
-    types: [] as string[],
+    types: ["单选"] as string[],
     count: 5,
     difficulty: "中等",
     socrates: false,
@@ -6372,6 +6376,12 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
   });
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [selectedQuestionsForExam, setSelectedQuestionsForExam] = useState<number[]>([]);
+  const [configCollapsed, setConfigCollapsed] = useState(false);
+  const [selectedForReview, setSelectedForReview] = useState<number[]>([]);
+  const [expandedExplanations, setExpandedExplanations] = useState<Record<number, boolean>>({});
+  const [confirmRejectId, setConfirmRejectId] = useState<number | null>(null);
+  const [inlineEditId, setInlineEditId] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState(false);
 
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
 
@@ -6416,6 +6426,9 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
       });
       setGeneratedQuestions(questions);
       setSelectedQuestionsForExam([]);
+      setSelectedForReview([]);
+      setExpandedExplanations({});
+      setInlineEditId(null);
       showToastMsg(`成功生成 ${questions.length} 道题目`);
     } catch (error) {
       showToastMsg(error instanceof Error ? error.message : "无法连接本地大模型服务");
@@ -6466,9 +6479,66 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
   };
 
   const handleQuestionSelect = (id: number) => {
-    setSelectedQuestionsForExam(prev => 
+    setSelectedQuestionsForExam(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
+  };
+
+  const toggleReviewSelect = (id: number) => {
+    setSelectedForReview(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const toggleAllReviewSelect = () => {
+    const pendingIds = generatedQuestions.filter(q => q.status !== "approved").map(q => q.id);
+    setSelectedForReview(prev => prev.length === pendingIds.length && pendingIds.length > 0 ? [] : pendingIds);
+  };
+
+  const handleBatchReview = (action: "approve" | "reject" | "regenerate") => {
+    if (selectedForReview.length === 0) {
+      showToastMsg("请先勾选要批量操作的题目");
+      return;
+    }
+    const count = selectedForReview.length;
+    if (action === "approve") {
+      setGeneratedQuestions(prev => prev.map(q => selectedForReview.includes(q.id) ? { ...q, status: "approved" as const } : q));
+      setAddedCount(prev => prev + count);
+      showToastMsg(`已批量通过 ${count} 道题目`);
+    } else if (action === "reject") {
+      setGeneratedQuestions(prev => prev.filter(q => !selectedForReview.includes(q.id)));
+      showToastMsg(`已批量驳回 ${count} 道题目`);
+    } else {
+      showToastMsg("批量重新生成中…");
+    }
+    setSelectedForReview([]);
+  };
+
+  const toggleExplanation = (id: number) => {
+    setExpandedExplanations(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const saveInlineEdit = (id: number, text: string) => {
+    setGeneratedQuestions(prev => prev.map(q => q.id === id ? { ...q, question: text } : q));
+    setInlineEditId(null);
+  };
+
+  const toggleAllTypes = () => {
+    const allTypes = ["单选", "多选", "填空", "简答", "综合"];
+    setParams(prev => ({ ...prev, types: prev.types.length === allTypes.length ? ["单选"] : allTypes }));
+  };
+
+  const handleFileDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      setUploadedReference(file.name);
+      showToastMsg("已上传参考试卷");
+    }
+  };
+
+  const removeUploadedReference = () => {
+    setUploadedReference(null);
+    showToastMsg("已移除参考试卷");
   };
 
   const handlePublishExam = () => {
@@ -6484,15 +6554,20 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
   const approvedQuestions = generatedQuestions.filter(q => q.status === "approved");
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    <div className={`${configCollapsed ? "lg:grid-cols-1" : "lg:grid-cols-3"} grid grid-cols-1 gap-5`}>
       {toast && (
         <div className="fixed top-20 right-6 z-50 px-4 py-3 bg-primary text-white text-sm rounded-lg shadow-lg">
           <div className="flex items-center gap-2"><CheckCircle size={14} />{toast}</div>
         </div>
       )}
 
-      <div className="lg:col-span-1 bg-card rounded-lg border border-border p-5 space-y-4">
-        <h3 className="font-medium text-sm">题目生成参数</h3>
+      <div className={`lg:col-span-1 bg-card rounded-lg border border-border p-5 space-y-4 ${configCollapsed ? "hidden" : ""}`}>
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium text-sm">题目生成参数</h3>
+          <button onClick={() => setConfigCollapsed(true)} title="收起配置" className="text-muted-foreground hover:text-primary">
+            <PanelLeftClose size={16} />
+          </button>
+        </div>
         
         <div>
           <label className="text-xs font-medium text-muted-foreground">知识点范围</label>
@@ -6505,7 +6580,12 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
         </div>
 
         <div>
-          <label className="text-xs font-medium text-muted-foreground">题型</label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-muted-foreground">题型</label>
+            <button onClick={toggleAllTypes} className="text-xs text-primary hover:underline">
+              {params.types.length === 5 ? "取消全选" : "全选"}
+            </button>
+          </div>
           <div className="mt-2 space-y-1">
             {["单选", "多选", "填空", "简答", "综合"].map(t => (
               <label key={t} className="flex items-center gap-2 text-sm cursor-pointer">
@@ -6538,81 +6618,149 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
         <div>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input type="checkbox" checked={params.socrates} onChange={e => setParams({ ...params, socrates: e.target.checked })} className="rounded" />
-            苏格拉底模式
+            启发追问模式
+            <span className="relative group inline-flex">
+              <Info size={13} className="text-muted-foreground cursor-help" />
+              <span className="hidden group-hover:block absolute left-5 top-0 z-10 w-52 bg-card border border-border rounded-md p-2 text-xs text-muted-foreground shadow-lg normal-case whitespace-normal">
+                通过追问引导学生思考，不直接给出答案
+              </span>
+            </span>
           </label>
         </div>
 
         <div>
           <label className="text-xs font-medium text-muted-foreground">参考来源（可选）</label>
-          <div className={`mt-2 border-2 border-dashed rounded-lg p-4 text-center ${uploadedReference ? "border-primary bg-primary/5" : "border-border hover:border-primary"} cursor-pointer transition-colors`} onClick={handleUploadReference}>
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleFileDrop}
+            onClick={uploadedReference ? undefined : handleUploadReference}
+            className={`mt-2 border-2 border-dashed rounded-lg p-4 text-center ${dragOver ? "border-primary bg-primary/10" : uploadedReference ? "border-primary bg-primary/5" : "border-border hover:border-primary"} cursor-pointer transition-colors`}>
             {uploadedReference ? (
-              <div className="flex items-center justify-center gap-2 text-primary">
-                <FileText size={14} />{uploadedReference}
+              <div className="flex items-center justify-between gap-2 text-primary">
+                <div className="flex items-center gap-2"><FileText size={14} />{uploadedReference}</div>
+                <button onClick={(e) => { e.stopPropagation(); removeUploadedReference(); }} className="text-muted-foreground hover:text-[#EF4444]"><X size={14} /></button>
               </div>
             ) : (
               <div className="text-xs text-muted-foreground">
-                <Upload size={16} className="mx-auto mb-1" />上传参考试卷或练习题
+                <Upload size={16} className="mx-auto mb-1" />点击或拖拽上传参考试卷
               </div>
             )}
           </div>
           <p className="text-xs text-muted-foreground mt-1">上传后AI会模仿该试卷的命题风格，提取的题目仍需审核后入库</p>
         </div>
 
-        <button onClick={handleGenerate} disabled={isGenerating} className="w-full py-3 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6] disabled:opacity-50 flex items-center justify-center gap-2">
+        <button onClick={handleGenerate} disabled={isGenerating} className="w-full py-3 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8] disabled:opacity-50 flex items-center justify-center gap-2">
           {isGenerating ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Zap size={16} />}
           {isGenerating ? "生成中..." : "生成题目"}
         </button>
       </div>
 
-      <div className="lg:col-span-2 space-y-4">
+      <div className={`${configCollapsed ? "lg:col-span-1" : "lg:col-span-2"} space-y-4`}>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
+            {configCollapsed && (
+              <button onClick={() => setConfigCollapsed(false)} title="展开配置" className="flex items-center gap-1 px-2 py-1 text-xs border border-border rounded-md hover:bg-accent text-muted-foreground">
+                <PanelLeftOpen size={14} />配置
+              </button>
+            )}
             <h3 className="font-medium text-sm">生成的题目列表</h3>
             <div className="flex bg-card border border-border rounded-lg p-0.5">
               <button onClick={() => setViewMode("preview")}
-                className={`px-3 py-1.5 text-xs rounded-md transition-colors ${viewMode === "preview" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#7F84D6]"}`}>
+                className={`px-3 py-1.5 text-xs rounded-md transition-colors ${viewMode === "preview" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#1D4ED8]"}`}>
                 预览模式
               </button>
               <button onClick={() => setViewMode("edit")}
-                className={`px-3 py-1.5 text-xs rounded-md transition-colors ${viewMode === "edit" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#7F84D6]"}`}>
+                className={`px-3 py-1.5 text-xs rounded-md transition-colors ${viewMode === "edit" ? "bg-primary text-white" : "text-muted-foreground hover:text-[#1D4ED8]"}`}>
                 编辑模式
               </button>
             </div>
-            <span className="text-xs text-muted-foreground">待审核 {pendingQuestions.length} 道 · 已入库 {approvedQuestions.length} 道 · 已选择 {selectedQuestionsForExam.length} 道</span>
           </div>
           <div className="flex items-center gap-2">
+            {selectedForReview.length > 0 && (
+              <>
+                <button onClick={() => handleBatchReview("approve")} className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#10B981] text-white rounded-md hover:bg-[#0EA5E9]">
+                  <CheckCircle size={12} />批量通过 ({selectedForReview.length})
+                </button>
+                <button onClick={() => handleBatchReview("reject")} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#EF4444] hover:bg-[#DC2626]/20 rounded-md border border-[#DC2626]/40">
+                  <XCircle size={12} />批量驳回
+                </button>
+                <button onClick={() => handleBatchReview("regenerate")} className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-md hover:bg-accent">
+                  <RotateCcw size={12} />批量重新生成
+                </button>
+              </>
+            )}
             {pendingQuestions.length > 0 && (
-              <button onClick={handleBatchApprove} className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#74C2A0] text-white rounded-md hover:bg-[#5FAF8E]">
+              <button onClick={handleBatchApprove} className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#10B981] text-white rounded-md hover:bg-[#0EA5E9]">
                 <CheckCircle size={12} />全部通过 ({pendingQuestions.length})
               </button>
             )}
             {selectedQuestionsForExam.length > 0 && (
-              <button onClick={() => setShowPublishModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#F2A56B] text-white rounded-md hover:bg-[#E8945C]">
+              <button onClick={() => setShowPublishModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#F59E0B] text-white rounded-md hover:bg-[#D97706]">
                 <Send size={12} />发布考试 ({selectedQuestionsForExam.length})
               </button>
             )}
             {approvedQuestions.length > 0 && (
-              <button onClick={() => onNav("teacher-bank")} className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-primary text-white rounded-md hover:bg-[#7F84D6]">
+              <button onClick={() => onNav("teacher-bank")} className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-primary text-white rounded-md hover:bg-[#1D4ED8]">
                 <Database size={12} />前往题库查看
               </button>
             )}
           </div>
         </div>
 
+        <div className="flex flex-wrap items-center gap-4 bg-card border border-border rounded-lg px-4 py-2 text-xs">
+          <div className="flex items-center gap-1.5"><Clock size={13} className="text-[#F59E0B]" /><span className="text-muted-foreground">待审核</span><span className="font-medium">{pendingQuestions.length}</span></div>
+          <div className="w-px h-3 bg-border" />
+          <div className="flex items-center gap-1.5"><Database size={13} className="text-[#059669]" /><span className="text-muted-foreground">已入库</span><span className="font-medium">{approvedQuestions.length}</span></div>
+          <div className="w-px h-3 bg-border" />
+          <div className="flex items-center gap-1.5"><CheckCircle size={13} className="text-primary" /><span className="text-muted-foreground">待入库选中</span><span className="font-medium">{selectedQuestionsForExam.length}</span></div>
+          {pendingQuestions.length > 0 && (
+            <button onClick={toggleAllReviewSelect} className="ml-auto text-primary hover:underline">
+              {selectedForReview.length === pendingQuestions.length && pendingQuestions.length > 0 ? "取消全选" : "全选待审"}
+            </button>
+          )}
+        </div>
+
         <div className="space-y-4">
-          {generatedQuestions.map((q, index) => (
+          {isGenerating && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-xs text-primary">
+                <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                正在生成 {params.count} 道题目，请稍候…
+              </div>
+              {Array.from({ length: Math.min(params.count, 5) }).map((_, i) => (
+                <div key={`sk-${i}`} className="bg-card rounded-lg border border-border p-4 animate-pulse space-y-3">
+                  <div className="flex gap-2">
+                    <div className="h-5 w-16 bg-muted rounded" />
+                    <div className="h-5 w-20 bg-muted rounded" />
+                    <div className="h-5 w-12 bg-muted rounded" />
+                  </div>
+                  <div className="h-3 bg-muted rounded w-full" />
+                  <div className="h-3 bg-muted rounded w-2/3" />
+                  <div className="space-y-1.5">
+                    <div className="h-3 bg-muted rounded w-1/2" />
+                    <div className="h-3 bg-muted rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {!isGenerating && generatedQuestions.map((q, index) => (
             <div key={q.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index)}
-              className={`bg-card rounded-lg border border-border p-4 ${q.professionalScore < 80 ? "border-[#EEC1DD]/60" : ""} ${q.status === "approved" ? "opacity-60" : ""} ${draggedIndex === index ? "opacity-50 border-primary shadow-lg" : ""} cursor-move hover:border-primary/50 transition-all`}>
+              className={`bg-card rounded-lg border border-border p-4 ${q.professionalScore < 80 ? "border-[#0EA5E9]/60" : ""} ${q.status === "approved" ? "opacity-60" : ""} ${draggedIndex === index ? "opacity-50 border-primary shadow-lg" : ""} ${selectedForReview.includes(q.id) ? "border-primary ring-1 ring-primary/30" : ""} cursor-move hover:border-primary/50 transition-all`}>
               <div className="flex items-start justify-between gap-4 mb-3">
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" checked={selectedQuestionsForExam.includes(q.id)} onChange={() => handleQuestionSelect(q.id)} 
-                    className="rounded text-primary focus:ring-primary" disabled={q.status !== "approved"} />
+                  <input type="checkbox"
+                    checked={q.status === "approved" ? selectedQuestionsForExam.includes(q.id) : selectedForReview.includes(q.id)}
+                    onChange={() => q.status === "approved" ? handleQuestionSelect(q.id) : toggleReviewSelect(q.id)}
+                    className={`rounded focus:ring-primary ${q.status === "approved" ? "text-[#F59E0B]" : "text-primary"}`}
+                    title={q.status === "approved" ? "加入试卷发布" : "勾选后可批量通过/驳回/重新生成"} />
                   <GripVertical size={14} className="text-muted-foreground" />
-                  <Tag color="blue">{q.questionType || (q.type === "multiple" ? "多选题" : q.type === "choice" ? "选择题" : q.type === "fill" ? "填空题" : "问答题")}</Tag>
+                  <Tag color="gray">{q.questionType || (q.type === "multiple" ? "多选题" : q.type === "choice" ? "选择题" : q.type === "fill" ? "填空题" : "问答题")}</Tag>
                   <Tag color="gray">{q.topic}</Tag>
                   <Tag color={q.difficulty === "简单" ? "green" : q.difficulty === "中等" ? "blue" : "red"}>{q.difficulty}</Tag>
                   {q.professionalScore < 80 && <Tag color="yellow">专业度 {q.professionalScore}</Tag>}
-                  <Tag color="cyan">AI生成</Tag>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#2563EB] text-white">AI生成</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {q.status === "approved" ? <Tag color="green">已入库</Tag> : <Tag color="gray">待审核</Tag>}
@@ -6620,51 +6768,73 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
               </div>
               {viewMode === "edit" ? (
                 <textarea defaultValue={q.question} className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none h-24 mb-3" />
+              ) : inlineEditId === q.id ? (
+                <div className="mb-3">
+                  <textarea id={`inline-${q.id}`} defaultValue={q.question} autoFocus className="w-full px-3 py-2 text-sm border border-primary rounded-md focus:outline-none resize-none h-20" />
+                  <div className="flex gap-2 mt-1">
+                    <button onClick={() => saveInlineEdit(q.id, (document.getElementById(`inline-${q.id}`) as HTMLTextAreaElement)?.value || q.question)} className="px-2 py-1 text-xs bg-primary text-white rounded">保存</button>
+                    <button onClick={() => setInlineEditId(null)} className="px-2 py-1 text-xs border border-border rounded">取消</button>
+                  </div>
+                </div>
               ) : (
-                <p className="text-sm mb-3">{q.question}</p>
+                <p className="text-sm mb-3 cursor-text hover:bg-accent/40 rounded px-1 -mx-1" onClick={() => setInlineEditId(q.id)} title="点击直接编辑题目">{q.question}</p>
               )}
               {q.options?.length > 0 && (
                 <div className="space-y-1 mb-3">
-                  {q.options.map((opt, i) => (
-                    <div key={i} className={`text-xs px-3 py-1.5 rounded ${(Array.isArray(q.answer) ? q.answer.includes(i) : i === q.answer) ? "bg-[#74C2A0]/20 text-[#57AE8F]" : "bg-muted"}`}>
-                      {String.fromCharCode(65 + i)}. {viewMode === "edit" ? <input type="text" defaultValue={opt} className="w-full bg-transparent text-xs" /> : opt}
-                    </div>
-                  ))}
+                  {q.options.map((opt, i) => {
+                    const isAnswer = Array.isArray(q.answer) ? q.answer.includes(i) : i === q.answer;
+                    return (
+                      <div key={i} className={`text-xs px-3 py-1.5 rounded border-l-2 ${isAnswer ? "border-[#059669] bg-[#10B981]/10 font-semibold text-[#059669]" : "border-transparent bg-muted text-foreground"}`}>
+                        {String.fromCharCode(65 + i)}. {viewMode === "edit" ? <input type="text" defaultValue={opt} className="w-full bg-transparent text-xs" /> : opt}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               {q.type !== "choice" && q.type !== "multiple" && (
-                <div className="bg-[#74C2A0]/20 rounded p-2 mb-3">
-                  <p className="text-xs font-medium text-[#57AE8F]">参考答案：{q.answer}</p>
+                <div className="border-l-2 border-[#059669] bg-[#10B981]/10 rounded p-2 mb-3">
+                  <p className="text-xs font-semibold text-[#059669]">参考答案：{q.answer}</p>
                 </div>
               )}
-              <div className="bg-[#969BE7]/20 rounded p-2 mb-3">
-                <p className="text-xs text-[#969BE7]">{q.explain}</p>
-              </div>
+              {q.explain && (
+                <div className="mb-3">
+                  <button onClick={() => toggleExplanation(q.id)} className="flex items-center gap-1 text-xs text-[#2563EB] hover:underline">
+                    {expandedExplanations[q.id] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    {expandedExplanations[q.id] ? "收起解析" : "展开解析"}
+                  </button>
+                  {expandedExplanations[q.id] && (
+                    <div className="bg-[#2563EB]/20 rounded p-2 mt-1">
+                      <p className="text-xs text-[#2563EB]">{q.explain}</p>
+                    </div>
+                  )}
+                </div>
+              )}
               {q.socraticQuestions?.length > 0 && (
-                <div className="bg-[#969BE7]/20 rounded p-2 mb-3">
-                  <p className="text-xs font-medium text-[#969BE7] mb-1">苏格拉底追问</p>
+                <div className="bg-[#2563EB]/20 rounded p-2 mb-3">
+                  <p className="text-xs font-medium text-[#2563EB] mb-1">启发追问</p>
                   {q.socraticQuestions.map((question: string, i: number) => (
-                    <p key={i} className="text-xs text-[#969BE7]">{i + 1}. {question}</p>
+                    <p key={i} className="text-xs text-[#2563EB]">{i + 1}. {question}</p>
                   ))}
                 </div>
               )}
               {q.status !== "approved" && (
-                <div className="flex gap-2">
-                  <button onClick={() => handleApprove(q.id)} className="px-3 py-1.5 text-xs bg-[#74C2A0] text-white rounded hover:bg-[#5FAF8E]">审核通过（入库）</button>
-                  <button className="px-3 py-1.5 text-xs border border-border rounded hover:bg-accent">修改内容</button>
-                  <button onClick={() => handleReject(q.id)} className="px-3 py-1.5 text-xs text-[#DD7373] hover:bg-[#E88383]/20 rounded">驳回丢弃</button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => handleApprove(q.id)} className="px-3 py-1.5 text-xs bg-[#10B981] text-white rounded hover:bg-[#0EA5E9]">审核通过</button>
+                  <button onClick={() => setInlineEditId(q.id)} className="px-3 py-1.5 text-xs border border-border rounded hover:bg-accent">修改内容</button>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <button onClick={() => setConfirmRejectId(q.id)} className="px-3 py-1.5 text-xs text-[#EF4444] hover:bg-[#DC2626]/20 rounded">驳回丢弃</button>
                   <button className="px-3 py-1.5 text-xs border border-border rounded hover:bg-accent">重新生成</button>
                 </div>
               )}
               {q.status === "approved" && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <CheckCircle size={12} className="text-[#57AE8F]" />题目已入库，来源标记为"AI生成题目"
+                  <CheckCircle size={12} className="text-[#059669]" />题目已入库，来源标记为"AI生成题目"
                   <button onClick={() => onNav("teacher-bank")} className="text-primary hover:underline">查看题库</button>
                 </div>
               )}
             </div>
           ))}
-          {generatedQuestions.length === 0 && (
+          {!isGenerating && generatedQuestions.length === 0 && (
             <div className="px-4 py-12 text-center text-sm text-muted-foreground">
               <Brain size={32} className="mx-auto mb-3 opacity-50" />
               <p>暂无生成的题目</p>
@@ -6674,11 +6844,29 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
         </div>
       </div>
 
+      {confirmRejectId !== null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg border border-border w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#DC2626]/20 rounded-full flex items-center justify-center">
+                <AlertCircle size={20} className="text-[#EF4444]" />
+              </div>
+              <h3 className="font-semibold">确定丢弃此题？</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">驳回后该题目将被永久删除，无法恢复。如需保留修改，请改用"修改内容"。</p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmRejectId(null)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
+              <button onClick={() => { if (confirmRejectId !== null) handleReject(confirmRejectId); setConfirmRejectId(null); }} className="flex-1 py-2 bg-[#EF4444] text-white rounded-md text-sm hover:bg-[#C85F5F]">确定丢弃</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showAddedModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card rounded-lg border border-border w-full max-w-md p-6 text-center space-y-4">
-            <div className="w-16 h-16 bg-[#74C2A0]/25 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle size={32} className="text-[#57AE8F]" />
+            <div className="w-16 h-16 bg-[#10B981]/25 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle size={32} className="text-[#059669]" />
             </div>
             <div>
               <h3 className="font-semibold">题目入库成功</h3>
@@ -6686,7 +6874,7 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowAddedModal(false)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">继续生成</button>
-              <button onClick={() => { setShowAddedModal(false); onNav("teacher-bank"); }} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">前往题库查看</button>
+              <button onClick={() => { setShowAddedModal(false); onNav("teacher-bank"); }} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">前往题库查看</button>
             </div>
           </div>
         </div>
@@ -6927,14 +7115,14 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
           )}
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => onNav("teacher-ai-quiz")} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
+          <button onClick={() => onNav("teacher-ai-quiz")} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">
             <Plus size={14} />AI生成题目
           </button>
           <button onClick={() => setShowUploadModal(true)} className="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
             <Upload size={14} />导入试卷
           </button>
           {selectedQuestions.length > 0 && (
-            <button onClick={handleAddToQuiz} className="flex items-center gap-2 px-4 py-2 bg-[#74C2A0] text-white rounded-md text-sm hover:bg-[#5FAF8E]">
+            <button onClick={handleAddToQuiz} className="flex items-center gap-2 px-4 py-2 bg-[#10B981] text-white rounded-md text-sm hover:bg-[#0EA5E9]">
               <Plus size={14} />加入组卷 ({selectedQuestions.length})
             </button>
           )}
@@ -6950,8 +7138,8 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
         ].map(item => (
           <div key={item.label} className="bg-card rounded-lg border border-border p-4">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.color === "blue" ? "bg-[#969BE7]/25" : item.color === "green" ? "bg-[#74C2A0]/25" : item.color === "purple" ? "bg-[#969BE7]/25" : "bg-[#55AEC2]/25"}`}>
-                <item.icon size={18} className={item.color === "blue" ? "text-[#969BE7]" : item.color === "green" ? "text-[#57AE8F]" : item.color === "purple" ? "text-[#969BE7]" : "text-[#55AEC2]"} />
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.color === "blue" ? "bg-[#2563EB]/25" : item.color === "green" ? "bg-[#10B981]/25" : item.color === "purple" ? "bg-[#2563EB]/25" : "bg-[#55AEC2]/25"}`}>
+                <item.icon size={18} className={item.color === "blue" ? "text-[#2563EB]" : item.color === "green" ? "text-[#059669]" : item.color === "purple" ? "text-[#2563EB]" : "text-[#55AEC2]"} />
               </div>
               <div>
                 <p className="font-mono text-xl font-bold text-primary">{item.value}</p>
@@ -7070,7 +7258,7 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
                         加入组卷
                       </button>
                       <button className="px-3 py-1.5 text-xs border border-border rounded-md hover:bg-accent">编辑</button>
-                      <button onClick={() => handleDelete(q.id)} className="px-3 py-1.5 text-xs text-[#DD7373] hover:bg-[#E88383]/20 rounded-md">删除</button>
+                      <button onClick={() => handleDelete(q.id)} className="px-3 py-1.5 text-xs text-[#EF4444] hover:bg-[#DC2626]/20 rounded-md">删除</button>
                     </div>
                   </div>
                 </div>
@@ -7113,12 +7301,12 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
 
             {uploadedFile && (
               <div className="space-y-4">
-                <div className="bg-[#969BE7]/20 rounded-lg p-4">
+                <div className="bg-[#2563EB]/20 rounded-lg p-4">
                   <h4 className="text-sm font-medium text-[#6E719E] mb-2">AI智能分析</h4>
-                  <div className="space-y-2 text-xs text-[#969BE7]">
+                  <div className="space-y-2 text-xs text-[#2563EB]">
                     <div className="flex items-center justify-between">
                       <span>正在分析试卷内容...</span>
-                      {aiExtracting && <div className="w-4 h-4 border-2 border-[#969BE7]/55 border-t-blue-700 rounded-full animate-spin" />}
+                      {aiExtracting && <div className="w-4 h-4 border-2 border-[#2563EB]/55 border-t-blue-700 rounded-full animate-spin" />}
                     </div>
                     {extractedCount > 0 && (
                       <>
@@ -7130,7 +7318,7 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
                 </div>
 
                 {!aiExtracting && extractedCount === 0 && (
-                  <button onClick={handleAiExtract} className="w-full py-3 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6] flex items-center justify-center gap-2">
+                  <button onClick={handleAiExtract} className="w-full py-3 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8] flex items-center justify-center gap-2">
                     <Brain size={16} />AI提取题目
                   </button>
                 )}
@@ -7138,7 +7326,7 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
                 {extractedCount > 0 && (
                   <div className="flex gap-3">
                     <button onClick={() => { setShowUploadModal(false); setUploadedFile(null); setExtractedCount(0); }} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
-                    <button onClick={handleAddToBank} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
+                    <button onClick={handleAddToBank} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">
                       添加 {extractedCount} 道题目到题库
                     </button>
                   </div>
@@ -7319,7 +7507,7 @@ function NotificationCenter({ mode }: { mode: "teacher" | "admin" | "student" })
             </button>
           )}
           {canSend && (
-            <button onClick={() => setShowSendModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
+            <button onClick={() => setShowSendModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">
               <Plus size={14} />{mode === "admin" ? "发布通知" : "发送通知"}
             </button>
           )}
@@ -7346,7 +7534,7 @@ function NotificationCenter({ mode }: { mode: "teacher" | "admin" | "student" })
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <p className="font-medium text-sm flex items-center gap-2">
-                  {n.isRead === 0 && <span className="w-2 h-2 bg-[#E88383] rounded-full flex-shrink-0" title="未读" />}
+                  {n.isRead === 0 && <span className="w-2 h-2 bg-[#DC2626] rounded-full flex-shrink-0" title="未读" />}
                   {n.title}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">{fmtNotifTime(n.createTime)} · 发送人：{n.senderName || "系统"}</p>
@@ -7448,7 +7636,7 @@ function NotificationCenter({ mode }: { mode: "teacher" | "admin" | "student" })
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowSendModal(false)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
-              <button onClick={handleSendNotification} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
+              <button onClick={handleSendNotification} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">
                 立即发送
               </button>
             </div>
@@ -7565,7 +7753,7 @@ function TeacherOperationLogs() {
                   <td className="px-4 py-3">
                     {isAssistant && !isRevoked && (
                       <button onClick={() => { setRevokingLog(log); setShowRevokeModal(true); }}
-                        className="flex items-center gap-1.5 px-2 py-1 text-xs text-[#DD7373] hover:text-[#DD7373] hover:bg-[#E88383]/20 rounded transition-colors">
+                        className="flex items-center gap-1.5 px-2 py-1 text-xs text-[#EF4444] hover:text-[#EF4444] hover:bg-[#DC2626]/20 rounded transition-colors">
                         <RotateCcw size={12} />撤回
                       </button>
                     )}
@@ -7590,7 +7778,7 @@ function TeacherOperationLogs() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card rounded-lg border border-border w-full max-w-md p-6 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#E88383]/25 text-[#DD7373] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-[#DC2626]/25 text-[#EF4444] flex items-center justify-center">
                 <AlertCircle size={20} />
               </div>
               <div>
@@ -7627,7 +7815,7 @@ function TeacherOperationLogs() {
                 setShowRevokeModal(false);
                 setRevokingLog(null);
                 showToastMsg("已撤回助教操作");
-              }} className="flex-1 py-2 bg-[#E88383] text-white rounded-md text-sm hover:bg-[#E07070]">确认撤回</button>
+              }} className="flex-1 py-2 bg-[#DC2626] text-white rounded-md text-sm hover:bg-[#E07070]">确认撤回</button>
             </div>
           </div>
         </div>
@@ -7668,8 +7856,8 @@ function TeacherQuizReview() {
                     <button onClick={() => setSelected(q)} className="text-primary hover:underline text-xs">审核</button>
                     {q.status === "pending" && (
                       <>
-                        <button className="text-[#57AE8F] hover:underline text-xs">通过</button>
-                        <button className="text-[#DD7373] hover:underline text-xs">驳回</button>
+                        <button className="text-[#059669] hover:underline text-xs">通过</button>
+                        <button className="text-[#EF4444] hover:underline text-xs">驳回</button>
                       </>
                     )}
                   </div>
@@ -7698,19 +7886,19 @@ function TeacherQuizReview() {
               </div>
               <div className="space-y-1.5">
                 {["A. 选项一（参考答案）", "B. 选项二", "C. 选项三", "D. 选项四"].map((o, i) => (
-                  <div key={i} className={`px-3 py-2 rounded text-sm ${i === 0 ? "bg-[#74C2A0]/20 text-[#57AE8F] border border-[#74C2A0]/40" : "bg-muted text-muted-foreground"}`}>
+                  <div key={i} className={`px-3 py-2 rounded text-sm ${i === 0 ? "bg-[#10B981]/20 text-[#059669] border border-[#10B981]/40" : "bg-muted text-muted-foreground"}`}>
                     {o}
                   </div>
                 ))}
               </div>
-              <div className="bg-[#969BE7]/20 rounded p-3 text-xs text-[#969BE7]">
+              <div className="bg-[#2563EB]/20 rounded p-3 text-xs text-[#2563EB]">
                 <strong>解析：</strong>根据微分方程求解原理，正确答案为A。
               </div>
             </div>
             <div className="flex gap-3 pt-2">
-              <button onClick={() => setSelected(null)} className="flex-1 py-2 border border-border rounded-md text-sm text-[#DD7373] hover:bg-[#E88383]/20">驳回</button>
+              <button onClick={() => setSelected(null)} className="flex-1 py-2 border border-border rounded-md text-sm text-[#EF4444] hover:bg-[#DC2626]/20">驳回</button>
               <button onClick={() => setSelected(null)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">编辑</button>
-              <button onClick={() => setSelected(null)} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">通过</button>
+              <button onClick={() => setSelected(null)} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">通过</button>
             </div>
           </div>
         </div>
@@ -7772,7 +7960,7 @@ function StudentDashboard({ onNav }: { onNav: (p: Page) => void }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-[#969BE7] to-[#C8A2E8] rounded-lg p-6 text-white">
+      <div className="bg-gradient-to-r from-[#2563EB] to-[#C8A2E8] rounded-lg p-6 text-white">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="text-xl font-semibold">你好，{studentName} 👋</h2>
@@ -7784,7 +7972,7 @@ function StudentDashboard({ onNav }: { onNav: (p: Page) => void }) {
               <select value={selectedCourseId || ""} onChange={e => handleCourseChange(parseInt(e.target.value))}
                 className="appearance-none bg-white/20 backdrop-blur-sm text-white px-4 py-2 pr-8 rounded-lg text-sm font-medium cursor-pointer hover:bg-white/30 transition-colors">
                 {studentCourses.map(c => (
-                  <option key={c.id} value={c.id} className="text-[#4A4A6A]">
+                  <option key={c.id} value={c.id} className="text-[#0F172A]">
                     {c.courseName}
                   </option>
                 ))}
@@ -7821,7 +8009,7 @@ function StudentDashboard({ onNav }: { onNav: (p: Page) => void }) {
               <YAxis domain={[50, 100]} tick={{ fontSize: 11 }} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="score" stroke="#969BE7" strokeWidth={2} dot={{ r: 4 }} name="我的成绩" />
+              <Line type="monotone" dataKey="score" stroke="#2563EB" strokeWidth={2} dot={{ r: 4 }} name="我的成绩" />
               <Line type="monotone" dataKey="classAvg" stroke="#B8B8CE" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="5 5" name="班级均值" />
             </LineChart>
           </ResponsiveContainer>
@@ -7841,7 +8029,7 @@ function StudentDashboard({ onNav }: { onNav: (p: Page) => void }) {
                   <p className="text-xs text-muted-foreground">{selectedCourse?.courseName || ""} · {e.duration}分钟</p>
                 </div>
                 <div className="text-right">
-                  <button onClick={() => onNav("student-exam")} className="mt-1 px-3 py-1 text-xs bg-primary text-white rounded hover:bg-[#7F84D6]">
+                  <button onClick={() => onNav("student-exam")} className="mt-1 px-3 py-1 text-xs bg-primary text-white rounded hover:bg-[#1D4ED8]">
                     参加考试
                   </button>
                 </div>
@@ -7874,7 +8062,7 @@ function StudentDashboard({ onNav }: { onNav: (p: Page) => void }) {
           ].map(item => (
             <button key={item.label} onClick={() => onNav(item.page)}
               className="flex flex-col items-center gap-2 p-4 bg-muted/50 rounded-lg hover:bg-accent transition-colors">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.color === "blue" ? "bg-[#969BE7]/20 text-[#969BE7]" : item.color === "green" ? "bg-[#74C2A0]/20 text-[#57AE8F]" : item.color === "purple" ? "bg-[#969BE7]/20 text-[#969BE7]" : item.color === "orange" ? "bg-[#F2A56B]/20 text-[#E8945C]" : item.color === "cyan" ? "bg-[#55AEC2]/20 text-[#55AEC2]" : "bg-[#D98BA8]/20 text-[#D98BA8]"}`}>
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.color === "blue" ? "bg-[#2563EB]/20 text-[#2563EB]" : item.color === "green" ? "bg-[#10B981]/20 text-[#059669]" : item.color === "purple" ? "bg-[#2563EB]/20 text-[#2563EB]" : item.color === "orange" ? "bg-[#F59E0B]/20 text-[#D97706]" : item.color === "cyan" ? "bg-[#55AEC2]/20 text-[#55AEC2]" : "bg-[#D98BA8]/20 text-[#D98BA8]"}`}>
                 <item.icon size={18} />
               </div>
               <span className="text-sm font-medium">{item.label}</span>
@@ -7971,7 +8159,7 @@ function StudentProfile() {
           <div className="flex items-center gap-2"><CheckCircle size={14} />{toast}</div>
         </div>
       )}
-      <div className="bg-gradient-to-r from-[#969BE7] to-[#C8A2E8] rounded-lg p-6 text-white">
+      <div className="bg-gradient-to-r from-[#2563EB] to-[#C8A2E8] rounded-lg p-6 text-white">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-6">
             <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
@@ -7989,7 +8177,7 @@ function StudentProfile() {
               <select value={selectedCourseId || ""} onChange={e => handleCourseChange(parseInt(e.target.value))}
                 className="appearance-none bg-white/20 backdrop-blur-sm text-white px-4 py-2 pr-8 rounded-lg text-sm font-medium cursor-pointer hover:bg-white/30 transition-colors">
                 {studentCourses.map(c => (
-                  <option key={c.id} value={c.id} className="text-[#4A4A6A]">
+                  <option key={c.id} value={c.id} className="text-[#0F172A]">
                     {c.courseName}
                   </option>
                 ))}
@@ -8008,17 +8196,17 @@ function StudentProfile() {
         </div>
         <div className="bg-card rounded-lg border border-border p-4">
           <p className="text-xs text-muted-foreground">出勤率</p>
-          <p className="font-mono text-2xl font-bold text-[#57AE8F] mt-1">{profile?.attendanceRate != null ? profile.attendanceRate.toFixed(1) + "%" : "—"}</p>
+          <p className="font-mono text-2xl font-bold text-[#059669] mt-1">{profile?.attendanceRate != null ? profile.attendanceRate.toFixed(1) + "%" : "—"}</p>
           <p className="text-xs text-muted-foreground mt-2">{profile?.absentCount === 0 ? "全勤" : `缺勤${profile?.absentCount}次`}</p>
         </div>
         <div className="bg-card rounded-lg border border-border p-4">
           <p className="text-xs text-muted-foreground">作业提交率</p>
-          <p className="font-mono text-2xl font-bold text-[#969BE7] mt-1">{profile?.homeworkRate != null ? profile.homeworkRate.toFixed(1) + "%" : "—"}</p>
+          <p className="font-mono text-2xl font-bold text-[#2563EB] mt-1">{profile?.homeworkRate != null ? profile.homeworkRate.toFixed(1) + "%" : "—"}</p>
           <p className="text-xs text-muted-foreground mt-2">按时提交</p>
         </div>
         <div className="bg-card rounded-lg border border-border p-4">
           <p className="text-xs text-muted-foreground">班级排名</p>
-          <p className="font-mono text-2xl font-bold text-[#969BE7] mt-1">{profile?.classRank && profile?.classTotal ? `${profile.classRank}/${profile.classTotal}` : "—"}</p>
+          <p className="font-mono text-2xl font-bold text-[#2563EB] mt-1">{profile?.classRank && profile?.classTotal ? `${profile.classRank}/${profile.classTotal}` : "—"}</p>
           <p className="text-xs text-muted-foreground mt-2">共{profile?.classTotal ?? 0}人</p>
         </div>
       </div>
@@ -8033,13 +8221,13 @@ function StudentProfile() {
             {knowledgeData.map(k => (
               <div key={k.subject}>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className={k.value < 60 ? "text-[#DD7373] font-medium" : ""}>{k.subject}</span>
-                  <span className={`font-mono text-xs ${k.value < 60 ? "text-[#DD7373] font-semibold" : "text-muted-foreground"}`}>
+                  <span className={k.value < 60 ? "text-[#EF4444] font-medium" : ""}>{k.subject}</span>
+                  <span className={`font-mono text-xs ${k.value < 60 ? "text-[#EF4444] font-semibold" : "text-muted-foreground"}`}>
                     {k.value}% {k.value < 60 && "⚠"}
                   </span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
-                  <div className={`h-2 rounded-full transition-all ${k.value < 60 ? "bg-[#E88383]" : k.value < 75 ? "bg-[#F5C069]" : "bg-[#74C2A0]"}`}
+                  <div className={`h-2 rounded-full transition-all ${k.value < 60 ? "bg-[#DC2626]" : k.value < 75 ? "bg-[#F5C069]" : "bg-[#10B981]"}`}
                     style={{ width: `${k.value}%` }} />
                 </div>
               </div>
@@ -8056,7 +8244,7 @@ function StudentProfile() {
             <RadarChart data={knowledgeData}>
               <PolarGrid stroke="var(--border)" />
               <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
-              <Radar dataKey="value" stroke="#969BE7" fill="#969BE7" fillOpacity={0.2} name="掌握度" />
+              <Radar dataKey="value" stroke="#2563EB" fill="#2563EB" fillOpacity={0.2} name="掌握度" />
               <Tooltip formatter={(v: any) => `${v}%`} />
             </RadarChart>
           </ResponsiveContainer>
@@ -8098,7 +8286,7 @@ function StudentProfile() {
               <div key={item.label} className="bg-muted/50 rounded-lg p-4">
                 <p className="text-xs text-muted-foreground">{item.label}</p>
                 <p className="font-mono text-xl font-bold mt-1">{item.value}</p>
-                <p className={`text-xs mt-1 ${item.trend.startsWith("+") ? "text-[#57AE8F]" : "text-[#DD7373]"}`}>
+                <p className={`text-xs mt-1 ${item.trend.startsWith("+") ? "text-[#059669]" : "text-[#EF4444]"}`}>
                   {item.trend} 较上周
                 </p>
               </div>
@@ -8113,8 +8301,8 @@ function StudentProfile() {
               learningSuggestions.map((s, i) => (
                 <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${
-                    s.type === "strong" ? "bg-[#74C2A0]/25 text-[#57AE8F]" : 
-                    s.type === "weak" ? "bg-[#E88383]/25 text-[#DD7373]" : "bg-[#969BE7]/25 text-[#969BE7]"
+                    s.type === "strong" ? "bg-[#10B981]/25 text-[#059669]" : 
+                    s.type === "weak" ? "bg-[#DC2626]/25 text-[#EF4444]" : "bg-[#2563EB]/25 text-[#2563EB]"
                   }`}>
                     {s.type === "strong" ? "优" : s.type === "weak" ? "弱" : "改"}
                   </div>
@@ -8135,7 +8323,7 @@ function StudentProfile() {
             <button
               onClick={handleGenerateSuggestions}
               disabled={generatingSuggestions}
-              className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white text-sm rounded-md hover:bg-[#7F84D6] disabled:opacity-50 disabled:cursor-not-allowed">
+              className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white text-sm rounded-md hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed">
               {generatingSuggestions ? (
                 <>
                   <RefreshCw size={14} className="animate-spin" />
@@ -8168,7 +8356,7 @@ function StudentProfile() {
                 { type: "code", title: "实验代码示例", size: "56KB", icon: Code },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg hover:bg-accent transition-colors cursor-pointer">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.type === "video" ? "bg-[#E88383]/20 text-[#DD7373]" : item.type === "pdf" ? "bg-[#969BE7]/20 text-[#969BE7]" : "bg-[#74C2A0]/20 text-[#57AE8F]"}`}>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.type === "video" ? "bg-[#DC2626]/20 text-[#EF4444]" : item.type === "pdf" ? "bg-[#2563EB]/20 text-[#2563EB]" : "bg-[#10B981]/20 text-[#059669]"}`}>
                     <item.icon size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -8240,7 +8428,7 @@ function StudentScoreTrend() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-[#969BE7] to-[#C8A2E8] rounded-lg p-6 text-white">
+      <div className="bg-gradient-to-r from-[#2563EB] to-[#C8A2E8] rounded-lg p-6 text-white">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="text-xl font-semibold">成绩趋势分析</h2>
@@ -8253,7 +8441,7 @@ function StudentScoreTrend() {
                 <select value={selectedCourseId || ""} onChange={e => handleCourseChange(parseInt(e.target.value))}
                   className="appearance-none bg-white/20 backdrop-blur-sm text-white px-4 py-2 pr-8 rounded-lg text-sm font-medium cursor-pointer hover:bg-white/30 transition-colors">
                   {studentCourses.map(c => (
-                    <option key={c.id} value={c.id} className="text-[#4A4A6A]">
+                    <option key={c.id} value={c.id} className="text-[#0F172A]">
                       {c.courseName}
                     </option>
                   ))}
@@ -8280,17 +8468,17 @@ function StudentScoreTrend() {
           </div>
           <div className="bg-card rounded-lg border border-border p-4">
             <p className="text-xs text-muted-foreground">最低分</p>
-            <p className="font-mono text-2xl font-bold text-[#DD7373] mt-1">{stats.min}</p>
+            <p className="font-mono text-2xl font-bold text-[#EF4444] mt-1">{stats.min}</p>
             <p className="text-xs text-muted-foreground mt-1">{courseScoreTrend.find(s => s.score === stats.min)?.exam}</p>
           </div>
           <div className="bg-card rounded-lg border border-border p-4">
             <p className="text-xs text-muted-foreground">平均分</p>
-            <p className="font-mono text-2xl font-bold text-[#969BE7] mt-1">{stats.avg}</p>
+            <p className="font-mono text-2xl font-bold text-[#2563EB] mt-1">{stats.avg}</p>
             <p className="text-xs text-muted-foreground mt-1">{courseScoreTrend.length}次考试</p>
           </div>
           <div className="bg-card rounded-lg border border-border p-4">
             <p className="text-xs text-muted-foreground">标准差</p>
-            <p className="font-mono text-2xl font-bold text-[#969BE7] mt-1">{stats.std}</p>
+            <p className="font-mono text-2xl font-bold text-[#2563EB] mt-1">{stats.std}</p>
             <p className="text-xs text-muted-foreground mt-1">成绩波动</p>
           </div>
         </div>
@@ -8309,7 +8497,7 @@ function StudentScoreTrend() {
               <YAxis domain={[50, 100]} tick={{ fontSize: 11 }} />
               <Tooltip formatter={(v: any) => `${v}分`} />
               <Legend />
-              <Line type="monotone" dataKey="score" stroke="#969BE7" strokeWidth={2} dot={{ r: 4 }} name="我的成绩" />
+              <Line type="monotone" dataKey="score" stroke="#2563EB" strokeWidth={2} dot={{ r: 4 }} name="我的成绩" />
               {showClassAvg && (
                 <Line type="monotone" dataKey="classAvg" stroke="#B8B8CE" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="5 5" name="班级均值" />
               )}
@@ -8345,10 +8533,10 @@ function StudentScoreTrend() {
                     <td className="px-4 py-3 font-medium">{item.exam}</td>
                     <td className="px-4 py-3 font-mono font-semibold">{item.score}</td>
                     <td className="px-4 py-3 font-mono text-muted-foreground">{item.classAvg}</td>
-                    <td className={`px-4 py-3 font-mono ${diff >= 0 ? "text-[#57AE8F]" : "text-[#DD7373]"}`}>
+                    <td className={`px-4 py-3 font-mono ${diff >= 0 ? "text-[#059669]" : "text-[#EF4444]"}`}>
                       {diff >= 0 ? "+" : ""}{diff}
                     </td>
-                    <td className={`px-4 py-3 font-mono text-xs ${prevScore !== null && item.score >= prevScore ? "text-[#57AE8F]" : prevScore !== null ? "text-[#DD7373]" : "text-muted-foreground"}`}>
+                    <td className={`px-4 py-3 font-mono text-xs ${prevScore !== null && item.score >= prevScore ? "text-[#059669]" : prevScore !== null ? "text-[#EF4444]" : "text-muted-foreground"}`}>
                       {trend}
                     </td>
                   </tr>
@@ -8609,7 +8797,7 @@ function StudentWrongBook() {
             <button onClick={() => setShowAddWrongModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 border border-border text-sm rounded-md hover:bg-accent">
               <Plus size={14} />手动添加
             </button>
-            <button onClick={() => { setShowAIGenerateModal(true); setAiGeneratedQuestions([]); }} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-sm rounded-md hover:bg-[#7F84D6]">
+            <button onClick={() => { setShowAIGenerateModal(true); setAiGeneratedQuestions([]); }} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-sm rounded-md hover:bg-[#1D4ED8]">
               <Brain size={14} />AI生成相似题
             </button>
           </div>
@@ -8683,11 +8871,11 @@ function StudentWrongBook() {
                     </div>
                     <p className="text-sm line-clamp-2">{q.question}</p>
                     <div className="mt-2 flex items-center gap-4 text-xs">
-                      <span className="text-[#DD7373]">我的答案：{q.myAnswer}</span>
-                      <span className="text-[#57AE8F]">正确答案：{q.correctAnswer}</span>
+                      <span className="text-[#EF4444]">我的答案：{q.myAnswer}</span>
+                      <span className="text-[#059669]">正确答案：{q.correctAnswer}</span>
                     </div>
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); setSelectedQuestion(q); setShowAIGenerateModal(true); requestSimilarQuestions(q); }} className="flex-shrink-0 px-3 py-1.5 text-xs bg-primary text-white rounded hover:bg-[#7F84D6]">
+                  <button onClick={(e) => { e.stopPropagation(); setSelectedQuestion(q); setShowAIGenerateModal(true); requestSimilarQuestions(q); }} className="flex-shrink-0 px-3 py-1.5 text-xs bg-primary text-white rounded hover:bg-[#1D4ED8]">
                     练习相似题
                   </button>
                 </div>
@@ -8716,16 +8904,16 @@ function StudentWrongBook() {
               {selectedQuestion.options.map((opt, i) => <div key={i} className="px-4 py-3 rounded-md text-sm bg-muted">{String.fromCharCode(65 + i)}. {formatMathText(opt)}</div>)}
             </div>}
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <p className="rounded-md bg-[#E88383]/20 p-3 text-[#DD7373]">我的答案：{formatMathText(selectedQuestion.myAnswer)}</p>
-              <p className="rounded-md bg-[#74C2A0]/20 p-3 text-[#57AE8F]">正确答案：{formatMathText(selectedQuestion.correctAnswer)}</p>
+              <p className="rounded-md bg-[#DC2626]/20 p-3 text-[#EF4444]">我的答案：{formatMathText(selectedQuestion.myAnswer)}</p>
+              <p className="rounded-md bg-[#10B981]/20 p-3 text-[#059669]">正确答案：{formatMathText(selectedQuestion.correctAnswer)}</p>
             </div>
-            <div className="bg-[#969BE7]/20 rounded-lg p-4">
-              <p className="text-xs font-medium text-[#969BE7] mb-1">解析</p>
-              <p className="text-sm text-[#969BE7]">{formatMathText(selectedQuestion.explain)}</p>
+            <div className="bg-[#2563EB]/20 rounded-lg p-4">
+              <p className="text-xs font-medium text-[#2563EB] mb-1">解析</p>
+              <p className="text-sm text-[#2563EB]">{formatMathText(selectedQuestion.explain)}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <button disabled={analysisLoading} onClick={requestAnalysis} className="py-2 border border-primary text-primary rounded-md text-sm hover:bg-primary/10 disabled:opacity-50">{analysisLoading ? "分析中..." : "AI错因分析"}</button>
-              <button onClick={() => { setShowAIGenerateModal(true); requestSimilarQuestions(selectedQuestion); }} className="py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">练习相似题</button>
+              <button onClick={() => { setShowAIGenerateModal(true); requestSimilarQuestions(selectedQuestion); }} className="py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">练习相似题</button>
             </div>
           </div>
         </div>
@@ -8752,8 +8940,8 @@ function StudentWrongBook() {
                   const answered = practiceAnswers[practiceIdx] !== undefined;
                   let cls = "border border-border hover:border-primary text-sm";
                   if (answered) {
-                    if (i === practiceQuestionsList[practiceIdx].answer) cls = "border border-[#93D4BC] bg-[#74C2A0]/20 text-[#57AE8F] text-sm";
-                    else if (i === practiceAnswers[practiceIdx] && practiceAnswers[practiceIdx] !== practiceQuestionsList[practiceIdx].answer) cls = "border border-[#E8909A] bg-[#E88383]/20 text-[#DD7373] text-sm";
+                    if (i === practiceQuestionsList[practiceIdx].answer) cls = "border border-[#93D4BC] bg-[#10B981]/20 text-[#059669] text-sm";
+                    else if (i === practiceAnswers[practiceIdx] && practiceAnswers[practiceIdx] !== practiceQuestionsList[practiceIdx].answer) cls = "border border-[#E8909A] bg-[#DC2626]/20 text-[#EF4444] text-sm";
                     else cls = "border border-border text-muted-foreground text-sm";
                   }
                   return (
@@ -8765,9 +8953,9 @@ function StudentWrongBook() {
                 })}
               </div>
               {practiceAnswers[practiceIdx] !== undefined && (
-                <div className="mt-3 bg-[#969BE7]/20 rounded-lg p-4">
-                  <p className="text-xs font-medium text-[#969BE7] mb-1">解析</p>
-                  <p className="text-sm text-[#969BE7]">{formatMathText(practiceQuestionsList[practiceIdx].explain)}</p>
+                <div className="mt-3 bg-[#2563EB]/20 rounded-lg p-4">
+                  <p className="text-xs font-medium text-[#2563EB] mb-1">解析</p>
+                  <p className="text-sm text-[#2563EB]">{formatMathText(practiceQuestionsList[practiceIdx].explain)}</p>
                 </div>
               )}
             </div>
@@ -8775,10 +8963,10 @@ function StudentWrongBook() {
             <div className="flex gap-3">
               <button onClick={() => setPracticeMode(false)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
               {practiceAnswers[practiceIdx] !== undefined && practiceIdx < practiceQuestionsList.length - 1 && (
-                <button onClick={() => setPracticeIdx(i => i + 1)} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">下一题</button>
+                <button onClick={() => setPracticeIdx(i => i + 1)} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">下一题</button>
               )}
               {practiceAnswers[practiceIdx] !== undefined && practiceIdx === practiceQuestionsList.length - 1 && (
-                <button onClick={() => setPracticeMode(false)} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">完成练习</button>
+                <button onClick={() => setPracticeMode(false)} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">完成练习</button>
               )}
             </div>
           </div>
@@ -8830,7 +9018,7 @@ function StudentWrongBook() {
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowAddWrongModal(false)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
-              <button disabled={savingManualWrong} onClick={saveManualWrongQuestion} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6] disabled:opacity-50">{savingManualWrong ? "保存中..." : "保存错题"}</button>
+              <button disabled={savingManualWrong} onClick={saveManualWrongQuestion} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8] disabled:opacity-50">{savingManualWrong ? "保存中..." : "保存错题"}</button>
             </div>
           </div>
         </div>
@@ -8858,7 +9046,7 @@ function StudentWrongBook() {
                     setPracticeAnswers({});
                     setShowAIGenerateModal(false);
                     setPracticeMode(true);
-                  }} className="w-full py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">开始相似题练习</button>
+                  }} className="w-full py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">开始相似题练习</button>
                   {aiGeneratedQuestions.map((q, i) => (
                     <div key={i} className="border border-border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
@@ -8873,9 +9061,9 @@ function StudentWrongBook() {
                           </div>
                         ))}
                       </div>
-                      <div className="mt-3 bg-[#969BE7]/20 rounded-lg p-3">
-                        <p className="text-xs font-medium text-[#969BE7]">答案：{String.fromCharCode(65 + q.answer)}</p>
-                        <p className="text-xs text-[#969BE7] mt-1">{formatMathText(q.explain)}</p>
+                      <div className="mt-3 bg-[#2563EB]/20 rounded-lg p-3">
+                        <p className="text-xs font-medium text-[#2563EB]">答案：{String.fromCharCode(65 + q.answer)}</p>
+                        <p className="text-xs text-[#2563EB] mt-1">{formatMathText(q.explain)}</p>
                       </div>
                       <p className="mt-3 text-xs text-muted-foreground">在练习中答错后，会自动加入错题本。</p>
                     </div>
@@ -8980,7 +9168,7 @@ function StudentExamLegacy() {
 
     return (
       <div className="space-y-5">
-        <div className="bg-gradient-to-r from-[#969BE7] to-[#C8A2E8] rounded-lg p-5 text-white">
+        <div className="bg-gradient-to-r from-[#2563EB] to-[#C8A2E8] rounded-lg p-5 text-white">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-semibold">{activeExam.name}</h2>
@@ -8993,7 +9181,7 @@ function StudentExamLegacy() {
                 </p>
                 <p className="text-white/75 text-xs">剩余时间</p>
               </div>
-              <button onClick={() => { setShowConfirmModal(true); }} className="px-4 py-2 bg-[#969BE7]/15 text-[#5B60B8] rounded-md text-sm font-medium hover:bg-[#969BE7]/30">
+              <button onClick={() => { setShowConfirmModal(true); }} className="px-4 py-2 bg-[#2563EB]/15 text-[#5B60B8] rounded-md text-sm font-medium hover:bg-[#2563EB]/30">
                 提交试卷
               </button>
             </div>
@@ -9002,7 +9190,7 @@ function StudentExamLegacy() {
 
         {submitted ? (
           <div className="bg-card rounded-lg border border-border p-8 text-center space-y-6">
-            <div className="w-20 h-20 mx-auto rounded-full bg-[#EEC1DD]/40 flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto rounded-full bg-[#0EA5E9]/40 flex items-center justify-center">
               <Award size={40} className="text-[#E9B45C]" />
             </div>
             <div>
@@ -9016,22 +9204,22 @@ function StudentExamLegacy() {
             <div className="bg-muted/50 rounded-lg p-4 max-w-2xl mx-auto">
               <div className="space-y-2">
                 {activeExam.questions.map((q, i) => (
-                  <div key={q.id} className={`flex items-start gap-3 p-3 rounded-md text-sm ${answers[i] === q.answer ? "bg-[#74C2A0]/20" : "bg-[#E88383]/20"}`}>
-                    <span className={`font-mono text-xs ${answers[i] === q.answer ? "text-[#57AE8F]" : "text-[#DD7373]"}`}>
+                  <div key={q.id} className={`flex items-start gap-3 p-3 rounded-md text-sm ${answers[i] === q.answer ? "bg-[#10B981]/20" : "bg-[#DC2626]/20"}`}>
+                    <span className={`font-mono text-xs ${answers[i] === q.answer ? "text-[#059669]" : "text-[#EF4444]"}`}>
                       {i + 1}. {q.type === "choice" ? "选择题" : q.type === "judge" ? "判断题" : "问答题"}
                     </span>
                     <div className="flex-1">
                       <p className="text-xs">{q.question}</p>
                       <div className="mt-1 flex items-center gap-4 text-xs">
-                        <span className="text-[#DD7373]">我的答案：{q.type === "text" ? (answers[i] || "未作答") : q.options[answers[i] ?? -1] || "未作答"}</span>
-                        <span className="text-[#57AE8F]">正确答案：{q.type === "text" ? q.answer : q.options[q.answer]}</span>
+                        <span className="text-[#EF4444]">我的答案：{q.type === "text" ? (answers[i] || "未作答") : q.options[answers[i] ?? -1] || "未作答"}</span>
+                        <span className="text-[#059669]">正确答案：{q.type === "text" ? q.answer : q.options[q.answer]}</span>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-            <button onClick={() => setActiveExam(null)} className="px-6 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
+            <button onClick={() => setActiveExam(null)} className="px-6 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">
               返回列表
             </button>
           </div>
@@ -9083,7 +9271,7 @@ function StudentExamLegacy() {
                         i === currentQuestion
                           ? "bg-primary text-white shadow-sm"
                           : answers[i] !== undefined
-                            ? "bg-[#74C2A0]/25 text-[#57AE8F] hover:bg-[#74C2A0]/30"
+                            ? "bg-[#10B981]/25 text-[#059669] hover:bg-[#10B981]/30"
                             : "bg-muted text-muted-foreground hover:bg-accent"
                       }`}>
                       {i + 1}
@@ -9103,8 +9291,8 @@ function StudentExamLegacy() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-card rounded-lg border border-border w-full max-w-sm p-6 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#F2A56B]/20 flex items-center justify-center">
-                  <AlertCircle size={20} className="text-[#E8945C]" />
+                <div className="w-10 h-10 rounded-full bg-[#F59E0B]/20 flex items-center justify-center">
+                  <AlertCircle size={20} className="text-[#D97706]" />
                 </div>
                 <div>
                   <h3 className="font-semibold">确认提交</h3>
@@ -9113,7 +9301,7 @@ function StudentExamLegacy() {
               </div>
               <div className="flex gap-3">
                 <button onClick={() => setShowConfirmModal(false)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">继续答题</button>
-                <button onClick={submitExam} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">确认提交</button>
+                <button onClick={submitExam} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8]">确认提交</button>
               </div>
             </div>
           </div>
@@ -9124,7 +9312,7 @@ function StudentExamLegacy() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-[#969BE7] to-[#C8A2E8] rounded-lg p-6 text-white">
+      <div className="bg-gradient-to-r from-[#2563EB] to-[#C8A2E8] rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold">在线考试</h2>
@@ -9136,7 +9324,7 @@ function StudentExamLegacy() {
               <select value={selectedCourseId} onChange={e => handleCourseChange(parseInt(e.target.value))}
                 className="appearance-none bg-white/20 backdrop-blur-sm text-white px-4 py-2 pr-8 rounded-lg text-sm font-medium cursor-pointer hover:bg-white/30 transition-colors">
                 {studentCourses.map(c => (
-                  <option key={c.id} value={c.id} className="text-[#4A4A6A]">
+                  <option key={c.id} value={c.id} className="text-[#0F172A]">
                     {c.name} · 进度 {c.progress}%
                   </option>
                 ))}
@@ -9151,7 +9339,7 @@ function StudentExamLegacy() {
         <div className="bg-card rounded-lg border border-border overflow-hidden">
           <div className="px-4 py-3 border-b border-border bg-muted/50">
             <div className="flex items-center gap-2">
-              <Clock size={14} className="text-[#E8945C]" />
+              <Clock size={14} className="text-[#D97706]" />
               <h3 className="font-medium text-sm">待参加考试</h3>
               <Tag color="orange" className="ml-auto">{pendingExams.length}</Tag>
             </div>
@@ -9164,13 +9352,13 @@ function StudentExamLegacy() {
                     <p className="font-medium text-sm">{exam.name}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{exam.course} · {exam.teacher}</p>
                     <div className="flex items-center gap-3 mt-2">
-                      <span className="text-xs bg-[#969BE7]/20 text-[#969BE7] px-2 py-0.5 rounded">
+                      <span className="text-xs bg-[#2563EB]/20 text-[#2563EB] px-2 py-0.5 rounded">
                         {exam.duration}分钟
                       </span>
-                      <span className="text-xs text-[#E8945C]">{exam.deadline} 截止</span>
+                      <span className="text-xs text-[#D97706]">{exam.deadline} 截止</span>
                     </div>
                   </div>
-                  <button onClick={() => startExam(exam)} className="ml-4 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6] transition-colors">
+                  <button onClick={() => startExam(exam)} className="ml-4 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#1D4ED8] transition-colors">
                     参加考试
                   </button>
                 </div>
@@ -9178,7 +9366,7 @@ function StudentExamLegacy() {
             ))}
             {pendingExams.length === 0 && (
               <div className="text-center py-12">
-                <CheckCircle size={32} className="mx-auto text-[#57AE8F] mb-2" />
+                <CheckCircle size={32} className="mx-auto text-[#059669] mb-2" />
                 <p className="text-sm text-muted-foreground">暂无待参加考试</p>
               </div>
             )}
@@ -9188,7 +9376,7 @@ function StudentExamLegacy() {
         <div className="bg-card rounded-lg border border-border overflow-hidden">
           <div className="px-4 py-3 border-b border-border bg-muted/50">
             <div className="flex items-center gap-2">
-              <Award size={14} className="text-[#57AE8F]" />
+              <Award size={14} className="text-[#059669]" />
               <h3 className="font-medium text-sm">已完成考试</h3>
               <Tag color="green" className="ml-auto">{completedExams.length}</Tag>
             </div>
@@ -9927,19 +10115,19 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
                   <div className="flex items-center gap-2 flex-wrap">
                     {p.status === "DRAFT" && (
                       <>
-                        <button onClick={() => openEdit(p.id)} className="inline-flex items-center gap-1 text-xs text-[#969BE7] hover:underline"><Edit2 size={14} />编辑</button>
-                        <button onClick={() => handlePublish(p.id)} className="inline-flex items-center gap-1 text-xs text-[#57AE8F] hover:underline"><Play size={14} />发布</button>
-                        <button onClick={() => handleDelete(p.id)} className="inline-flex items-center gap-1 text-xs text-[#DD7373] hover:underline"><Trash2 size={14} />删除</button>
+                        <button onClick={() => openEdit(p.id)} className="inline-flex items-center gap-1 text-xs text-[#2563EB] hover:underline"><Edit2 size={14} />编辑</button>
+                        <button onClick={() => handlePublish(p.id)} className="inline-flex items-center gap-1 text-xs text-[#059669] hover:underline"><Play size={14} />发布</button>
+                        <button onClick={() => handleDelete(p.id)} className="inline-flex items-center gap-1 text-xs text-[#EF4444] hover:underline"><Trash2 size={14} />删除</button>
                       </>
                     )}
                     {p.status === "PUBLISHED" && (
-                      <button onClick={() => handleClose(p.id)} className="inline-flex items-center gap-1 text-xs text-[#E8945C] hover:underline"><Clock size={14} />结束</button>
+                      <button onClick={() => handleClose(p.id)} className="inline-flex items-center gap-1 text-xs text-[#D97706] hover:underline"><Clock size={14} />结束</button>
                     )}
                     {p.status === "ENDED" && (
                       <>
-                        <button onClick={() => openGrading(p.id)} className="inline-flex items-center gap-1 text-xs text-[#969BE7] hover:underline"><FileSearch size={14} />批阅({p.ungradedCount ?? 0})</button>
-                        <button onClick={() => openResults(p.id)} className="inline-flex items-center gap-1 text-xs text-[#969BE7] hover:underline"><Eye size={14} />结果</button>
-                        <button onClick={() => handleDelete(p.id)} className="inline-flex items-center gap-1 text-xs text-[#DD7373] hover:underline"><Trash2 size={14} />删除</button>
+                        <button onClick={() => openGrading(p.id)} className="inline-flex items-center gap-1 text-xs text-[#2563EB] hover:underline"><FileSearch size={14} />批阅({p.ungradedCount ?? 0})</button>
+                        <button onClick={() => openResults(p.id)} className="inline-flex items-center gap-1 text-xs text-[#2563EB] hover:underline"><Eye size={14} />结果</button>
+                        <button onClick={() => handleDelete(p.id)} className="inline-flex items-center gap-1 text-xs text-[#EF4444] hover:underline"><Trash2 size={14} />删除</button>
                       </>
                     )}
                   </div>
@@ -10025,7 +10213,7 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
                         </div>
                         {objective ? (
                           <>
-                            <div className="text-xs"><span className="text-muted-foreground">正确答案：</span><span className="font-medium text-[#57AE8F]">{q.correctAnswer || "—"}</span></div>
+                            <div className="text-xs"><span className="text-muted-foreground">正确答案：</span><span className="font-medium text-[#059669]">{q.correctAnswer || "—"}</span></div>
                             <div className="text-xs"><span className="text-muted-foreground">得分：</span><span className="font-medium">{q.score ?? 0}</span></div>
                           </>
                         ) : graded ? (
@@ -10152,7 +10340,7 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
                     <tbody>
                       {results.questionStats.map((q, idx) => {
                         const rate = q.correctRate ?? 0;
-                        const rateColor = rate >= 70 ? "text-[#57AE8F]" : rate >= 40 ? "text-[#E8945C]" : "text-[#DD7373]";
+                        const rateColor = rate >= 70 ? "text-[#059669]" : rate >= 40 ? "text-[#D97706]" : "text-[#EF4444]";
                         const typeMap: Record<string,string> = { SINGLE: "单选", MULTI: "多选", FILL: "填空", SHORT: "简答", COMPREHENSIVE: "综合" };
                         return (
                           <tr key={idx} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
@@ -10161,8 +10349,8 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
                             <td className="px-4 py-2.5 text-xs max-w-xs truncate" title={q.questionStem}>{q.questionStem ?? "—"}</td>
                             <td className="px-4 py-2.5 text-xs text-muted-foreground">{q.knowledgePoints ?? "—"}</td>
                             <td className="px-4 py-2.5 text-center font-mono">{q.answerCount ?? 0}</td>
-                            <td className="px-4 py-2.5 text-center font-mono text-[#57AE8F]">{q.correctCount ?? 0}</td>
-                            <td className="px-4 py-2.5 text-center font-mono text-[#DD7373]">{q.wrongCount ?? 0}</td>
+                            <td className="px-4 py-2.5 text-center font-mono text-[#059669]">{q.correctCount ?? 0}</td>
+                            <td className="px-4 py-2.5 text-center font-mono text-[#EF4444]">{q.wrongCount ?? 0}</td>
                             <td className={`px-4 py-2.5 text-center font-mono font-medium ${rateColor}`}>{rate}%</td>
                           </tr>
                         );
@@ -10261,8 +10449,8 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
                   <label className="text-sm font-medium">选择学生</label>
                   {students.length > 0 && (
                     <div className="flex items-center gap-2 text-xs">
-                      <button type="button" onClick={selectAllStudents} className="text-[#969BE7] hover:underline">全选</button>
-                      <button type="button" onClick={clearStudents} className="text-[#969BE7] hover:underline">取消全选</button>
+                      <button type="button" onClick={selectAllStudents} className="text-[#2563EB] hover:underline">全选</button>
+                      <button type="button" onClick={clearStudents} className="text-[#2563EB] hover:underline">取消全选</button>
                     </div>
                   )}
                 </div>
@@ -10396,13 +10584,13 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
                           <label className="text-xs text-muted-foreground block mb-1">选项</label>
-                          <button onClick={() => addOption(idx)} className="text-xs text-[#969BE7] hover:underline">+ 添加选项</button>
+                          <button onClick={() => addOption(idx)} className="text-xs text-[#2563EB] hover:underline">+ 添加选项</button>
                         </div>
                         {q.options.map((o, oi) => (
                           <div key={oi} className="flex items-center gap-2">
                             <span className="text-sm font-medium w-5 text-center">{o.label}.</span>
                             <input value={o.text} onChange={e => updateOptionText(idx, oi, e.target.value)} className="flex-1 px-2 py-1 border border-border rounded-md text-sm" />
-                            <button onClick={() => removeOption(idx, oi)} className="p-1 text-[#DD7373] hover:bg-[#E88383]/20 rounded" title="删除选项"><X size={14} /></button>
+                            <button onClick={() => removeOption(idx, oi)} className="p-1 text-[#EF4444] hover:bg-[#DC2626]/20 rounded" title="删除选项"><X size={14} /></button>
                           </div>
                         ))}
                       </div>
@@ -10654,7 +10842,7 @@ function StudentExam() {
     return (
       <div className="space-y-5">
         <div className="bg-card rounded-lg border border-border p-8 text-center">
-          <CheckCircle size={48} className="mx-auto text-[#57AE8F] mb-3" />
+          <CheckCircle size={48} className="mx-auto text-[#059669] mb-3" />
           <h2 className="text-xl font-semibold text-foreground">交卷成功</h2>
           <div className="flex items-center justify-center gap-6 mt-4">
             <div>
@@ -10885,7 +11073,7 @@ function StudentExam() {
                     <td className="px-4 py-3">{r.subjectivePending && r.subjectivePending > 0 ? <Tag color="yellow">待批阅</Tag> : <Tag color="green">已出分</Tag>}</td>
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{fmtDate(r.submitTime)}</td>
                     <td className="px-4 py-3">
-                      <button onClick={() => openReview(r)} className="inline-flex items-center gap-1 text-xs text-[#969BE7] hover:underline"><Eye size={14} />查看</button>
+                      <button onClick={() => openReview(r)} className="inline-flex items-center gap-1 text-xs text-[#2563EB] hover:underline"><Eye size={14} />查看</button>
                     </td>
                   </tr>
                 ))}
@@ -11049,7 +11237,7 @@ function TeacherAiAnalysis() {
                       <td className="py-2 pr-4 font-mono">{s.presentCount}</td>
                       <td className="py-2 pr-4 font-mono">{s.lateCount}</td>
                       <td className="py-2 pr-4 font-mono">{s.leaveCount}</td>
-                      <td className={`py-2 pr-4 font-mono ${s.absentCount > 0 ? "text-[#DD7373] font-medium" : ""}`}>{s.absentCount}</td>
+                      <td className={`py-2 pr-4 font-mono ${s.absentCount > 0 ? "text-[#EF4444] font-medium" : ""}`}>{s.absentCount}</td>
                       <td className="py-2 pr-4 font-mono">{pctText(s.attendanceRate)}</td>
                       <td className="py-2">{levelTag(s.level)}</td>
                     </tr>
@@ -11085,7 +11273,7 @@ function TeacherAiAnalysis() {
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full ${k.classAvgRate < 50 ? "bg-[#E88383]" : k.classAvgRate < 70 ? "bg-[#F5C069]" : "bg-[#74C2A0]"}`}
+                        <div className={`h-full rounded-full ${k.classAvgRate < 50 ? "bg-[#DC2626]" : k.classAvgRate < 70 ? "bg-[#F5C069]" : "bg-[#10B981]"}`}
                           style={{ width: `${Math.min(100, Number(k.classAvgRate))}%` }} />
                       </div>
                       <span className="font-mono text-xs text-muted-foreground w-24 text-right">
@@ -11100,7 +11288,7 @@ function TeacherAiAnalysis() {
             {/* 模块三：学生综合预警 */}
             <div className="bg-card rounded-xl border border-border p-5">
               <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle size={16} className="text-[#E8945C]" />
+                <AlertTriangle size={16} className="text-[#D97706]" />
                 <h3 className="font-semibold">模块三 · 学生综合预警</h3>
                 <span className="text-xs text-muted-foreground">
                   {report.alerts.length} 人（高风险 {highCount}）
@@ -11158,11 +11346,11 @@ function TeacherAiAnalysis() {
                           <td className="py-2 pr-4">{s.assessmentName}</td>
                           <td className="py-2 pr-4"><Tag color="blue">{assessmentTypeLabel(s.assessmentType)}</Tag></td>
                           <td className="py-2 pr-4 font-mono">{scoreText(s.avgScore)}</td>
-                          <td className={`py-2 pr-4 font-mono ${Number(s.scoreRate) < 60 ? "text-[#DD7373] font-medium" : ""}`}>
+                          <td className={`py-2 pr-4 font-mono ${Number(s.scoreRate) < 60 ? "text-[#EF4444] font-medium" : ""}`}>
                             {pctText(s.scoreRate)}
                           </td>
-                          <td className={`py-2 pr-4 font-mono ${s.lowScoreCount > 0 ? "text-[#E8945C]" : ""}`}>{s.lowScoreCount}</td>
-                          <td className={`py-2 font-mono ${s.absentCount > 0 ? "text-[#DD7373]" : ""}`}>{s.absentCount}</td>
+                          <td className={`py-2 pr-4 font-mono ${s.lowScoreCount > 0 ? "text-[#D97706]" : ""}`}>{s.lowScoreCount}</td>
+                          <td className={`py-2 font-mono ${s.absentCount > 0 ? "text-[#EF4444]" : ""}`}>{s.absentCount}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -11269,7 +11457,7 @@ function TeacherAiAnalysis() {
                   <ul className="space-y-1.5">
                     {audit.suggestions.map((s, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm">
-                        <AlertCircle size={14} className="text-[#E8945C] mt-0.5 flex-shrink-0" />{s}
+                        <AlertCircle size={14} className="text-[#D97706] mt-0.5 flex-shrink-0" />{s}
                       </li>
                     ))}
                   </ul>
@@ -11396,7 +11584,7 @@ function AIAssistant() {
     <>
       <div 
         onClick={() => setIsOpen(true)}
-        className={`fixed right-5 bottom-5 w-14 h-14 bg-gradient-to-br from-[#A6AAEE] to-[#969BE7] rounded-full shadow-lg shadow-[#969BE7]/30 flex items-center justify-center cursor-pointer z-[9999] transition-all duration-300 hover:scale-110 hover:shadow-xl hover:shadow-[#969BE7]/40 ${isOpen ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+        className={`fixed right-5 bottom-5 w-14 h-14 bg-gradient-to-br from-[#A6AAEE] to-[#2563EB] rounded-full shadow-lg shadow-[#2563EB]/30 flex items-center justify-center cursor-pointer z-[9999] transition-all duration-300 hover:scale-110 hover:shadow-xl hover:shadow-[#2563EB]/40 ${isOpen ? "opacity-0 pointer-events-none" : "opacity-100"}`}
         style={{
           animation: !isOpen ? "breathe 3s ease-in-out infinite" : "none"
         }}
@@ -11406,8 +11594,8 @@ function AIAssistant() {
 
       <style>{`
         @keyframes breathe {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(150, 155, 231, 0.4); }
-          50% { box-shadow: 0 0 0 12px rgba(150, 155, 231, 0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+          50% { box-shadow: 0 0 0 12px rgba(37, 99, 235, 0); }
         }
       `}</style>
 
@@ -11420,7 +11608,7 @@ function AIAssistant() {
           height: windowHeight,
         }}
       >
-        <div className="bg-gradient-to-r from-[#A6AAEE] to-[#969BE7] px-4 py-3 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-[#A6AAEE] to-[#2563EB] px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Brain size={18} className="text-white" />
             <span className="text-sm font-medium text-white">AI智能助手</span>
@@ -11440,7 +11628,7 @@ function AIAssistant() {
             <div key={i} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
               <div className={`max-w-[85%] rounded-xl px-4 py-3 ${
                 msg.role === "user" 
-                  ? "bg-[#969BE7] text-white rounded-br-md" 
+                  ? "bg-[#2563EB] text-white rounded-br-md" 
                   : "bg-muted text-foreground rounded-bl-md"
               }`}>
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
@@ -11475,7 +11663,7 @@ function AIAssistant() {
           <div className="px-4 py-2 bg-accent/50 border-t border-border">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-muted-foreground">已选择 {files.length} 个文件</span>
-              <button onClick={() => setFiles([])} className="text-xs text-[#DD7373] hover:text-[#DD7373]">清空全部</button>
+              <button onClick={() => setFiles([])} className="text-xs text-[#EF4444] hover:text-[#EF4444]">清空全部</button>
             </div>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {files.map((f, i) => (
@@ -11483,7 +11671,7 @@ function AIAssistant() {
                   <FileText size={14} className="text-muted-foreground flex-shrink-0" />
                   <span className="text-xs flex-1 truncate">{f.name}</span>
                   <span className="text-xs text-muted-foreground flex-shrink-0">{(f.size / 1024).toFixed(1)} KB</span>
-                  <button onClick={() => removeFile(i)} className="p-1 text-muted-foreground hover:text-[#DD7373] hover:bg-[#E88383]/20 rounded flex-shrink-0">
+                  <button onClick={() => removeFile(i)} className="p-1 text-muted-foreground hover:text-[#EF4444] hover:bg-[#DC2626]/20 rounded flex-shrink-0">
                     <X size={12} />
                   </button>
                 </div>
@@ -11520,7 +11708,7 @@ function AIAssistant() {
             <button 
               onClick={handleSend}
               disabled={!message.trim() && files.length === 0}
-              className="flex-shrink-0 p-2.5 bg-primary text-white rounded-xl hover:bg-[#7F84D6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-shrink-0 p-2.5 bg-primary text-white rounded-xl hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Send size={18} />
             </button>
