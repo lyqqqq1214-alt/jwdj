@@ -12,6 +12,7 @@ import com.example.aitaes.entity.DataImportLog;
 import com.example.aitaes.enums.ImportType;
 import com.example.aitaes.mapper.DataImportLogMapper;
 import com.example.aitaes.service.DataImportService;
+import com.example.aitaes.service.WarningCheckService;
 import com.example.aitaes.strategy.ImportContext;
 import com.example.aitaes.strategy.ImportStrategy;
 import com.example.aitaes.strategy.ImportStrategyFactory;
@@ -28,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 数据导入服务实现
@@ -42,6 +44,12 @@ public class DataImportServiceImpl implements DataImportService {
 
     private final ImportStrategyFactory strategyFactory;
     private final DataImportLogMapper dataImportLogMapper;
+    private final WarningCheckService warningCheckService;
+
+    /** 需要触发预警检查的导入类型 */
+    private static final Set<String> WARNING_TRIGGER_TYPES = Set.of(
+            "ATTENDANCE", "HOMEWORK", "QUIZ", "EXAM_SCORE", "EXPERIMENT"
+    );
 
     /** 支持的导入文件扩展名 */
     private static final List<String> SUPPORTED_EXTENSIONS =
@@ -93,6 +101,17 @@ public class DataImportServiceImpl implements DataImportService {
 
         // 5. 记录导入日志
         saveImportLog(file.getOriginalFilename(), type.getCode(), context.getSourceId(), result);
+
+        // 6. 数据导入成功后触发预警检查
+        if (result.getSuccessRows() > 0 && context.getCourseId() != null
+                && WARNING_TRIGGER_TYPES.contains(type.getCode())) {
+            try {
+                int warningCount = warningCheckService.checkAndGenerateWarnings(context.getCourseId());
+                log.info("预警检查完成: 新增{}条预警记录", warningCount);
+            } catch (Exception e) {
+                log.warn("预警检查失败，不影响导入结果: {}", e.getMessage());
+            }
+        }
 
         return result;
     }

@@ -1,6 +1,7 @@
 package com.example.aitaes.service.impl;
 
 import com.example.aitaes.common.BusinessException;
+import com.example.aitaes.dto.AiChatMessageDTO;
 import com.example.aitaes.config.OllamaProperties;
 import com.example.aitaes.dto.AiGeneratedQuestionDTO;
 import com.example.aitaes.dto.AiQuestionGenerateRequest;
@@ -44,14 +45,34 @@ public class OllamaServiceImpl implements OllamaService {
         if (!StringUtils.hasText(prompt)) {
             throw new BusinessException(400, "Prompt不能为空");
         }
-        return callDashScope(prompt, null);
+        return chat(List.of(AiChatMessageDTO.builder()
+                .role("user")
+                .content(prompt)
+                .build()));
+    }
+
+    @Override
+    public String chat(List<AiChatMessageDTO> messages) {
+        if (messages == null || messages.isEmpty()) {
+            throw new BusinessException(400, "对话消息不能为空");
+        }
+        List<Map<String, String>> payloadMessages = messages.stream()
+                .filter(message -> StringUtils.hasText(message.getContent()))
+                .map(message -> Map.of(
+                        "role", normalizeRole(message.getRole()),
+                        "content", message.getContent().trim()))
+                .toList();
+        if (payloadMessages.isEmpty()) {
+            throw new BusinessException(400, "对话消息不能为空");
+        }
+        return callDashScope(payloadMessages, null);
     }
 
     @Override
     public List<AiGeneratedQuestionDTO> generateQuestions(AiQuestionGenerateRequest request) {
         validateRequest(request);
         String json = stripMarkdownFence(callDashScope(
-                buildQuestionPrompt(request),
+                List.of(Map.of("role", "user", "content", buildQuestionPrompt(request))),
                 Map.of("type", "json_object")));
         try {
             JsonNode root = objectMapper.readTree(json);
@@ -91,10 +112,7 @@ public class OllamaServiceImpl implements OllamaService {
         }
     }
 
-    private String callDashScope(String prompt, Object responseFormat) {
-        List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "user", "content", prompt));
-
+    private String callDashScope(List<Map<String, String>> messages, Object responseFormat) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("model", properties.getModel());
         body.put("messages", messages);
@@ -319,5 +337,16 @@ public class OllamaServiceImpl implements OllamaService {
             Thread.currentThread().interrupt();
             throw new BusinessException("AI调用重试等待被中断");
         }
+    }
+
+    private String normalizeRole(String role) {
+        if (!StringUtils.hasText(role)) {
+            return "user";
+        }
+        String normalized = role.trim().toLowerCase();
+        if ("system".equals(normalized) || "assistant".equals(normalized) || "user".equals(normalized)) {
+            return normalized;
+        }
+        return "user";
     }
 }
