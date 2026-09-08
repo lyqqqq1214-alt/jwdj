@@ -11990,8 +11990,8 @@ export default function App() {
         {page === "student-wrong-book" && <StudentWrongBook />}
         {page === "student-exam" && <StudentExam />}
       </AppShell>
-      {/* 悬浮 AI 问答助手：教师端不提供（教师仅使用 AI 智能分析报告），助教/学生/管理员保留 */}
-      {role !== "teacher" && <AIAssistant />}
+      {/* 悬浮 AI 问答助手：仅教师端使用本机 Ollama 问答。 */}
+      {role === "teacher" && <AIAssistant />}
     </>
   );
 }
