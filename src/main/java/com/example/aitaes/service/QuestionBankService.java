@@ -3,6 +3,7 @@ package com.example.aitaes.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.aitaes.entity.KnowledgePoint;
 import com.example.aitaes.entity.QuestionBank;
+import com.example.aitaes.dto.QuestionLabelUpdateRequest;
 
 import java.util.List;
 
@@ -31,6 +32,9 @@ public interface QuestionBankService {
      * 更新题目
      */
     QuestionBank update(Long id, QuestionBank entity);
+
+    /** 仅更新教师题库中题目的知识点与难度标签，避免编辑标签时覆盖题干和答案。 */
+    QuestionBank updateLabels(Long id, Long userId, QuestionLabelUpdateRequest request);
 
     /**
      * 删除题目

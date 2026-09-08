@@ -246,6 +246,16 @@ export async function submitGrade(answerId: number, score: number, comment?: str
   await api.put(`/exams/grading/${answerId}`, { score, comment });
 }
 
+export interface AiGradeSuggestion {
+  suggestedScore: number;
+  comment: string;
+}
+
+export async function getAiGradeSuggestion(answerId: number) {
+  const res = await api.post(`/exams/grading/${answerId}/ai-suggestion`);
+  return res.data as AiGradeSuggestion;
+}
+
 export async function getPaperQuestions(paperId: number) {
   const res = await api.get(`/exams/papers/${paperId}/questions`);
   return res.data as PaperQuestionEditVO[];

@@ -8,6 +8,7 @@ import com.example.aitaes.common.ResultCode;
 import com.example.aitaes.entity.KnowledgePoint;
 import com.example.aitaes.entity.QuestionBank;
 import com.example.aitaes.entity.Teacher;
+import com.example.aitaes.dto.QuestionLabelUpdateRequest;
 import com.example.aitaes.mapper.KnowledgePointMapper;
 import com.example.aitaes.mapper.QuestionBankMapper;
 import com.example.aitaes.mapper.TeacherMapper;
@@ -88,6 +89,32 @@ public class QuestionBankServiceImpl implements QuestionBankService {
         questionBankMapper.updateById(entity);
         log.info("更新题目: id={}", id);
         return getById(id);
+    }
+
+    @Override
+    public QuestionBank updateLabels(Long id, Long userId, QuestionLabelUpdateRequest request) {
+        QuestionBank existing = getById(id);
+        Teacher teacher = teacherMapper.selectOne(new LambdaQueryWrapper<Teacher>()
+                .eq(Teacher::getUserId, userId));
+        if (teacher == null || !teacher.getId().equals(existing.getTeacherId())) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "无权编辑该题目标签");
+        }
+        existing.setKnowledgePoints(normalizeKnowledgePoints(request.getKnowledgePoints()));
+        existing.setDifficulty(request.getDifficulty());
+        questionBankMapper.updateById(existing);
+        return existing;
+    }
+
+    private String normalizeKnowledgePoints(String source) {
+        List<String> tags = java.util.Arrays.stream(source.split("[,，、]"))
+                .map(String::trim).filter(StringUtils::hasText).distinct().limit(3).toList();
+        if (tags.isEmpty()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "至少需要一个知识点标签");
+        }
+        if (tags.stream().anyMatch(tag -> !tag.matches("[^/]+/[^/]+"))) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "知识点必须使用“一级模块/二级知识点”格式");
+        }
+        return String.join(",", tags);
     }
 
     @Override

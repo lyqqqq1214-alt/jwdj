@@ -3,6 +3,7 @@ package com.example.aitaes.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.aitaes.annotation.RequireRole;
 import com.example.aitaes.common.Result;
+import com.example.aitaes.dto.AiGradeSuggestionDTO;
 import com.example.aitaes.dto.ExamPaperCreateDTO;
 import com.example.aitaes.dto.ExamResultDTO;
 import com.example.aitaes.dto.GradeRequestDTO;
@@ -117,6 +118,14 @@ public class ExamController {
     public Result<List<GradingItemVO>> gradingList(@RequestParam Long courseId,
                                                     @RequestParam(required = false) Long paperId) {
         return Result.success(examService.getGradingList(courseId, paperId));
+    }
+
+    /** AI 仅生成预评分建议，最终成绩仍由教师或助教提交。 */
+    @PostMapping("/grading/{answerId}/ai-suggestion")
+    @RequireRole({"TEACHER", "ASSISTANT"})
+    public Result<AiGradeSuggestionDTO> aiGradeSuggestion(@PathVariable Long answerId,
+                                                           @RequestAttribute("userId") Long userId) {
+        return Result.success(examService.suggestSubjectiveGrade(answerId, userId));
     }
 
     @PutMapping("/grading/{answerId}")

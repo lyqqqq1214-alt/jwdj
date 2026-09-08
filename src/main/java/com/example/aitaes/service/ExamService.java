@@ -3,6 +3,7 @@ package com.example.aitaes.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.aitaes.dto.ExamPaperCreateDTO;
 import com.example.aitaes.dto.ExamResultDTO;
+import com.example.aitaes.dto.AiGradeSuggestionDTO;
 import com.example.aitaes.dto.GradingItemVO;
 import com.example.aitaes.dto.PaperGradingVO;
 import com.example.aitaes.dto.PaperQuestionEditVO;
@@ -48,6 +49,7 @@ public interface ExamService {
     // ===== 主观题批阅 =====
 
     List<GradingItemVO> getGradingList(Long courseId, Long paperId);
+    AiGradeSuggestionDTO suggestSubjectiveGrade(Long answerId, Long graderUserId);
     void submitGrade(Long answerId, Long graderUserId, BigDecimal score, String comment);
     PaperGradingVO getPaperGrading(Long paperId, Long userId);
     BigDecimal submitStudentGrade(Long recordId, Long graderUserId, List<StudentGradeRequestDTO.GradeItem> grades);
