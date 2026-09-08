@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { getCurrentUser, clearUser, mapRole, logout } from "../services/authService";
 import type { Role, Page } from "./types";
 import { pageMeta } from "./constants";
+import { getTAPermissions, seedTAsIfEmpty, type TAPermissions } from "../services/taService";
 
 // Layout & shared components
 import AppShell from "./components/layout/AppShell";
@@ -48,6 +49,7 @@ export default function App() {
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [taPermissions, setTaPermissions] = useState<TAPermissions | null>(null);
 
   // 检查是否已登录
   useEffect(() => {
@@ -56,6 +58,9 @@ export default function App() {
       const frontendRole = mapRole(savedUser.role);
       setRole(frontendRole);
       setUser(savedUser);
+      if (frontendRole === "teaching-assistant") {
+        setTaPermissions(getTAPermissions(savedUser.username));
+      }
       setPage(frontendRole === "admin" ? "admin-dashboard" : frontendRole === "teacher" ? "teacher-dashboard" : frontendRole === "teaching-assistant" ? "ta-dashboard" : "student-dashboard");
     }
   }, []);
@@ -63,7 +68,20 @@ export default function App() {
   const handleLogin = useCallback((r: Role, userData: any) => {
     setRole(r);
     setUser(userData);
-    setPage(r === "admin" ? "admin-dashboard" : r === "teacher" || r === "teaching-assistant" ? "teacher-dashboard" : "student-dashboard");
+    if (r === "teaching-assistant") {
+      setTaPermissions(getTAPermissions(userData.username));
+      setPage("ta-dashboard");
+    } else if (r === "teacher") {
+      seedTAsIfEmpty(userData.userId);
+      setTaPermissions(null);
+      setPage("teacher-dashboard");
+    } else if (r === "admin") {
+      setTaPermissions(null);
+      setPage("admin-dashboard");
+    } else {
+      setTaPermissions(null);
+      setPage("student-dashboard");
+    }
   }, []);
 
   const handleLogout = useCallback(async () => {
@@ -93,7 +111,7 @@ export default function App() {
       <AppShell role={role} page={page} onNav={setPage} onLogout={handleLogout}
         dark={dark} onToggleDark={toggleDark} breadcrumb={breadcrumb}
         onToggleAiAssistant={() => {}}
-        userData={user}>
+        userData={user} taPermissions={taPermissions}>
         {/* Admin pages */}
         {page === "admin-dashboard" && <AdminDashboard />}
         {page === "admin-teachers" && <AdminTeacherManagement />}
@@ -113,8 +131,8 @@ export default function App() {
         {page === "admin-notification" && <NotificationCenter mode="admin" />}
         {page === "student-notification" && <NotificationCenter mode="student" />}
         {page === "teacher-logs" && <TeacherOperationLogs />}
-        {/* Teaching Assistant pages (复用教师端组件，后端已做权限控制) */}
-        {page === "ta-dashboard" && <TeacherDashboard onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} />}
+        {/* Teaching Assistant pages (复用教师端组件，按权限过滤) */}
+        {page === "ta-dashboard" && <TeacherDashboard onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} taPermissions={taPermissions} />}
         {page === "ta-import" && <TeacherDataImport />}
         {page === "ta-profile" && <TeacherStudentProfile onNav={setPage} initialStudentId={selectedStudentId} initialCourseId={selectedCourseId} />}
         {page === "ta-grading" && <TA_Grading />}

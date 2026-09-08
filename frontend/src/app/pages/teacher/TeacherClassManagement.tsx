@@ -1,46 +1,31 @@
 import { useState, useEffect } from "react";
-import { Plus, Users, AlertCircle, ChevronRight, Search, Upload, X } from "lucide-react";
+import { Plus, Users, AlertCircle, ChevronRight, Search, Upload, X, UserPlus, Shield, Trash2 } from "lucide-react";
 import {
   getMyClasses, getClassStudents, createClass, addStudentToClass,
   ClassVO as ClsVO, StudentVO
 } from "../../../services/classService";
+import { getCurrentUser } from "../../../services/authService";
+import {
+  getTAsByTeacher, createTA, deleteTA, getTAPermissions, assignTAToClass,
+  removeTAFromClass, setTAStatus, type TeachingAssistant, type TAPermissions
+} from "../../../services/taService";
 import { Page } from "../../types";
 import { Tag } from "../../utils";
 
-const teachingAssistants = [
-  { id: 1, staffId: "TA2024001", name: "陈晓峰", account: "TA2024001", status: "active", createdAt: "2024-09-01", lastLogin: "2025-03-12 15:00" },
-  { id: 2, staffId: "TA2024002", name: "林雨萱", account: "TA2024002", status: "active", createdAt: "2024-09-01", lastLogin: "2025-03-12 16:00" },
-];
-
-const taPermissions: Record<string, {
-  allowedClasses: number[];
-  canImport: boolean;
-  canGrade: boolean;
-  canViewProfile: boolean;
-}> = {
-  "TA2024001": {
-    allowedClasses: [1, 3],
-    canImport: true,
-    canGrade: true,
-    canViewProfile: true,
-  },
-  "TA2024002": {
-    allowedClasses: [2],
-    canImport: false,
-    canGrade: true,
-    canViewProfile: false,
-  },
-};
-
 function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourseId }: { onNav: (p: Page) => void; setSelectedStudentId: (id: number | null) => void; setSelectedCourseId: (id: number | null) => void }) {
+  const teacherId = getCurrentUser()?.userId || 1;
+
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [showAddClassModal, setShowAddClassModal] = useState(false);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [showTAConfigModal, setShowTAConfigModal] = useState(false);
+  const [showAddTAModal, setShowAddTAModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<"classes" | "assistants">("classes");
   const [searchQuery, setSearchQuery] = useState("");
   const [classFilter, setClassFilter] = useState("");
   const [newClass, setNewClass] = useState({ name: "", course: "", semester: "" });
   const [newStudent, setNewStudent] = useState({ studentNo: "", name: "", password: "" });
+  const [newTA, setNewTA] = useState({ staffId: "", name: "" });
   const [selectedTA, setSelectedTA] = useState<string>("");
   const [taPerms, setTaPerms] = useState({ canImport: false, canGrade: false, canViewProfile: false });
   const [classList, setClassList] = useState<ClsVO[]>([]);
@@ -48,6 +33,12 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [taList, setTaList] = useState<TeachingAssistant[]>([]);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2000); };
+
+  const refreshTAs = () => setTaList(getTAsByTeacher(teacherId));
 
   // Fetch classes on mount
   useEffect(() => {
@@ -59,6 +50,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
       setClassList([]);
       setLoadError(err.message || "加载失败");
     }).finally(() => setLoadingClasses(false));
+    refreshTAs();
   }, []);
 
   // Fetch students when class is selected
@@ -79,9 +71,10 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
     (!classFilter || s.className === classFilter)
   );
 
-  const classTAs = teachingAssistants.filter(ta => {
-    const perms = taPermissions[ta.staffId];
-    return perms && perms.allowedClasses.includes(selectedClassId || 0);
+  // 当前班级已分配的助教
+  const classTAs = taList.filter(ta => {
+    const perms = getTAPermissions(ta.staffId);
+    return perms.allowedClasses.includes(selectedClassId || 0);
   });
 
   const handleAddClass = async () => {
@@ -108,34 +101,97 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
     }
   };
 
+  const handleCreateTA = () => {
+    if (!newTA.staffId || !newTA.name) return;
+    try {
+      createTA({ staffId: newTA.staffId, name: newTA.name, teacherId });
+      refreshTAs();
+      setShowAddTAModal(false);
+      setNewTA({ staffId: "", name: "" });
+      showToast("助教创建成功");
+    } catch (err: any) {
+      alert(err.message || "创建失败");
+    }
+  };
+
+  const handleDeleteTA = (staffId: string) => {
+    if (!confirm("确认删除该助教？相关权限配置将一并清除。")) return;
+    deleteTA(staffId);
+    refreshTAs();
+    showToast("助教已删除");
+  };
+
+  const handleToggleTAStatus = (ta: TeachingAssistant) => {
+    const next = ta.status === "active" ? "disabled" : "active";
+    setTAStatus(ta.staffId, next);
+    refreshTAs();
+  };
+
+  const openTAConfig = (taStaffId?: string) => {
+    if (taStaffId) {
+      setSelectedTA(taStaffId);
+      const p = getTAPermissions(taStaffId);
+      setTaPerms({ canImport: p.canImport, canGrade: p.canGrade, canViewProfile: p.canViewProfile });
+    } else {
+      setSelectedTA("");
+      setTaPerms({ canImport: false, canGrade: false, canViewProfile: false });
+    }
+    setShowTAConfigModal(true);
+  };
+
   const handleTAConfig = () => {
-    if (selectedTA && selectedClassId) {
-      const perms = taPermissions[selectedTA];
-      if (perms && !perms.allowedClasses.includes(selectedClassId)) {
-        perms.allowedClasses.push(selectedClassId);
-      }
-      perms.canImport = taPerms.canImport;
-      perms.canGrade = taPerms.canGrade;
-      perms.canViewProfile = taPerms.canViewProfile;
+    if (!selectedTA) return;
+    if (selectedClassId) {
+      assignTAToClass(selectedTA, selectedClassId, taPerms);
+    } else {
+      // 无班级上下文时，仅更新全局权限（不改变已分配班级）
+      const current = getTAPermissions(selectedTA);
+      const updated: TAPermissions = { ...current, ...taPerms };
+      // 使用 assignTAToClass 传入当前已有的第一个班级以触发更新，或直接用 updateTAPermissions
+      import("../../../services/taService").then(m => m.updateTAPermissions(selectedTA, updated));
     }
     setShowTAConfigModal(false);
     setSelectedTA("");
     setTaPerms({ canImport: false, canGrade: false, canViewProfile: false });
+    refreshTAs();
+    showToast("权限已保存");
   };
 
-  const removeTAFromClass = (taId: string) => {
-    const perms = taPermissions[taId];
-    if (perms && selectedClassId) {
-      perms.allowedClasses = perms.allowedClasses.filter(c => c !== selectedClassId);
+  const handleRemoveTAFromClass = (taId: string) => {
+    if (selectedClassId) {
+      removeTAFromClass(taId, selectedClassId);
+      refreshTAs();
+      showToast("已移除该助教");
     }
   };
 
   return (
     <div className="space-y-5">
-      {!selectedClassId ? (
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-4 py-2 rounded-md text-sm shadow-lg">
+          {toast}
+        </div>
+      )}
+
+      {/* 顶部 Tab 切换 */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1 bg-muted rounded-lg p-1">
+          <button onClick={() => setActiveTab("classes")}
+            className={`px-4 py-1.5 rounded-md text-sm transition-colors ${activeTab === "classes" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+            班级管理
+          </button>
+          <button onClick={() => setActiveTab("assistants")}
+            className={`px-4 py-1.5 rounded-md text-sm transition-colors flex items-center gap-1.5 ${activeTab === "assistants" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+            <Shield size={14} />助教管理
+          </button>
+        </div>
+      </div>
+
+      {/* 班级管理 Tab */}
+      {activeTab === "classes" && (!selectedClassId ? (
         <>
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">班级管理</h2>
+            <h2 className="text-lg font-semibold">班级列表</h2>
             <button onClick={() => setShowAddClassModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
               <Plus size={14} />新增班级
             </button>
@@ -212,9 +268,6 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
               <button onClick={() => setShowAddStudentModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
                 <Plus size={14} />添加学生
               </button>
-              <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
-                <Upload size={14} />导入名单
-              </button>
             </div>
           </div>
 
@@ -262,9 +315,127 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
               </table>
             )}
           </div>
+
+          {/* 班级助教列表 */}
+          <div className="bg-card rounded-lg border border-border p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-medium text-sm">本班助教</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">为本班级分配助教并设置权限</p>
+              </div>
+              <button onClick={() => openTAConfig()} className="flex items-center gap-2 px-3 py-1.5 border border-primary text-primary rounded-md text-sm hover:bg-accent">
+                <Shield size={14} />分配助教权限
+              </button>
+            </div>
+            {classTAs.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">暂无助教，点击右上角分配</p>
+            ) : (
+              <div className="space-y-2">
+                {classTAs.map(ta => {
+                  const p = getTAPermissions(ta.staffId);
+                  return (
+                    <div key={ta.staffId} className="flex items-center justify-between bg-muted/50 rounded-lg px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
+                          {ta.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{ta.name}</p>
+                          <p className="text-xs text-muted-foreground font-mono">{ta.staffId}</p>
+                        </div>
+                        <div className="flex gap-1.5 ml-4">
+                          {p.canImport && <Tag color="blue">导入数据</Tag>}
+                          {p.canGrade && <Tag color="green">考试批阅</Tag>}
+                          {p.canViewProfile && <Tag color="purple">学生画像</Tag>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => openTAConfig(ta.staffId)} className="text-primary hover:underline text-xs">编辑权限</button>
+                        <button onClick={() => handleRemoveTAFromClass(ta.staffId)} className="text-[#DD7373] hover:underline text-xs">移除</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </>
+      ))}
+
+      {/* 助教管理 Tab */}
+      {activeTab === "assistants" && (
+        <>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">助教管理</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">管理你的助教团队，为其分配班级与操作权限</p>
+            </div>
+            <button onClick={() => setShowAddTAModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
+              <UserPlus size={14} />添加助教
+            </button>
+          </div>
+
+          {taList.length === 0 ? (
+            <div className="bg-card rounded-lg border border-border p-12 text-center">
+              <Shield size={32} className="mx-auto mb-3 text-muted-foreground opacity-50" />
+              <p className="text-sm text-muted-foreground">暂无助教，点击右上角添加</p>
+            </div>
+          ) : (
+            <div className="bg-card rounded-lg border border-border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    {["工号", "姓名", "状态", "已分配班级", "权限", "操作"].map(h => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {taList.map(ta => {
+                    const p = getTAPermissions(ta.staffId);
+                    const classNames = p.allowedClasses
+                      .map(id => classList.find(c => c.id === id)?.className || classList.find(c => c.id === id)?.courseName || `班级#${id}`)
+                      .join("、");
+                    return (
+                      <tr key={ta.staffId} className="border-b border-border last:border-0 hover:bg-accent/30">
+                        <td className="px-4 py-3 font-mono text-xs">{ta.staffId}</td>
+                        <td className="px-4 py-3 font-medium">{ta.name}</td>
+                        <td className="px-4 py-3">
+                          <Tag color={ta.status === "active" ? "green" : "gray"}>
+                            {ta.status === "active" ? "启用" : "禁用"}
+                          </Tag>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground max-w-xs truncate">{classNames || "—"}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {p.canImport && <Tag color="blue">导入</Tag>}
+                            {p.canGrade && <Tag color="green">批阅</Tag>}
+                            {p.canViewProfile && <Tag color="purple">画像</Tag>}
+                            {!p.canImport && !p.canGrade && !p.canViewProfile && <span className="text-xs text-muted-foreground">无</span>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => openTAConfig(ta.staffId)} className="text-primary hover:underline text-xs">权限</button>
+                            <button onClick={() => handleToggleTAStatus(ta)} className="text-xs hover:underline">
+                              {ta.status === "active" ? "禁用" : "启用"}
+                            </button>
+                            <button onClick={() => handleDeleteTA(ta.staffId)} className="text-[#DD7373] hover:underline text-xs flex items-center gap-1">
+                              <Trash2 size={12} />删除
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </>
       )}
 
+      {/* 新增班级 Modal */}
       {showAddClassModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card rounded-lg border border-border w-full max-w-md p-6 space-y-4">
@@ -294,6 +465,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
         </div>
       )}
 
+      {/* 添加学生 Modal */}
       {showAddStudentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card rounded-lg border border-border w-full max-w-md p-6 space-y-4">
@@ -301,7 +473,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-medium text-muted-foreground">学号</label>
-                <input type="text" value={newStudent.uid} onChange={e => setNewStudent({ ...newStudent, uid: e.target.value })}
+                <input type="text" value={newStudent.studentNo} onChange={e => setNewStudent({ ...newStudent, studentNo: e.target.value })}
                   className="mt-1 w-full px-4 py-2 border border-border rounded-md text-sm" placeholder="请输入学号" />
               </div>
               <div>
@@ -318,24 +490,56 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
         </div>
       )}
 
+      {/* 添加助教 Modal */}
+      {showAddTAModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg border border-border w-full max-w-md p-6 space-y-4">
+            <h3 className="font-semibold">添加助教</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">助教工号（登录账号）</label>
+                <input type="text" value={newTA.staffId} onChange={e => setNewTA({ ...newTA, staffId: e.target.value })}
+                  className="mt-1 w-full px-4 py-2 border border-border rounded-md text-sm" placeholder="如：TA2024003" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">姓名</label>
+                <input type="text" value={newTA.name} onChange={e => setNewTA({ ...newTA, name: e.target.value })}
+                  className="mt-1 w-full px-4 py-2 border border-border rounded-md text-sm" placeholder="请输入助教姓名" />
+              </div>
+              <p className="text-xs text-muted-foreground">提示：助教使用工号作为登录账号，初始密码请联系系统管理员设置。</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowAddTAModal(false)} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
+              <button onClick={handleCreateTA} disabled={!newTA.staffId || !newTA.name} className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6] disabled:opacity-50 disabled:cursor-not-allowed">添加</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 分配助教权限 Modal */}
       {showTAConfigModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card rounded-lg border border-border w-full max-w-md p-6 space-y-4">
-            <h3 className="font-semibold">分配助教权限</h3>
+            <h3 className="font-semibold">{selectedTA ? "编辑助教权限" : "分配助教权限"}</h3>
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-medium text-muted-foreground">选择助教</label>
-                <select value={selectedTA} onChange={e => setSelectedTA(e.target.value)}
+                <select value={selectedTA} onChange={e => { setSelectedTA(e.target.value); if (e.target.value) { const p = getTAPermissions(e.target.value); setTaPerms({ canImport: p.canImport, canGrade: p.canGrade, canViewProfile: p.canViewProfile }); } }}
                   className="mt-1 w-full px-4 py-2 border border-border rounded-md text-sm">
                   <option value="">请选择助教</option>
-                  {teachingAssistants.map(ta => (
+                  {taList.map(ta => (
                     <option key={ta.staffId} value={ta.staffId}>{ta.name} · {ta.staffId}</option>
                   ))}
                 </select>
               </div>
+              {selectedClassId && (
+                <p className="text-xs text-muted-foreground bg-muted rounded px-3 py-2">
+                  当前操作班级：{classList.find(c => c.id === selectedClassId)?.className || classList.find(c => c.id === selectedClassId)?.courseName}
+                </p>
+              )}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">权限设置</label>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={taPerms.canImport} onChange={e => setTaPerms({ ...taPerms, canImport: e.target.checked })} className="rounded" />
                     <span className="text-sm">允许导入数据</span>

@@ -1,14 +1,24 @@
 import { Brain, Menu, ChevronRight, Sun, Moon, LogOut } from "lucide-react";
 import type { Role, Page } from "../../types";
 import { navItems } from "../../constants";
+import type { TAPermissions } from "../../../services/taService";
 
-export default function Sidebar({ role, page, onNav, onLogout, dark, onToggleDark, collapsed, onToggleCollapse, onToggleAiAssistant, userData }: {
+export default function Sidebar({ role, page, onNav, onLogout, dark, onToggleDark, collapsed, onToggleCollapse, onToggleAiAssistant, userData, taPermissions }: {
   role: Role; page: Page; onNav: (p: Page) => void; onLogout: () => void;
   dark: boolean; onToggleDark: () => void; collapsed: boolean; onToggleCollapse: () => void;
   onToggleAiAssistant?: () => void;
   userData?: any;
+  taPermissions?: TAPermissions | null;
 }) {
-  const items = navItems[role];
+  // 助教端按权限过滤导航项
+  const items = role === "teaching-assistant" && taPermissions
+    ? navItems[role].filter(item => {
+        if (item.page === "ta-import") return taPermissions.canImport;
+        if (item.page === "ta-grading") return taPermissions.canGrade;
+        if (item.page === "ta-profile") return taPermissions.canViewProfile;
+        return true; // 教学驾驶舱、班级管理、通知中心始终可见
+      })
+    : navItems[role];
   return (
     <aside className={`flex flex-col h-full bg-sidebar transition-all duration-200 ${collapsed ? "w-16" : "w-56"} flex-shrink-0`}>
       {/* Logo */}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   CheckCircle, ChevronRight, GitCompare, ChevronLeft, ChevronDown,
   Settings, Brain, Target, AlertTriangle, BookOpen, TrendingUp,
@@ -24,9 +24,10 @@ import {
 import { sendNotification } from "../../../services/notificationService";
 import { Page } from "../../types";
 import { Tag } from "../../utils";
+import type { TAPermissions } from "../../../services/taService";
 import { PIE_COLORS } from "../../constants";
 
-function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: { onNav: (p: Page) => void; setSelectedStudentId: (id: number | null) => void; setSelectedCourseId: (id: number | null) => void }) {
+function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId, taPermissions }: { onNav: (p: Page) => void; setSelectedStudentId: (id: number | null) => void; setSelectedCourseId: (id: number | null) => void; taPermissions?: TAPermissions | null }) {
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
   const [selectedClassName, setSelectedClassName] = useState<string>("");
   const [viewMode, setViewMode] = useState<"single" | "merged" | "compare">("single");
@@ -90,11 +91,17 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
     });
   }, []);
 
+  // 助教端：仅显示有权限的班级
+  const visibleCourses = useMemo(() => {
+    if (!taPermissions) return dashboardCourses;
+    return dashboardCourses.filter(c => taPermissions.allowedClasses.includes(c.id));
+  }, [dashboardCourses, taPermissions]);
+
   useEffect(() => {
-    if (selectedCompareClasses.length === 0 && dashboardCourses.length >= 2) {
-      setSelectedCompareClasses([dashboardCourses[0].id, dashboardCourses[1].id]);
+    if (selectedCompareClasses.length === 0 && visibleCourses.length >= 2) {
+      setSelectedCompareClasses([visibleCourses[0].id, visibleCourses[1].id]);
     }
-  }, [dashboardCourses, selectedCompareClasses.length]);
+  }, [visibleCourses, selectedCompareClasses.length]);
 
   // Fetch dashboard data when class is selected
   useEffect(() => {
@@ -144,7 +151,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
     );
   };
 
-  const classInfo = dashboardCourses.find(c => c.id === selectedClass);
+  const classInfo = visibleCourses.find(c => c.id === selectedClass);
   const currentCharts = dashboardCharts;
   const currentOverview = dashboardOverview;
   const currentWarnings = dashboardWarnings;
@@ -256,7 +263,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {dashboardCourses.map(c => {
+            {visibleCourses.map(c => {
               const warningCount = dashboardWarnings.length;
               return (
                 <div key={c.id} onClick={() => { setSelectedClass(c.id); }}
@@ -372,9 +379,9 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
                   <YAxis domain={[60, 100]} tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="class1" stroke="#1A56DB" strokeWidth={2} dot={{ r: 4 }} name={dashboardCourses.find(c => c.id === selectedCompareClasses[0])?.className || "班级1"} />
-                  {selectedCompareClasses.length > 1 && <Line type="monotone" dataKey="class2" stroke="#10B981" strokeWidth={2} dot={{ r: 4 }} name={dashboardCourses.find(c => c.id === selectedCompareClasses[1])?.className || "班级2"} />}
-                  {selectedCompareClasses.length > 2 && <Line type="monotone" dataKey="class3" stroke="#F59E0B" strokeWidth={2} dot={{ r: 4 }} name={dashboardCourses.find(c => c.id === selectedCompareClasses[2])?.className || "班级3"} />}
+                  <Line type="monotone" dataKey="class1" stroke="#1A56DB" strokeWidth={2} dot={{ r: 4 }} name={visibleCourses.find(c => c.id === selectedCompareClasses[0])?.className || "班级1"} />
+                  {selectedCompareClasses.length > 1 && <Line type="monotone" dataKey="class2" stroke="#10B981" strokeWidth={2} dot={{ r: 4 }} name={visibleCourses.find(c => c.id === selectedCompareClasses[1])?.className || "班级2"} />}
+                  {selectedCompareClasses.length > 2 && <Line type="monotone" dataKey="class3" stroke="#F59E0B" strokeWidth={2} dot={{ r: 4 }} name={visibleCourses.find(c => c.id === selectedCompareClasses[2])?.className || "班级3"} />}
                 </LineChart>
               </ResponsiveContainer>
             </div>
