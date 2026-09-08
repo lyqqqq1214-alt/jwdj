@@ -31,6 +31,7 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId }: 
   const [selectedClassName, setSelectedClassName] = useState<string>("");
   const [viewMode, setViewMode] = useState<"single" | "merged" | "compare">("single");
   const [selectedCompareClasses, setSelectedCompareClasses] = useState<number[]>([]);
+  const [compareData, setCompareData] = useState<{ className: string; overview: DashboardOverview | null }[]>([]);
   const [warningFilter, setWarningFilter] = useState<string | null>(null);
   const [selectedWarnings, setSelectedWarnings] = useState<number[]>([]);
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
