@@ -48,7 +48,6 @@ export default function App() {
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [user, setUser] = useState<any>(null);
-  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
 
   // 检查是否已登录
   useEffect(() => {
@@ -93,7 +92,7 @@ export default function App() {
     <>
       <AppShell role={role} page={page} onNav={setPage} onLogout={handleLogout}
         dark={dark} onToggleDark={toggleDark} breadcrumb={breadcrumb}
-        onToggleAiAssistant={() => setIsAiAssistantOpen(v => !v)}
+        onToggleAiAssistant={() => {}}
         userData={user}>
         {/* Admin pages */}
         {page === "admin-dashboard" && <AdminDashboard />}
@@ -126,7 +125,8 @@ export default function App() {
         {page === "student-wrong-book" && <StudentWrongBook />}
         {page === "student-exam" && <StudentExam />}
       </AppShell>
-      <AIAssistant courseId={selectedCourseId} studentId={selectedStudentId} role={role} isOpen={isAiAssistantOpen} onToggle={() => setIsAiAssistantOpen(v => !v)} />
+      {/* 悬浮 AI 问答助手：仅教师端使用本机 Ollama 问答 */}
+      {role === "teacher" && <AIAssistant />}
     </>
   );
 }

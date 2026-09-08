@@ -1,24 +1,28 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Brain, Sparkles, X, FileText, Paperclip, Send } from "lucide-react";
-import type { Role } from "../types";
-import { sendChatMessage, AiChatMessage } from "../../services/aiChatService";
+import React, { useState, useRef, useEffect } from "react";
+import { Brain, X, FileText, Paperclip, Send, Minimize2, Maximize2 } from "lucide-react";
+import { getCurrentUser } from "../../services/authService";
+import { askTeacherAi } from "../../services/teacherAiChatService";
 
-export default function AIAssistant({ courseId, studentId, role, isOpen, onToggle }: { courseId?: number | null, studentId?: number | null, role: Role, isOpen: boolean, onToggle: () => void }) {
+export default function AIAssistant() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [message, setMessage] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const [socraticMode, setSocraticMode] = useState(true);
-  const [messages, setMessages] = useState<{ role: "user" | "ai"; content: string; files?: File[]; socraticQuestions?: string[] }[]>([
-    { role: "ai", content: "您好！我是您的AI助教，有什么可以帮您的吗？\n\n您可以：\n• 提问教学相关问题\n• 上传文件进行分析\n• 获取学习建议" }
+  const [messages, setMessages] = useState<{ role: "user" | "ai"; content: string; files?: File[] }[]>([
+    { role: "ai", content: "您好！我是您的AI智能助手，有什么可以帮您的吗？\n\n您可以：\n• 提问教学相关问题\n• 上传文件进行分析\n• 获取学习建议" }
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 自动滚动到底部
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isTyping]);
+
+  const baseHeight = 500;
+  const expandedHeight = baseHeight + 150;
+  const windowHeight = files.length > 0 ? (isMaximized ? Math.min(window.innerHeight * 0.8, 800) : expandedHeight) : (isMaximized ? Math.min(window.innerHeight * 0.8, 800) : baseHeight);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFiles = Array.from(e.target.files || []);
@@ -29,43 +33,27 @@ export default function AIAssistant({ courseId, studentId, role, isOpen, onToggl
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSend = async (overrideMessage?: string) => {
-    const textToSend = overrideMessage || message;
-    if (!textToSend.trim() && files.length === 0) return;
+  const handleSend = async () => {
+    if (!message.trim() && files.length === 0) return;
 
-    setMessages(prev => [...prev, { role: "user", content: textToSend, files: [...files] }]);
+    setMessages(prev => [...prev, { role: "user", content: message, files: [...files] }]);
     setMessage("");
     setFiles([]);
     setIsTyping(true);
 
     try {
-      // 准备历史记录
-      const history: AiChatMessage[] = messages.slice(-6).map(m => ({
-        role: m.role,
-        content: m.content
-      }));
-
-      const response = await sendChatMessage({
-        message: textToSend,
-        courseId: courseId || undefined,
-        studentId: studentId || undefined,
-        socraticMode: role === 'student' ? socraticMode : false,
-        history
-      });
-
+      const current = getCurrentUser();
+      const isTeacher = current?.role === "TEACHER" || current?.role === "teacher";
+      const answer = files.length > 0
+        ? "当前教师端助手暂不支持文件解析，请先将文件内容导入系统后再提问。"
+        : isTeacher
+          ? await askTeacherAi(message)
+          : "学生端 AI 对话助手已按第四周计划降级，您可通过错题本的 AI 错因分析和相似题练习获得学习帮助。";
+      setMessages(prev => [...prev, { role: "ai", content: answer || "AI 未返回有效内容，请稍后重试。" }]);
+    } catch (err: any) {
+      setMessages(prev => [...prev, { role: "ai", content: err?.message || "AI 服务暂不可用，请确认 Ollama 已启动后重试。" }]);
+    } finally {
       setIsTyping(false);
-      setMessages(prev => [...prev, {
-        role: "ai",
-        content: response.answer,
-        socraticQuestions: response.socraticQuestions
-      }]);
-    } catch (error: any) {
-      console.error("AI对话失败:", error);
-      setIsTyping(false);
-      setMessages(prev => [...prev, {
-        role: "ai",
-        content: "抱歉，我遇到了点问题：" + (error.message || "未知错误")
-      }]);
     }
   };
 
@@ -76,11 +64,17 @@ export default function AIAssistant({ courseId, studentId, role, isOpen, onToggl
     }
   };
 
+  // 第四周计划：学生端气泡取消，仅保留教师端基础问答入口。
+  const currentUser = getCurrentUser();
+  if (currentUser?.role !== "TEACHER" && currentUser?.role !== "teacher") {
+    return null;
+  }
+
   return (
     <>
       <div
-        onClick={onToggle}
-        className={`fixed right-5 bottom-5 w-14 h-14 bg-gradient-to-br from-[#A6AAEE] to-[#969BE7] rounded-full shadow-lg shadow-[#969BE7]/30 flex items-center justify-center cursor-pointer z-[9999] transition-all duration-300 hover:scale-110 hover:shadow-xl hover:shadow-[#969BE7]/40 ${isOpen ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+        onClick={() => setIsOpen(true)}
+        className={`fixed right-5 bottom-5 w-14 h-14 bg-gradient-to-br from-[#A6AAEE] to-[#2563EB] rounded-full shadow-lg shadow-[#2563EB]/30 flex items-center justify-center cursor-pointer z-[9999] transition-all duration-300 hover:scale-110 hover:shadow-xl hover:shadow-[#2563EB]/40 ${isOpen ? "opacity-0 pointer-events-none" : "opacity-100"}`}
         style={{
           animation: !isOpen ? "breathe 3s ease-in-out infinite" : "none"
         }}
@@ -90,81 +84,45 @@ export default function AIAssistant({ courseId, studentId, role, isOpen, onToggl
 
       <style>{`
         @keyframes breathe {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(150, 155, 231, 0.4); }
-          50% { box-shadow: 0 0 0 12px rgba(150, 155, 231, 0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+          50% { box-shadow: 0 0 0 12px rgba(37, 99, 235, 0); }
         }
       `}</style>
 
-      {/* 遮罩层 */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-[9998] transition-opacity"
-          onClick={onToggle}
-        />
-      )}
-
-      {/* 右侧滑出面板 */}
       <div
-        className={`fixed top-0 right-0 h-full bg-card shadow-2xl border-l border-border z-[9999] transition-transform duration-300 ease-out flex flex-col ${
-          isOpen ? "transform translate-x-0" : "transform translate-x-full"
+        className={`fixed right-5 bottom-5 bg-card rounded-2xl shadow-2xl border border-border z-[9999] transition-all duration-300 ease-out overflow-hidden flex flex-col ${
+          isOpen ? "opacity-100 transform translate-y-0" : "opacity-0 transform translate-y-4 pointer-events-none"
         }`}
-        style={{ width: 400 }}
+        style={{
+          width: isMaximized ? Math.min(window.innerWidth * 0.8, 800) : 380,
+          height: windowHeight,
+        }}
       >
-        {/* 头部 */}
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-4 flex items-center justify-between flex-shrink-0">
+        <div className="bg-gradient-to-r from-[#A6AAEE] to-[#2563EB] px-4 py-3 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <Brain size={20} className="text-white" />
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            </div>
-            <div>
-              <span className="text-sm font-medium text-white">AI助教</span>
-              <span className="text-xs text-white/70 ml-2">在线</span>
-            </div>
+            <Brain size={18} className="text-white" />
+            <span className="text-sm font-medium text-white">AI智能助手</span>
           </div>
           <div className="flex items-center gap-1">
-            {role === 'student' && (
-              <button
-                onClick={() => setSocraticMode(!socraticMode)}
-                title={socraticMode ? "苏格拉底启发模式已开启" : "开启苏格拉底启发模式"}
-                className={`p-1.5 rounded transition-colors ${socraticMode ? "text-yellow-300 bg-white/20" : "text-white/60 hover:text-white hover:bg-white/10"}`}
-              >
-                <Sparkles size={16} />
-              </button>
-            )}
-            <button onClick={onToggle} className="p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded transition-colors">
-              <X size={18} />
+            <button onClick={() => setIsMaximized(!isMaximized)} className="p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded transition-colors">
+              {isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            </button>
+            <button onClick={() => setIsOpen(false)} className="p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded transition-colors">
+              <X size={16} />
             </button>
           </div>
         </div>
 
-        {/* 消息区域 */}
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto p-4 space-y-4"
-        >
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((msg, i) => (
             <div key={i} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
               <div className={`max-w-[85%] rounded-xl px-4 py-3 ${
                 msg.role === "user"
-                  ? "bg-[#969BE7] text-white rounded-br-md"
+                  ? "bg-[#2563EB] text-white rounded-br-md"
                   : "bg-muted text-foreground rounded-bl-md"
               }`}>
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
               </div>
-              {msg.socraticQuestions && msg.socraticQuestions.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2 max-w-[90%]">
-                  {msg.socraticQuestions.map((q, j) => (
-                    <button
-                      key={j}
-                      onClick={() => handleSend(q)}
-                      className="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-full transition-colors text-left"
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              )}
               {msg.files && msg.files.length > 0 && (
                 <div className={`mt-2 space-y-1 ${msg.role === "user" ? "items-end" : "items-start"} flex flex-col`}>
                   {msg.files.map((f, j) => (
@@ -191,12 +149,11 @@ export default function AIAssistant({ courseId, studentId, role, isOpen, onToggl
           )}
         </div>
 
-        {/* 文件区域 */}
         {files.length > 0 && (
           <div className="px-4 py-2 bg-accent/50 border-t border-border">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-muted-foreground">已选择 {files.length} 个文件</span>
-              <button onClick={() => setFiles([])} className="text-xs text-[#DD7373] hover:text-[#DD7373]">清空全部</button>
+              <button onClick={() => setFiles([])} className="text-xs text-[#EF4444] hover:text-[#EF4444]">清空全部</button>
             </div>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {files.map((f, i) => (
@@ -204,7 +161,7 @@ export default function AIAssistant({ courseId, studentId, role, isOpen, onToggl
                   <FileText size={14} className="text-muted-foreground flex-shrink-0" />
                   <span className="text-xs flex-1 truncate">{f.name}</span>
                   <span className="text-xs text-muted-foreground flex-shrink-0">{(f.size / 1024).toFixed(1)} KB</span>
-                  <button onClick={() => removeFile(i)} className="p-1 text-muted-foreground hover:text-[#DD7373] hover:bg-[#E88383]/20 rounded flex-shrink-0">
+                  <button onClick={() => removeFile(i)} className="p-1 text-muted-foreground hover:text-[#EF4444] hover:bg-[#DC2626]/20 rounded flex-shrink-0">
                     <X size={12} />
                   </button>
                 </div>
@@ -213,7 +170,6 @@ export default function AIAssistant({ courseId, studentId, role, isOpen, onToggl
           </div>
         )}
 
-        {/* 输入区域 */}
         <div className="px-4 py-3 bg-card border-t border-border flex-shrink-0">
           <div className="flex items-end gap-2">
             <div className="relative flex-shrink-0">
@@ -240,9 +196,9 @@ export default function AIAssistant({ courseId, studentId, role, isOpen, onToggl
               />
             </div>
             <button
-              onClick={() => handleSend()}
+              onClick={handleSend}
               disabled={!message.trim() && files.length === 0}
-              className="flex-shrink-0 p-2.5 bg-primary text-white rounded-xl hover:bg-[#7F84D6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-shrink-0 p-2.5 bg-primary text-white rounded-xl hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Send size={18} />
             </button>
