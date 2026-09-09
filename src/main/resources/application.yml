@@ -35,11 +35,12 @@ aitaes:
     max-errors: 100
   ai:
     ollama:
-      base-url: ${AI_BASE_URL:https://llm-npyrxu39mzdlb84q.cn-beijing.maas.aliyuncs.com/compatible-mode/v1}
-      api-key: ${AI_API_KEY:sk-7d7fb4f80c724cd99e4b4478ed84e365}
-      model: ${AI_MODEL:qwen3.7-max-2026-06-08}
-      connect-timeout: ${OLLAMA_CONNECT_TIMEOUT:5s}
-      read-timeout: ${OLLAMA_READ_TIMEOUT:30s}
-      max-attempts: ${OLLAMA_MAX_ATTEMPTS:1}
+      # 默认使用本机 Ollama；仅监听 127.0.0.1，不会把模型服务暴露到公网。
+      base-url: ${AI_BASE_URL:http://127.0.0.1:11434/v1}
+      api-key: ${AI_API_KEY:ollama}
+      model: ${AI_MODEL:qwen2.5:7b}
+      connect-timeout: ${OLLAMA_CONNECT_TIMEOUT:10s}
+      read-timeout: ${OLLAMA_READ_TIMEOUT:300s}
+      max-attempts: ${OLLAMA_MAX_ATTEMPTS:3}
       retry-delay: ${OLLAMA_RETRY_DELAY:1s}
       temperature: ${OLLAMA_TEMPERATURE:0.2}
