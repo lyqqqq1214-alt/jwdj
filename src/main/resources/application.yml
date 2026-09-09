@@ -35,9 +35,9 @@ aitaes:
     max-errors: 100
   ai:
     ollama:
-      base-url: ${AI_BASE_URL:https://llm-npyrxu39mzdlb84q.cn-beijing.maas.aliyuncs.com/compatible-mode/v1}
-      api-key: ${AI_API_KEY:sk-7d7fb4f80c724cd99e4b4478ed84e365}
-      model: ${AI_MODEL:qwen3.7-max-2026-06-08}
+      base-url: ${AI_BASE_URL:https://api.deepseek.com/v1}
+      api-key: ${AI_API_KEY:sk-472270ade0f14244a25bfdc4dab69988}
+      model: ${AI_MODEL:deepseek-chat}
       connect-timeout: ${OLLAMA_CONNECT_TIMEOUT:5s}
       read-timeout: ${OLLAMA_READ_TIMEOUT:30s}
       max-attempts: ${OLLAMA_MAX_ATTEMPTS:1}

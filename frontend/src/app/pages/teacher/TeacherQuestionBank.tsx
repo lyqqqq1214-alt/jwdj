@@ -1,15 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CheckCircle, Plus, Upload, Brain, Target, FileText, Database, Search, BookMarked, X } from "lucide-react";
 import { getMyCourses, ClassVO } from "../../../services/dashboardService";
-import { getQuestionList, deleteQuestion, QuestionBank } from "../../../services/questionBankService";
+import { getQuestionList, getQuestionById, updateQuestion, deleteQuestion, QuestionBank } from "../../../services/questionBankService";
 import { Page } from "../../types";
 import { Tag } from "../../utils";
 
-function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType, setFilterSourceType }: {
+function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType, setFilterSourceType, focusQuestion, onClearFocusQuestion }: {
   onNav: (p: Page) => void;
   setSelectedQuizQuestions: (ids: number[]) => void;
   filterSourceType: string | null;
   setFilterSourceType: (type: string | null) => void;
+  focusQuestion?: { id: number; courseId?: number | null } | null;
+  onClearFocusQuestion?: () => void;
 }) {
   const [questions, setQuestions] = useState<QuestionBank[]>([]);
   const [loading, setLoading] = useState(false);
@@ -26,6 +28,19 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
   const [extractedCount, setExtractedCount] = useState(0);
   const [selectedQuestions, setSelectedQuestions] = useState<number[]>([]);
   const [toast, setToast] = useState<string | null>(null);
+  const [editing, setEditing] = useState<QuestionBank | null>(null);
+  const [highlightId, setHighlightId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    questionType: "SINGLE",
+    difficulty: "EASY",
+    knowledgePoints: "",
+    stem: "",
+    options: [] as { label: string; text: string }[],
+    answer: "",
+    analysis: "",
+  });
+  const scrolledRef = useRef<number | null>(null);
 
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
 
@@ -55,6 +70,105 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
       return q.content || q.questionContent || "";
     }
   };
+
+  // ─── 编辑题目 ────────────────────────────────────────────────────────────────
+  const parseContent = (q: QuestionBank) => {
+    let stem = "", answer = "", analysis = "", options: { label: string; text: string }[] = [];
+    try {
+      const raw = q.content || q.questionContent || "";
+      const c = JSON.parse(raw);
+      stem = c.stem || c.question || c.title || "";
+      answer = c.answer ?? "";
+      analysis = c.analysis || c.explanation || "";
+      if (c.options) {
+        if (Array.isArray(c.options)) {
+          options = c.options.map((o: any) => ({ label: o.label || "", text: o.text || o.content || "" }));
+        } else if (typeof c.options === "object") {
+          options = Object.entries(c.options).map(([label, text]) => ({ label, text: String(text) }));
+        }
+      }
+    } catch {
+      stem = q.content || q.questionContent || "";
+    }
+    return { stem, answer, analysis, options };
+  };
+
+  const openEdit = (q: QuestionBank) => {
+    const parsed = parseContent(q);
+    setForm({
+      questionType: q.questionType || "SINGLE",
+      difficulty: q.difficulty || "EASY",
+      knowledgePoints: q.knowledgePoints || "",
+      stem: parsed.stem,
+      options: parsed.options,
+      answer: parsed.answer,
+      analysis: parsed.analysis,
+    });
+    setEditing(q);
+  };
+
+  const handleEditClick = (q: QuestionBank) => {
+    setHighlightId(q.id);
+    openEdit(q);
+  };
+
+  const isChoice = form.questionType === "SINGLE" || form.questionType === "MULTI";
+
+  const addOption = () => setForm(f => ({ ...f, options: [...f.options, { label: String.fromCharCode(65 + f.options.length), text: "" }] }));
+  const updateOption = (i: number, patch: Partial<{ label: string; text: string }>) =>
+    setForm(f => ({ ...f, options: f.options.map((o, idx) => (idx === i ? { ...o, ...patch } : o)) }));
+  const removeOption = (i: number) => setForm(f => ({ ...f, options: f.options.filter((_, idx) => idx !== i) }));
+
+  const handleSave = async () => {
+    if (!editing) return;
+    if (!form.stem.trim()) { showToastMsg("题干不能为空"); return; }
+    const contentObj: any = { stem: form.stem, answer: form.answer, analysis: form.analysis };
+    if (isChoice) {
+      const opts: Record<string, string> = {};
+      form.options.forEach(o => { if (o.label.trim()) opts[o.label.trim()] = o.text; });
+      contentObj.options = opts;
+    }
+    setSaving(true);
+    try {
+      await updateQuestion(editing.id, {
+        questionType: form.questionType,
+        difficulty: form.difficulty,
+        knowledgePoints: form.knowledgePoints,
+        content: JSON.stringify(contentObj),
+      });
+      showToastMsg("题目已更新");
+      setEditing(null);
+      loadQuestions();
+    } catch {
+      showToastMsg("保存失败，请重试");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // 从题库体检跳转而来：定位并打开对应题目
+  useEffect(() => {
+    if (!focusQuestion?.id) return;
+    if (focusQuestion.courseId) setSelectedCourseId(focusQuestion.courseId);
+    getQuestionById(focusQuestion.id)
+      .then(q => {
+        setHighlightId(q.id);
+        openEdit(q);
+      })
+      .catch(() => showToastMsg("未找到该题目"));
+    onClearFocusQuestion?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusQuestion]);
+
+  // 题目出现后滚动到可视区域
+  useEffect(() => {
+    if (highlightId == null) return;
+    const el = document.getElementById(`question-${highlightId}`);
+    if (el && scrolledRef.current !== highlightId) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      scrolledRef.current = highlightId;
+    }
+  }, [highlightId, questions]);
 
   const filteredQuestions = questions.filter(q => {
     if (selectedTopic && !(q.knowledgePoints || "").includes(selectedTopic)) return false;
@@ -286,8 +400,8 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
           </div>
         </div>
 
-        <div className="lg:col-span-3 space-y-4">
-          <div className="bg-card rounded-lg border border-border overflow-hidden">
+        <div className="lg:col-span-3 lg:flex lg:flex-col">
+          <div className="bg-card rounded-lg border border-border overflow-hidden flex flex-col flex-1">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <h3 className="font-medium text-sm">题目列表</h3>
@@ -298,32 +412,32 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
                 <button onClick={loadQuestions} className="text-xs text-muted-foreground hover:text-primary">刷新</button>
               </div>
             </div>
-            <div className="divide-y divide-border max-h-[600px] overflow-y-auto">
+            <div className="space-y-3 overflow-y-auto p-4 bg-background max-h-[600px] lg:max-h-none lg:flex-1 lg:min-h-0">
               {filteredQuestions.map(q => (
-                <div key={q.id} className="px-4 py-4 hover:bg-accent/20 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <Tag color="blue">{typeLabel(q.questionType)}</Tag>
-                        {q.knowledgePoints && <Tag color="gray">{q.knowledgePoints}</Tag>}
-                        <Tag color={q.difficulty === "EASY" ? "green" : q.difficulty === "MEDIUM" ? "blue" : "red"}>{difficultyLabel(q.difficulty)}</Tag>
-                        {q.aiGenerated === 1 && <Tag color="cyan"><Brain size={10} className="inline mr-1" />AI生成</Tag>}
-                      </div>
-                      <p className="text-sm leading-relaxed">{stemOf(q)}</p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                        {q.createTime && <span>创建时间：{q.createTime.slice(0, 10)}</span>}
-                        <span>使用次数：{q.usageCount || 0}</span>
-                        {q.status && <span>状态：{q.status}</span>}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
+                <div key={q.id} id={`question-${q.id}`} className={`bg-card border border-border rounded-lg p-4 hover:shadow-md hover:border-primary/40 transition-all ${highlightId === q.id ? "ring-2 ring-primary/40 border-primary/40" : ""}`}>
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <Tag color="blue">{typeLabel(q.questionType)}</Tag>
+                    {q.knowledgePoints && <Tag color="gray">{q.knowledgePoints}</Tag>}
+                    <Tag color={q.difficulty === "EASY" ? "green" : q.difficulty === "MEDIUM" ? "blue" : "red"}>{difficultyLabel(q.difficulty)}</Tag>
+                    {q.aiGenerated === 1 && <Tag color="cyan"><Brain size={10} className="inline mr-1" />AI生成</Tag>}
+                  </div>
+                  <p className="text-sm leading-relaxed">{stemOf(q)}</p>
+                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
+                    {q.createTime && <span>创建时间：{q.createTime.slice(0, 10)}</span>}
+                    <span>使用次数：{q.usageCount || 0}</span>
+                    {q.status && <span>状态：{q.status}</span>}
+                  </div>
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
                       <input type="checkbox" checked={selectedQuestions.includes(q.id)} onChange={() => toggleQuestionSelection(q.id)} className="rounded" />
-                      <button onClick={() => { toggleQuestionSelection(q.id); setTimeout(() => handleAddToQuiz(), 100); }} className="px-3 py-1.5 text-xs bg-primary/10 text-primary rounded-md hover:bg-primary/20">
-                        加入组卷
-                      </button>
-                      <button className="px-3 py-1.5 text-xs border border-border rounded-md hover:bg-accent">编辑</button>
-                      <button onClick={() => handleDelete(q.id)} className="px-3 py-1.5 text-xs text-[#DD7373] hover:bg-[#E88383]/20 rounded-md">删除</button>
-                    </div>
+                      选择
+                    </label>
+                    <div className="flex-1" />
+                    <button onClick={() => { toggleQuestionSelection(q.id); setTimeout(() => handleAddToQuiz(), 100); }} className="px-2.5 py-1.5 text-xs bg-primary/10 text-primary rounded-md hover:bg-primary/20 whitespace-nowrap">
+                      加入组卷
+                    </button>
+                    <button onClick={() => handleEditClick(q)} className="px-2.5 py-1.5 text-xs border border-border rounded-md hover:bg-accent whitespace-nowrap">编辑</button>
+                    <button onClick={() => handleDelete(q.id)} className="px-2.5 py-1.5 text-xs text-[#DD7373] hover:bg-[#E88383]/20 rounded-md whitespace-nowrap">删除</button>
                   </div>
                 </div>
               ))}
@@ -397,6 +511,85 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {editing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg border border-border w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <h3 className="font-semibold">编辑题目 #{editing.id}</h3>
+              <button onClick={() => setEditing(null)}><X size={16} /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">题型</label>
+                  <select value={form.questionType} onChange={e => setForm(f => ({ ...f, questionType: e.target.value }))}
+                    className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background">
+                    {questionTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">难度</label>
+                  <select value={form.difficulty} onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))}
+                    className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background">
+                    {difficulties.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">知识点（逗号分隔）</label>
+                  <input type="text" value={form.knowledgePoints} onChange={e => setForm(f => ({ ...f, knowledgePoints: e.target.value }))}
+                    className="w-full px-3 py-2 border border-border rounded-md text-sm" placeholder="如：传输层/TCP协议" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">题干</label>
+                <textarea value={form.stem} onChange={e => setForm(f => ({ ...f, stem: e.target.value }))}
+                  rows={3} className="w-full px-3 py-2 border border-border rounded-md text-sm resize-y" />
+              </div>
+
+              {isChoice && (
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs text-muted-foreground">选项</label>
+                    <button onClick={addOption} className="text-xs text-primary hover:underline">+ 添加选项</button>
+                  </div>
+                  <div className="space-y-2">
+                    {form.options.map((o, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <input value={o.label} onChange={e => updateOption(i, { label: e.target.value })}
+                          className="w-14 px-2 py-1.5 border border-border rounded-md text-sm text-center" placeholder="A" />
+                        <input value={o.text} onChange={e => updateOption(i, { text: e.target.value })}
+                          className="flex-1 px-3 py-1.5 border border-border rounded-md text-sm" placeholder="选项内容" />
+                        <button onClick={() => removeOption(i)} className="text-[#DD7373] hover:bg-[#E88383]/20 rounded p-1"><X size={14} /></button>
+                      </div>
+                    ))}
+                    {form.options.length === 0 && <p className="text-xs text-muted-foreground">暂无选项，点击「添加选项」新增</p>}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">答案</label>
+                <input type="text" value={form.answer} onChange={e => setForm(f => ({ ...f, answer: e.target.value }))}
+                  className="w-full px-3 py-2 border border-border rounded-md text-sm" placeholder={isChoice ? "如：A 或 A,C" : "参考答案"} />
+              </div>
+
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">解析</label>
+                <textarea value={form.analysis} onChange={e => setForm(f => ({ ...f, analysis: e.target.value }))}
+                  rows={3} className="w-full px-3 py-2 border border-border rounded-md text-sm resize-y" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 px-5 py-4 border-t border-border">
+              <button onClick={() => setEditing(null)} className="px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">取消</button>
+              <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6] disabled:opacity-50">
+                {saving ? "保存中…" : "保存修改"}
+              </button>
+            </div>
           </div>
         </div>
       )}

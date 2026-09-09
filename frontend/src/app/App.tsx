@@ -48,6 +48,7 @@ export default function App() {
   const [filterSourceType, setFilterSourceType] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [focusQuestion, setFocusQuestion] = useState<{ id: number; courseId?: number | null } | null>(null);
   const [user, setUser] = useState<any>(null);
   const [taPermissions, setTaPermissions] = useState<TAPermissions | null>(null);
 
@@ -119,13 +120,13 @@ export default function App() {
         {page === "admin-audit" && <AdminAuditLogs />}
         {page === "admin-config" && <AdminConfig />}
         {/* Teacher pages */}
-        {page === "teacher-ai-analysis" && <TeacherAiAnalysis />}
+        {page === "teacher-ai-analysis" && <TeacherAiAnalysis onOpenQuestion={(id, courseId) => { setFocusQuestion({ id, courseId }); setPage("teacher-bank"); }} />}
         {page === "teacher-dashboard" && <TeacherDashboard onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} />}
         {page === "teacher-class" && <TeacherClassManagement onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} />}
         {page === "teacher-import" && <TeacherDataImport />}
         {page === "teacher-profile" && <TeacherStudentProfile onNav={setPage} initialStudentId={selectedStudentId} initialCourseId={selectedCourseId} />}
         {page === "teacher-ai-quiz" && <TeacherAIQuiz onNav={setPage} />}
-        {page === "teacher-bank" && <TeacherQuestionBank onNav={setPage} setSelectedQuizQuestions={setSelectedQuizQuestions} filterSourceType={filterSourceType} setFilterSourceType={setFilterSourceType} />}
+        {page === "teacher-bank" && <TeacherQuestionBank onNav={setPage} setSelectedQuizQuestions={setSelectedQuizQuestions} filterSourceType={filterSourceType} setFilterSourceType={setFilterSourceType} focusQuestion={focusQuestion} onClearFocusQuestion={() => setFocusQuestion(null)} />}
         {page === "teacher-exam" && <TeacherExamManagement selectedQuizQuestions={selectedQuizQuestions} setSelectedQuizQuestions={setSelectedQuizQuestions} />}
         {page === "teacher-notification" && <NotificationCenter mode="teacher" />}
         {page === "admin-notification" && <NotificationCenter mode="admin" />}

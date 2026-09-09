@@ -48,6 +48,15 @@ public class QuestionBankAuditDTO {
     private BigDecimal avgAmbiguity;
     private BigDecimal avgKpCoverage;
 
+    /** 难度分布（EASY/MEDIUM/HARD/未标注） */
+    private List<DifficultyStat> difficultyDistribution;
+
+    /** 单题问题清单（内容完整性 + 规范性 + 知识点错标） */
+    private List<IssueItem> issues;
+
+    /** 从未被组卷使用的题目数（usageCount == 0 或 null） */
+    private Integer unusedCount;
+
     /** 整理建议（规则生成） */
     private List<String> suggestions;
 
@@ -92,5 +101,38 @@ public class QuestionBankAuditDTO {
 
         /** 重复题目ID列表 */
         private List<Long> questionIds;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DifficultyStat {
+
+        /** 难度：EASY / MEDIUM / HARD / UNLABELED */
+        private String difficulty;
+
+        private Integer count;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class IssueItem {
+
+        private Long questionId;
+
+        private String questionType;
+
+        /** 截断后的题干 */
+        private String stem;
+
+        /** 问题类型：MISSING_STEM / MISSING_OPTIONS / MISSING_ANSWER /
+         *  MISSING_ANALYSIS / INVALID_DIFFICULTY / NO_KNOWLEDGE_POINT / UNMATCHED_KNOWLEDGE_POINT */
+        private String category;
+
+        /** 补充说明（如未匹配的知识点名） */
+        private String detail;
     }
 }

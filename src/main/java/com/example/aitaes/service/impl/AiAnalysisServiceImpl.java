@@ -59,6 +59,9 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
     /** 得分率及格线（%） */
     private static final BigDecimal SCORE_PASS = new BigDecimal("60");
 
+    /** 合法难度值 */
+    private static final Set<String> VALID_DIFFICULTIES = Set.of("EASY", "MEDIUM", "HARD");
+
     private static final DateTimeFormatter TS = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     // ─── 课程智能分析报告 ─────────────────────────────────────────────────────
@@ -387,15 +390,21 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
                         .kpName(e.getKey()).questionCount(e.getValue()).build())
                 .sorted(Comparator.comparing(QuestionBankAuditDTO.KpCoverage::getQuestionCount).reversed())
                 .toList();
+        List<KnowledgePoint> courseKps = knowledgePointMapper.selectList(
+                new LambdaQueryWrapper<KnowledgePoint>().eq(KnowledgePoint::getCourseId, courseId));
         Set<String> covered = kpCount.keySet();
-        List<String> uncovered = knowledgePointMapper.selectList(
-                        new LambdaQueryWrapper<KnowledgePoint>().eq(KnowledgePoint::getCourseId, courseId))
-                .stream()
+        List<String> uncovered = courseKps.stream()
                 .map(KnowledgePoint::getKpName)
                 .filter(Objects::nonNull)
                 .filter(name -> !covered.contains(name.trim()))
                 .distinct()
                 .toList();
+        Set<String> courseKpNames = courseKps.stream()
+                .map(KnowledgePoint::getKpName)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(name -> !name.isEmpty())
+                .collect(Collectors.toSet());
 
         // 疑似重复题（题干完全相同）
         Map<String, List<Long>> stemGroups = new LinkedHashMap<>();
@@ -431,6 +440,61 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
         BigDecimal avgKp = ratedKp.isEmpty() ? null
                 : avgOf(ratedKp.stream().map(q -> BigDecimal.valueOf(q.getQualityKpCoverage())).toList());
 
+        // 难度分布
+        Map<String, Long> difficultyCounts = new LinkedHashMap<>();
+        for (QuestionBank q : questions) {
+            String d = q.getDifficulty() == null || q.getDifficulty().isBlank()
+                    ? "UNLABELED" : q.getDifficulty().trim().toUpperCase();
+            difficultyCounts.merge(d, 1L, Long::sum);
+        }
+        List<QuestionBankAuditDTO.DifficultyStat> difficultyDistribution = difficultyCounts.entrySet().stream()
+                .map(e -> QuestionBankAuditDTO.DifficultyStat.builder()
+                        .difficulty(e.getKey()).count(e.getValue().intValue()).build())
+                .sorted(Comparator.comparing(QuestionBankAuditDTO.DifficultyStat::getCount).reversed())
+                .toList();
+
+        // 内容完整性 / 规范性 / 知识点错标（逐题规则检测）
+        List<QuestionBankAuditDTO.IssueItem> issues = new ArrayList<>();
+        for (QuestionBank q : questions) {
+            JsonNode content = parseContent(q);
+            String stem = extractStem(q);
+            String stemText = stem == null ? "" : truncate(stem, 50);
+            String type = q.getQuestionType();
+
+            // 内容完整性
+            if (content == null || !hasText(content, "stem")) {
+                issues.add(issue(q, stemText, "MISSING_STEM", null));
+            } else {
+                if (isChoiceType(type) && !hasOptions(content)) {
+                    issues.add(issue(q, stemText, "MISSING_OPTIONS", null));
+                }
+                if (!hasText(content, "answer")) {
+                    issues.add(issue(q, stemText, "MISSING_ANSWER", null));
+                }
+                if (!hasText(content, "analysis", "explanation")) {
+                    issues.add(issue(q, stemText, "MISSING_ANALYSIS", null));
+                }
+            }
+
+            // 规范性：难度
+            if (q.getDifficulty() == null || q.getDifficulty().isBlank()
+                    || !VALID_DIFFICULTIES.contains(q.getDifficulty().trim().toUpperCase())) {
+                issues.add(issue(q, stemText, "INVALID_DIFFICULTY",
+                        q.getDifficulty() == null ? "空" : q.getDifficulty()));
+            }
+
+            // 规范性：知识点为空 / 错标
+            if (q.getKnowledgePoints() == null || q.getKnowledgePoints().isBlank()) {
+                issues.add(issue(q, stemText, "NO_KNOWLEDGE_POINT", null));
+            } else if (!courseKpNames.isEmpty() && !matchesAnyKp(q.getKnowledgePoints(), courseKpNames)) {
+                issues.add(issue(q, stemText, "UNMATCHED_KNOWLEDGE_POINT", q.getKnowledgePoints()));
+            }
+        }
+
+        // 从未被组卷使用的题目数
+        int unusedCount = (int) questions.stream()
+                .filter(q -> q.getUsageCount() == null || q.getUsageCount() == 0).count();
+
         // 规则整理建议
         List<String> suggestions = new ArrayList<>();
         if (!uncovered.isEmpty()) {
@@ -450,6 +514,38 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
         if (avgClarity != null && avgClarity.compareTo(new BigDecimal("3")) < 0) {
             suggestions.add("AI 质量评分显示题目清晰度偏低（均分 " + avgClarity + "/5），建议人工复核题干表述");
         }
+        // 新增规则建议
+        Map<String, Long> issueCounts = issues.stream()
+                .collect(Collectors.groupingBy(QuestionBankAuditDTO.IssueItem::getCategory, Collectors.counting()));
+        long missingStem = count(issueCounts, "MISSING_STEM");
+        long missingOptions = count(issueCounts, "MISSING_OPTIONS");
+        long missingAnswer = count(issueCounts, "MISSING_ANSWER");
+        long missingAnalysis = count(issueCounts, "MISSING_ANALYSIS");
+        long incomplete = missingStem + missingOptions + missingAnswer + missingAnalysis;
+        if (incomplete > 0) {
+            suggestions.add("有 " + incomplete + " 道题内容不完整（缺题干 " + missingStem
+                    + "、缺选项 " + missingOptions + "、缺答案 " + missingAnswer
+                    + "、缺解析 " + missingAnalysis + "），建议补齐");
+        }
+        long invalidDifficulty = count(issueCounts, "INVALID_DIFFICULTY");
+        if (invalidDifficulty > 0) {
+            suggestions.add("有 " + invalidDifficulty + " 道题难度缺失或非法，建议规范标注");
+        }
+        long noKp = count(issueCounts, "NO_KNOWLEDGE_POINT");
+        if (noKp > 0) {
+            suggestions.add("有 " + noKp + " 道题未标注知识点，建议补充");
+        }
+        long unmatchedKp = count(issueCounts, "UNMATCHED_KNOWLEDGE_POINT");
+        if (unmatchedKp > 0) {
+            suggestions.add("有 " + unmatchedKp + " 道题的知识点标签不在课程知识点列表中，建议核对");
+        }
+        if (unusedCount > 0) {
+            suggestions.add("有 " + unusedCount + " 道题从未被组卷使用，建议评估是否保留或复用");
+        }
+        if (!questions.isEmpty() && difficultyDistribution.size() == 1
+                && "UNLABELED".equals(difficultyDistribution.get(0).getDifficulty())) {
+            suggestions.add("题目均未标注难度，建议补充难度标签");
+        }
         if (suggestions.isEmpty()) {
             suggestions.add("题库整体状态良好，暂无需整理");
         }
@@ -467,6 +563,9 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
                 .avgDifficultyMatch(avgDifficulty)
                 .avgAmbiguity(avgAmbiguity)
                 .avgKpCoverage(avgKp)
+                .difficultyDistribution(difficultyDistribution)
+                .issues(issues)
+                .unusedCount(unusedCount)
                 .suggestions(suggestions)
                 .build();
 
@@ -630,6 +729,87 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
 
     private String truncate(String s, int max) {
         return s.length() <= max ? s : s.substring(0, max) + "…";
+    }
+
+    /** 解析题目 content JSON，失败返回 null */
+    private JsonNode parseContent(QuestionBank q) {
+        String content = q.getContent();
+        if (content == null || content.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readTree(content);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** 对象中任一 key 存在非空文本值 */
+    private boolean hasText(JsonNode node, String... keys) {
+        if (node == null || !node.isObject()) {
+            return false;
+        }
+        for (String key : keys) {
+            JsonNode value = node.get(key);
+            if (value != null && value.isTextual() && !value.asText().isBlank()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 选择题是否有选项（支持对象 {A:..} 或数组 [{label,text}]） */
+    private boolean hasOptions(JsonNode content) {
+        if (content == null || !content.isObject()) {
+            return false;
+        }
+        JsonNode options = content.get("options");
+        if (options == null || options.isNull()) {
+            return false;
+        }
+        return options.isObject() ? options.size() > 0 : options.isArray() && options.size() > 0;
+    }
+
+    /** 是否选择题型（SINGLE/MULTI 或中文单选/多选） */
+    private boolean isChoiceType(String type) {
+        if (type == null) {
+            return false;
+        }
+        String upper = type.trim().toUpperCase();
+        return upper.contains("SINGLE") || upper.contains("MULTI")
+                || type.contains("单选") || type.contains("多选");
+    }
+
+    /** 知识点标签是否命中课程知识点名（兼容「一级模块/二级知识点」层级格式） */
+    private boolean matchesAnyKp(String knowledgePoints, Set<String> courseKpNames) {
+        for (String tag : knowledgePoints.split("[,，]")) {
+            String t = tag.trim();
+            if (t.isEmpty()) {
+                continue;
+            }
+            if (courseKpNames.contains(t)) {
+                return true;
+            }
+            int idx = t.lastIndexOf('/');
+            if (idx >= 0 && courseKpNames.contains(t.substring(idx + 1).trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private QuestionBankAuditDTO.IssueItem issue(QuestionBank q, String stemText, String category, String detail) {
+        return QuestionBankAuditDTO.IssueItem.builder()
+                .questionId(q.getId())
+                .questionType(q.getQuestionType())
+                .stem(stemText)
+                .category(category)
+                .detail(detail)
+                .build();
+    }
+
+    private long count(Map<String, Long> counts, String key) {
+        return counts.getOrDefault(key, 0L);
     }
 
     /** 分析结果落库 t_ai_analysis_result */

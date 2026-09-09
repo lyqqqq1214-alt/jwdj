@@ -350,6 +350,82 @@ class AiAnalysisServiceImplTest {
             assertThat(audit.getAvgClarity()).isEqualByComparingTo(new BigDecimal("4.0"));
         }
 
+        @Test
+        @DisplayName("题库体检识别内容完整性与规范性问题")
+        void shouldDetectCompletenessAndValidityIssues() {
+            when(courseMapper.selectById(1L)).thenReturn(course);
+            when(questionBankMapper.selectList(any())).thenReturn(List.of(
+                    // 健康题：单选有选项/答案/解析，EASY，已使用
+                    healthQuestion(201L, "SINGLE",
+                            "{\"stem\":\"1+1=?\",\"options\":{\"A\":\"1\",\"B\":\"2\",\"C\":\"3\",\"D\":\"4\"},\"answer\":\"B\",\"analysis\":\"1+1=2\"}",
+                            "TCP", "EASY", 5),
+                    // 多选题缺解析 + 难度缺失 + 未使用
+                    healthQuestion(202L, "MULTI",
+                            "{\"stem\":\"选出偶数\",\"options\":{\"A\":\"2\",\"B\":\"3\",\"C\":\"4\",\"D\":\"5\"},\"answer\":\"A,C\"}",
+                            "TCP", null, 0),
+                    // 简答题缺答案/解析 + 知识点为空
+                    healthQuestion(203L, "SHORT", "{\"stem\":\"简述TCP\"}", "", "HARD", 3),
+                    // 填空题知识点错标（UDP 不在课程列表）+ 未使用
+                    healthQuestion(204L, "FILL",
+                            "{\"stem\":\"___是传输层协议\",\"options\":{},\"answer\":\"TCP\",\"analysis\":\"TCP\"}",
+                            "UDP", "EASY", 0)));
+            when(knowledgePointMapper.selectList(any())).thenReturn(List.of(kp("TCP"), kp("滑动窗口")));
+            when(ollamaService.generate(anyString())).thenThrow(new RuntimeException("AI 不可用"));
+
+            QuestionBankAuditDTO audit = service.auditQuestionBank(1L);
+
+            // 难度分布：EASY×2、HARD×1、UNLABELED×1
+            assertThat(audit.getDifficultyDistribution()).hasSize(3);
+            assertThat(audit.getDifficultyDistribution()).anySatisfy(d -> {
+                assertThat(d.getDifficulty()).isEqualTo("EASY");
+                assertThat(d.getCount()).isEqualTo(2);
+            });
+            assertThat(audit.getDifficultyDistribution()).anySatisfy(d -> {
+                assertThat(d.getDifficulty()).isEqualTo("HARD");
+                assertThat(d.getCount()).isEqualTo(1);
+            });
+            assertThat(audit.getDifficultyDistribution()).anySatisfy(d -> {
+                assertThat(d.getDifficulty()).isEqualTo("UNLABELED");
+                assertThat(d.getCount()).isEqualTo(1);
+            });
+
+            // 问题清单：缺解析×2、缺答案×1、难度非法×1、知识点空×1、知识点错标×1
+            assertThat(audit.getIssues())
+                    .extracting(QuestionBankAuditDTO.IssueItem::getCategory)
+                    .containsExactlyInAnyOrder(
+                            "MISSING_ANSWER", "MISSING_ANALYSIS", "MISSING_ANALYSIS",
+                            "INVALID_DIFFICULTY", "NO_KNOWLEDGE_POINT", "UNMATCHED_KNOWLEDGE_POINT");
+            // 未覆盖选择题缺选项：健康单选/填空不应报 MISSING_OPTIONS
+            assertThat(audit.getIssues().stream()
+                    .filter(i -> "MISSING_OPTIONS".equals(i.getCategory()))
+                    .toList()).isEmpty();
+            // 错标问题携带题目ID与原始标签
+            assertThat(audit.getIssues().stream()
+                    .filter(i -> "UNMATCHED_KNOWLEDGE_POINT".equals(i.getCategory()))
+                    .map(QuestionBankAuditDTO.IssueItem::getQuestionId).toList()).containsExactly(204L);
+            assertThat(audit.getIssues().stream()
+                    .filter(i -> "UNMATCHED_KNOWLEDGE_POINT".equals(i.getCategory()))
+                    .map(QuestionBankAuditDTO.IssueItem::getDetail).toList()).containsExactly("UDP");
+
+            // 未使用题数：202、204 使用次数为 0
+            assertThat(audit.getUnusedCount()).isEqualTo(2);
+
+            // 新增规则建议
+            assertThat(audit.getSuggestions()).anyMatch(s -> s.contains("内容不完整"));
+            assertThat(audit.getSuggestions()).anyMatch(s -> s.contains("难度缺失或非法"));
+            assertThat(audit.getSuggestions()).anyMatch(s -> s.contains("未标注知识点"));
+            assertThat(audit.getSuggestions()).anyMatch(s -> s.contains("知识点标签不在课程知识点列表"));
+            assertThat(audit.getSuggestions()).anyMatch(s -> s.contains("从未被组卷使用"));
+        }
+
+        private QuestionBank healthQuestion(Long id, String type, String content, String kps,
+                                            String difficulty, Integer usageCount) {
+            QuestionBank q = buildQuestion(id, type, content, kps, 0, "APPROVED", null);
+            q.setDifficulty(difficulty);
+            q.setUsageCount(usageCount);
+            return q;
+        }
+
         private KnowledgePoint kp(String name) {
             KnowledgePoint k = new KnowledgePoint();
             k.setCourseId(1L);

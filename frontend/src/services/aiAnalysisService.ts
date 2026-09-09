@@ -84,6 +84,19 @@ export interface DuplicateGroup {
   questionIds: number[];
 }
 
+export interface DifficultyStat {
+  difficulty: string; // EASY / MEDIUM / HARD / UNLABELED
+  count: number;
+}
+
+export interface IssueItem {
+  questionId: number;
+  questionType: string;
+  stem: string;
+  category: string; // MISSING_STEM / MISSING_OPTIONS / MISSING_ANSWER / MISSING_ANALYSIS / INVALID_DIFFICULTY / NO_KNOWLEDGE_POINT / UNMATCHED_KNOWLEDGE_POINT
+  detail?: string | null;
+}
+
 export interface QuestionBankAudit {
   courseId: number;
   total: number;
@@ -97,6 +110,9 @@ export interface QuestionBankAudit {
   avgDifficultyMatch?: number | null;
   avgAmbiguity?: number | null;
   avgKpCoverage?: number | null;
+  difficultyDistribution: DifficultyStat[];
+  issues: IssueItem[];
+  unusedCount: number;
   suggestions: string[];
   aiJudgment: string;
   aiAvailable: boolean;
@@ -109,6 +125,19 @@ const typeLabels: Record<string, string> = {
 
 export const assessmentTypeLabel = (t: string) => typeLabels[t] || t;
 export const questionTypeLabel = (t: string) => typeLabels[t] || t;
+
+const issueCategoryLabels: Record<string, string> = {
+  MISSING_STEM: '缺题干', MISSING_OPTIONS: '缺选项', MISSING_ANSWER: '缺答案',
+  MISSING_ANALYSIS: '缺解析', INVALID_DIFFICULTY: '难度非法',
+  NO_KNOWLEDGE_POINT: '未标知识点', UNMATCHED_KNOWLEDGE_POINT: '知识点错标',
+};
+
+const difficultyLabels: Record<string, string> = {
+  EASY: '简单', MEDIUM: '中等', HARD: '困难', UNLABELED: '未标注',
+};
+
+export const issueCategoryLabel = (c: string) => issueCategoryLabels[c] || c;
+export const difficultyLabel = (d: string) => difficultyLabels[d] || d;
 
 export async function getAiAnalysisReport(courseId: number) {
   const res = await api.get('/ai-analysis/report', { params: { courseId } });
