@@ -270,9 +270,9 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId, ta
                   className="bg-card rounded-xl border border-border p-5 cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-primary/20 hover:-translate-y-0.5">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="font-semibold text-base">{c.className || c.courseName}</h3>
-                      {c.className !== c.courseName && c.courseName && (
-                        <p className="text-sm text-muted-foreground mt-0.5">{c.courseName}</p>
+                      <h3 className="font-semibold text-base">{c.courseName || c.className}</h3>
+                      {c.courseNo && (
+                        <p className="text-xs text-muted-foreground mt-1">课程编号：{c.courseNo}</p>
                       )}
                       <p className="text-xs text-muted-foreground mt-1">{c.semester}</p>
                     </div>

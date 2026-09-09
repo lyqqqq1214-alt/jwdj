@@ -1450,711 +1450,586 @@ INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `diff
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "1965年科学家提出超文本概念，其超文本的核心是__A__。", "options": [{"label": "A", "text": "链接"}, {"label": "B", "text": "网络"}, {"label": "C", "text": "图像"}, {"label": "D", "text": "声音"}], "answer": "?"}',
+  '{"stem": "1965年科学家提出超文本概念，其超文本的核心是____。", "options": [{"label": "A", "text": "链接"}, {"label": "B", "text": "网络"}, {"label": "C", "text": "图像"}, {"label": "D", "text": "声音"}], "answer": "A"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 1965年科学家提出超文本概念，其超文本的核心是__A__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "地址栏中输入的http://zjhk.school.com中，zjhk.school.com 是一个_A___。", "options": [{"label": "A", "text": "域名"}, {"label": "B", "text": "文件"}, {"label": "C", "text": "邮箱"}, {"label": "D", "text": "国家"}], "answer": "?"}',
+  '{"stem": "地址栏中输入的http://zjhk.school.com中，zjhk.school.com 是一个____。", "options": [{"label": "A", "text": "域名"}, {"label": "B", "text": "文件"}, {"label": "C", "text": "邮箱"}, {"label": "D", "text": "国家"}], "answer": "A"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 地址栏中输入的http://zjhk.school.com中，zjhk.school.com 是一个_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "通常所说的ADSL是指_A__。", "options": [{"label": "A", "text": "上网方式"}, {"label": "B", "text": "电脑品牌"}, {"label": "C", "text": "网络服务商"}, {"label": "D", "text": "网页制作技术"}], "answer": "?"}',
+  '{"stem": "通常所说的ADSL是指____。", "options": [{"label": "A", "text": "上网方式"}, {"label": "B", "text": "电脑品牌"}, {"label": "C", "text": "网络服务商"}, {"label": "D", "text": "网页制作技术"}], "answer": "A"}',
   '物理层设备', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 通常所说的ADSL是指_A__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "下列四项中表示电子邮件地址的是_A__。", "options": [{"label": "A", "text": "ks@183.net"}, {"label": "B", "text": "192.168.0.1"}, {"label": "C", "text": "www.gov.cn"}, {"label": "D", "text": "www.cctv.com"}], "answer": "?"}',
+  '{"stem": "下列四项中表示电子邮件地址的是____。", "options": [{"label": "A", "text": "ks@183.net"}, {"label": "B", "text": "192.168.0.1"}, {"label": "C", "text": "www.gov.cn"}, {"label": "D", "text": "www.cctv.com"}], "answer": "A"}',
   '电子邮件协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 下列四项中表示电子邮件地址的是_A__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "浏览网页过程中，当鼠标移动到已设置了超链接的区域时，鼠标指针形状一般变为__A__。", "options": [{"label": "A", "text": "小手形状"}, {"label": "B", "text": "双向箭头"}, {"label": "C", "text": "禁止图案"}, {"label": "D", "text": "下拉箭头"}], "answer": "?"}',
+  '{"stem": "浏览网页过程中，当鼠标移动到已设置了超链接的区域时，鼠标指针形状一般变为____。", "options": [{"label": "A", "text": "小手形状"}, {"label": "B", "text": "双向箭头"}, {"label": "C", "text": "禁止图案"}, {"label": "D", "text": "下拉箭头"}], "answer": "A"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 浏览网页过程中，当鼠标移动到已设置了超链接的区域时，鼠标指针形状一般变为__A__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "下列四项中表示域名的是_A___。", "options": [{"label": "A", "text": "www.cctv.com"}, {"label": "B", "text": "hk@zj.school.com"}], "answer": "?"}',
+  '{"stem": "下列四项中表示域名的是____。", "options": [{"label": "A", "text": "www.cctv.com"}, {"label": "B", "text": "hk@zj.school.com"}], "answer": "A"}',
   'DNS协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 下列四项中表示域名的是_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "下列软件中可以查看WWW信息的是_D_。", "options": [{"label": "A", "text": "游戏软件"}, {"label": "B", "text": "财务软件"}, {"label": "C", "text": "杀毒软件"}, {"label": "D", "text": "浏览器软件"}], "answer": "?"}',
+  '{"stem": "下列软件中可以查看WWW信息的是____。", "options": [{"label": "A", "text": "游戏软件"}, {"label": "B", "text": "财务软件"}, {"label": "C", "text": "杀毒软件"}, {"label": "D", "text": "浏览器软件"}], "answer": "D"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 下列软件中可以查看WWW信息的是_D_。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "设置文件夹共享属性时，可以选择的三种访问类型为完全控制、更改和_B_。", "options": [{"label": "A", "text": "共享"}, {"label": "B", "text": "只读"}, {"label": "C", "text": "不完全"}, {"label": "D", "text": "不共享"}], "answer": "?"}',
+  '{"stem": "设置文件夹共享属性时，可以选择的三种访问类型为完全控制、更改和____。", "options": [{"label": "A", "text": "共享"}, {"label": "B", "text": "只读"}, {"label": "C", "text": "不完全"}, {"label": "D", "text": "不共享"}], "answer": "B"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 设置文件夹共享属性时，可以选择的三种访问类型为完全控制、更改和_B_。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "计算机网络最突出的特点是_A__。", "options": [{"label": "A", "text": "资源共享"}, {"label": "B", "text": "运算精度高"}, {"label": "C", "text": "运算速度快"}, {"label": "D", "text": "内存容量大"}], "answer": "?"}',
+  '{"stem": "计算机网络最突出的特点是____。", "options": [{"label": "A", "text": "资源共享"}, {"label": "B", "text": "运算精度高"}, {"label": "C", "text": "运算速度快"}, {"label": "D", "text": "内存容量大"}], "answer": "A"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 计算机网络最突出的特点是_A__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "E-mail地址的格式是_C___。", "options": [{"label": "A", "text": "www.zjschool.cn"}, {"label": "B", "text": "网址&#8226;用户名"}], "answer": "?"}',
+  '{"stem": "E-mail地址的格式是____。", "options": [{"label": "A", "text": "www.zjschool.cn"}, {"label": "B", "text": "网址&#8226;用户名"}], "answer": "C"}',
   '电子邮件协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: E-mail地址的格式是_C___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "为了使自己的文件让其他同学浏览，又不想让他们修改文件，一般可将包含该文件的文件夹共享属性的访问类型设置为_C___。", "options": [{"label": "A", "text": "隐藏"}, {"label": "B", "text": "完全"}, {"label": "C", "text": "只读"}, {"label": "D", "text": "不共享"}], "answer": "?"}',
+  '{"stem": "为了使自己的文件让其他同学浏览，又不想让他们修改文件，一般可将包含该文件的文件夹共享属性的访问类型设置为____。", "options": [{"label": "A", "text": "隐藏"}, {"label": "B", "text": "完全"}, {"label": "C", "text": "只读"}, {"label": "D", "text": "不共享"}], "answer": "C"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 为了使自己的文件让其他同学浏览，又不想让他们修改文件，一般可将包含该文件的文件夹共享属性的访问类型设置为_C___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "Internet Explorer(IE)浏览器的收藏夹的主要作用是收藏_C___。", "options": [{"label": "A", "text": "图片"}, {"label": "B", "text": "邮件"}, {"label": "C", "text": "网址"}, {"label": "D", "text": "文档"}], "answer": "?"}',
+  '{"stem": "Internet Explorer(IE)浏览器的收藏夹的主要作用是收藏____。", "options": [{"label": "A", "text": "图片"}, {"label": "B", "text": "邮件"}, {"label": "C", "text": "网址"}, {"label": "D", "text": "文档"}], "answer": "C"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: Internet Explorer(IE)浏览器的收藏夹的主要作用是收藏_C___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "网址www.pku.edu.cn中的cn表示_D___。", "options": [{"label": "A", "text": "英国"}, {"label": "B", "text": "美国"}, {"label": "C", "text": "日本"}, {"label": "D", "text": "中国"}], "answer": "?"}',
+  '{"stem": "网址www.pku.edu.cn中的cn表示____。", "options": [{"label": "A", "text": "英国"}, {"label": "B", "text": "美国"}, {"label": "C", "text": "日本"}, {"label": "D", "text": "中国"}], "answer": "D"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 网址www.pku.edu.cn中的cn表示_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "在因特网上专门用于传输文件的协议是_A_ 。", "options": [{"label": "A", "text": "FTP"}, {"label": "B", "text": "HTTP"}, {"label": "C", "text": "NEWS"}, {"label": "D", "text": "Word"}], "answer": "?"}',
+  '{"stem": "在因特网上专门用于传输文件的协议是____ 。", "options": [{"label": "A", "text": "FTP"}, {"label": "B", "text": "HTTP"}, {"label": "C", "text": "NEWS"}, {"label": "D", "text": "Word"}], "answer": "A"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 在因特网上专门用于传输文件的协议是_A_ 。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "www.163.com是指__ A___。", "options": [{"label": "A", "text": "域名"}, {"label": "B", "text": "程序语句"}, {"label": "C", "text": "电子邮件地址"}, {"label": "D", "text": "超文本传输协议"}], "answer": "?"}',
+  '{"stem": "www.163.com是指____。", "options": [{"label": "A", "text": "域名"}, {"label": "B", "text": "程序语句"}, {"label": "C", "text": "电子邮件地址"}, {"label": "D", "text": "超文本传输协议"}], "answer": "A"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: www.163.com是指__ A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "下列四项中主要用于在Internet上交流信息的是__A__。", "options": [{"label": "A", "text": "BBS"}, {"label": "B", "text": "DOS"}, {"label": "C", "text": "Word"}, {"label": "D", "text": "Excel"}], "answer": "?"}',
+  '{"stem": "下列四项中主要用于在Internet上交流信息的是____。", "options": [{"label": "A", "text": "BBS"}, {"label": "B", "text": "DOS"}, {"label": "C", "text": "Word"}, {"label": "D", "text": "Excel"}], "answer": "A"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 下列四项中主要用于在Internet上交流信息的是__A__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "电子邮件地址格式为：username@hostname,其中hostname为__D__。", "options": [{"label": "A", "text": "用户地址名"}, {"label": "B", "text": "某国家名"}, {"label": "C", "text": "某公司名"}, {"label": "D", "text": "ISP某台主机的域名"}], "answer": "?"}',
+  '{"stem": "电子邮件地址格式为：username@hostname,其中hostname为____。", "options": [{"label": "A", "text": "用户地址名"}, {"label": "B", "text": "某国家名"}, {"label": "C", "text": "某公司名"}, {"label": "D", "text": "ISP某台主机的域名"}], "answer": "D"}',
   '电子邮件协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 电子邮件地址格式为：username@hostname,其中hostname为__D__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "下列四项中主要用于在Internet上交流信息的是_D___。", "options": [{"label": "A", "text": "DOS"}, {"label": "B", "text": "Word"}, {"label": "C", "text": "Excel"}, {"label": "D", "text": "E-mail"}], "answer": "?"}',
+  '{"stem": "下列四项中主要用于在Internet上交流信息的是____。", "options": [{"label": "A", "text": "DOS"}, {"label": "B", "text": "Word"}, {"label": "C", "text": "Excel"}, {"label": "D", "text": "E-mail"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 下列四项中主要用于在Internet上交流信息的是_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "地址ftp://218.0.0.123中的ftp是指___A_。", "options": [{"label": "A", "text": "协议"}, {"label": "B", "text": "网址"}, {"label": "C", "text": "新闻组"}, {"label": "D", "text": "邮件信箱"}], "answer": "?"}',
+  '{"stem": "地址ftp://218.0.0.123中的ftp是指____。", "options": [{"label": "A", "text": "协议"}, {"label": "B", "text": "网址"}, {"label": "C", "text": "新闻组"}, {"label": "D", "text": "邮件信箱"}], "answer": "A"}',
   '文件传输协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 地址ftp://218.0.0.123中的ftp是指___A_。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "http是一种_D___。", "options": [{"label": "A", "text": "域名"}, {"label": "B", "text": "高级语言"}, {"label": "C", "text": "服务器名称"}, {"label": "D", "text": "超文本传输协议"}], "answer": "?"}',
+  '{"stem": "http是一种____。", "options": [{"label": "A", "text": "域名"}, {"label": "B", "text": "高级语言"}, {"label": "C", "text": "服务器名称"}, {"label": "D", "text": "超文本传输协议"}], "answer": "D"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: http是一种_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "上因特网浏览信息时，常用的浏览器是_D___。", "options": [{"label": "A", "text": "KV3000"}, {"label": "B", "text": "Word 97"}, {"label": "C", "text": "WPS 2000"}, {"label": "D", "text": "Internet Explorer"}], "answer": "?"}',
+  '{"stem": "上因特网浏览信息时，常用的浏览器是____。", "options": [{"label": "A", "text": "KV3000"}, {"label": "B", "text": "Word 97"}, {"label": "C", "text": "WPS 2000"}, {"label": "D", "text": "Internet Explorer"}], "answer": "D"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 上因特网浏览信息时，常用的浏览器是_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "发送电子邮件时，如果接收方没有开机，那么邮件将__D__。", "options": [{"label": "A", "text": "丢失"}, {"label": "B", "text": "退回给发件人"}, {"label": "C", "text": "开机时重新发送"}, {"label": "D", "text": "保存在邮件服务器上"}], "answer": "?"}',
+  '{"stem": "发送电子邮件时，如果接收方没有开机，那么邮件将____。", "options": [{"label": "A", "text": "丢失"}, {"label": "B", "text": "退回给发件人"}, {"label": "C", "text": "开机时重新发送"}, {"label": "D", "text": "保存在邮件服务器上"}], "answer": "D"}',
   '电子邮件协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 发送电子邮件时，如果接收方没有开机，那么邮件将__D__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "如果允许其他用户通过网上邻居来读取某一共享文件夹中的信息，但不能对该文件夹中的文件作任何修改，应将该文件夹的共享属性设置为__C__。", "options": [{"label": "A", "text": "隐藏"}, {"label": "B", "text": "完全"}, {"label": "C", "text": "只读"}, {"label": "D", "text": "系统"}], "answer": "?"}',
+  '{"stem": "如果允许其他用户通过网上邻居来读取某一共享文件夹中的信息，但不能对该文件夹中的文件作任何修改，应将该文件夹的共享属性设置为____。", "options": [{"label": "A", "text": "隐藏"}, {"label": "B", "text": "完全"}, {"label": "C", "text": "只读"}, {"label": "D", "text": "系统"}], "answer": "C"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 如果允许其他用户通过网上邻居来读取某一共享文件夹中的信息，但不能对该文件夹中的文件作任何修改，应将该文件夹的共享属性设置
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "下列属于计算机网络通信设备的是_B___。", "options": [{"label": "A", "text": "显卡"}, {"label": "B", "text": "网线"}, {"label": "C", "text": "音箱"}, {"label": "D", "text": "声卡"}], "answer": "?"}',
+  '{"stem": "下列属于计算机网络通信设备的是____。", "options": [{"label": "A", "text": "显卡"}, {"label": "B", "text": "网线"}, {"label": "C", "text": "音箱"}, {"label": "D", "text": "声卡"}], "answer": "B"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 下列属于计算机网络通信设备的是_B___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "个人计算机通过电话线拨号方式接入因特网时，应使用的设备是_B___。", "options": [{"label": "A", "text": "交换机"}, {"label": "B", "text": "调制解调器"}, {"label": "C", "text": "电话机"}, {"label": "D", "text": "浏览器软件"}], "answer": "?"}',
+  '{"stem": "个人计算机通过电话线拨号方式接入因特网时，应使用的设备是____。", "options": [{"label": "A", "text": "交换机"}, {"label": "B", "text": "调制解调器"}, {"label": "C", "text": "电话机"}, {"label": "D", "text": "浏览器软件"}], "answer": "B"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 个人计算机通过电话线拨号方式接入因特网时，应使用的设备是_B___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "用IE浏览器浏览网页，在地址栏中输入网址时，通常可以省略的是_A___。", "options": [{"label": "A", "text": "http://"}, {"label": "B", "text": "ftp://"}, {"label": "C", "text": "mailto://"}, {"label": "D", "text": "news://"}], "answer": "?"}',
+  '{"stem": "用IE浏览器浏览网页，在地址栏中输入网址时，通常可以省略的是____。", "options": [{"label": "A", "text": "http://"}, {"label": "B", "text": "ftp://"}, {"label": "C", "text": "mailto://"}, {"label": "D", "text": "news://"}], "answer": "A"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 用IE浏览器浏览网页，在地址栏中输入网址时，通常可以省略的是_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "网卡属于计算机的_D__。", "options": [{"label": "A", "text": "显示设备"}, {"label": "B", "text": "存储设备"}, {"label": "C", "text": "打印设备"}, {"label": "D", "text": "网络设备"}], "answer": "?"}',
+  '{"stem": "网卡属于计算机的____。", "options": [{"label": "A", "text": "显示设备"}, {"label": "B", "text": "存储设备"}, {"label": "C", "text": "打印设备"}, {"label": "D", "text": "网络设备"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 网卡属于计算机的_D__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "Internet中URL的含义是_A___。", "options": [{"label": "A", "text": "统一资源定位器"}, {"label": "B", "text": "Internet 协议"}], "answer": "?"}',
+  '{"stem": "Internet中URL的含义是____。", "options": [{"label": "A", "text": "统一资源定位器"}, {"label": "B", "text": "Internet 协议"}], "answer": "A"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: Internet中URL的含义是_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "ADSL可以在普通电话线上提供10M bps的下行速率，即意味着理论上ADSL可以提供下载文件的速度达到每秒___D_。", "options": [{"label": "A", "text": "1024字节"}, {"label": "B", "text": "10×1024字节"}, {"label": "C", "text": "10×1024位"}, {"label": "D", "text": "10×1024×1024位"}], "answer": "?"}',
+  '{"stem": "ADSL可以在普通电话线上提供10M bps的下行速率，即意味着理论上ADSL可以提供下载文件的速度达到每秒____。", "options": [{"label": "A", "text": "1024字节"}, {"label": "B", "text": "10×1024字节"}, {"label": "C", "text": "10×1024位"}, {"label": "D", "text": "10×1024×1024位"}], "answer": "D"}',
   '物理层设备', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: ADSL可以在普通电话线上提供10M bps的下行速率，即意味着理论上ADSL可以提供下载文件的速度达到每秒___D_。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "要能顺利发送和接收电子邮件，下列设备必需的是_B___。", "options": [{"label": "A", "text": "打印机"}, {"label": "B", "text": "邮件服务器"}, {"label": "C", "text": "扫描仪"}, {"label": "D", "text": "Web服务器"}], "answer": "?"}',
+  '{"stem": "要能顺利发送和接收电子邮件，下列设备必需的是____。", "options": [{"label": "A", "text": "打印机"}, {"label": "B", "text": "邮件服务器"}, {"label": "C", "text": "扫描仪"}, {"label": "D", "text": "Web服务器"}], "answer": "B"}',
   '电子邮件协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 要能顺利发送和接收电子邮件，下列设备必需的是_B___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "区分局域网（LAN）和广域网（WAN）的依据是__ D__。", "options": [{"label": "A", "text": "网络用户"}, {"label": "B", "text": "传输协议"}, {"label": "C", "text": "联网设备"}, {"label": "D", "text": "联网范围"}], "answer": "?"}',
+  '{"stem": "区分局域网（LAN）和广域网（WAN）的依据是____。", "options": [{"label": "A", "text": "网络用户"}, {"label": "B", "text": "传输协议"}, {"label": "C", "text": "联网设备"}, {"label": "D", "text": "联网范围"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 区分局域网（LAN）和广域网（WAN）的依据是__ D__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "关于Internet, 以下说法正确的是_D___。", "options": [{"label": "A", "text": "Internet 属于美国"}, {"label": "B", "text": "Internet属于联合国"}], "answer": "?"}',
+  '{"stem": "关于Internet, 以下说法正确的是____。", "options": [{"label": "A", "text": "Internet 属于美国"}, {"label": "B", "text": "Internet属于联合国"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 关于Internet, 以下说法正确的是_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "要给某人发送一封E-mail,必须知道他的_D___。", "options": [{"label": "A", "text": "姓名"}, {"label": "B", "text": "邮政编码"}, {"label": "C", "text": "家庭地址"}, {"label": "D", "text": "电子邮件地址"}], "answer": "?"}',
+  '{"stem": "要给某人发送一封E-mail,必须知道他的____。", "options": [{"label": "A", "text": "姓名"}, {"label": "B", "text": "邮政编码"}, {"label": "C", "text": "家庭地址"}, {"label": "D", "text": "电子邮件地址"}], "answer": "D"}',
   '电子邮件协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 要给某人发送一封E-mail,必须知道他的_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "Internet的中文规范译名为_A___。", "options": [{"label": "A", "text": "因特网"}, {"label": "B", "text": "教科网"}, {"label": "C", "text": "局域网"}, {"label": "D", "text": "广域网"}], "answer": "?"}',
+  '{"stem": "Internet的中文规范译名为____。", "options": [{"label": "A", "text": "因特网"}, {"label": "B", "text": "教科网"}, {"label": "C", "text": "局域网"}, {"label": "D", "text": "广域网"}], "answer": "A"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: Internet的中文规范译名为_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "学校的校园网络属于__A__。", "options": [{"label": "A", "text": "局域网"}, {"label": "B", "text": "广域网"}, {"label": "C", "text": "城域网"}, {"label": "D", "text": "电话网"}], "answer": "?"}',
+  '{"stem": "学校的校园网络属于____。", "options": [{"label": "A", "text": "局域网"}, {"label": "B", "text": "广域网"}, {"label": "C", "text": "城域网"}, {"label": "D", "text": "电话网"}], "answer": "A"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 学校的校园网络属于__A__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "连接到Internet的计算机中，必须安装的协议是__B__。", "options": [{"label": "A", "text": "双边协议"}, {"label": "B", "text": "TCP/IP协议"}, {"label": "C", "text": "NetBEUI协议"}, {"label": "D", "text": "SPSS协议"}], "answer": "?"}',
+  '{"stem": "连接到Internet的计算机中，必须安装的协议是____。", "options": [{"label": "A", "text": "双边协议"}, {"label": "B", "text": "TCP/IP协议"}, {"label": "C", "text": "NetBEUI协议"}, {"label": "D", "text": "SPSS协议"}], "answer": "B"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 连接到Internet的计算机中，必须安装的协议是__B__。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "下面是某单位的主页的Web地址URL,其中符合URL格式的是____。", "options": [{"label": "A", "text": "Http//www.jnu.edu.cn"}, {"label": "B", "text": "Http:www.jnu.edu.cn"}], "answer": "?"}',
-  'HTTP协议', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题一: 下面是某单位的主页的Web地址URL,其中符合URL格式的是____。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "在地址栏中显示http://www.sina.com.cn/,则所采用的协议是__C__。", "options": [{"label": "A", "text": "HTTP"}, {"label": "B", "text": "FTP"}, {"label": "C", "text": "WWW"}, {"label": "D", "text": "电子邮件"}], "answer": "?"}',
+  '{"stem": "在地址栏中显示http://www.sina.com.cn/,则所采用的协议是____。", "options": [{"label": "A", "text": "HTTP"}, {"label": "B", "text": "FTP"}, {"label": "C", "text": "WWW"}, {"label": "D", "text": "电子邮件"}], "answer": "C"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 在地址栏中显示http://www.sina.com.cn/,则所采用的协议是__C__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "WWW最初是由_C__实验室研制的。", "options": [{"label": "A", "text": "CERN"}, {"label": "B", "text": "AT&T"}, {"label": "C", "text": "ARPA"}, {"label": "D", "text": "Microsoft Internet Lab"}], "answer": "?"}',
+  '{"stem": "WWW最初是由____实验室研制的。", "options": [{"label": "A", "text": "CERN"}, {"label": "B", "text": "AT&T"}, {"label": "C", "text": "ARPA"}, {"label": "D", "text": "Microsoft Internet Lab"}], "answer": "C"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: WWW最初是由_C__实验室研制的。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "Internet 起源于__A__。", "options": [{"label": "A", "text": "美国"}, {"label": "B", "text": "英国"}, {"label": "C", "text": "德国"}, {"label": "D", "text": "澳大利亚"}], "answer": "?"}',
+  '{"stem": "Internet 起源于____。", "options": [{"label": "A", "text": "美国"}, {"label": "B", "text": "英国"}, {"label": "C", "text": "德国"}, {"label": "D", "text": "澳大利亚"}], "answer": "A"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: Internet 起源于__A__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "下列IP地址中书写正确的是_D___。", "options": [{"label": "A", "text": "16819201"}, {"label": "B", "text": "325.255.231.0"}, {"label": "C", "text": "192.168.1"}, {"label": "D", "text": "255.255.255.0"}], "answer": "?"}',
+  '{"stem": "下列IP地址中书写正确的是____。", "options": [{"label": "A", "text": "16819201"}, {"label": "B", "text": "325.255.231.0"}, {"label": "C", "text": "192.168.1"}, {"label": "D", "text": "255.255.255.0"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 下列IP地址中书写正确的是_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "构成计算机网络的要素主要有：通信主体、通信设备和通信协议，其中通信主体指的是_D_。", "options": [{"label": "A", "text": "交换机"}, {"label": "B", "text": "双绞线"}, {"label": "C", "text": "计算机"}, {"label": "D", "text": "网卡"}], "answer": "?"}',
+  '{"stem": "构成计算机网络的要素主要有：通信主体、通信设备和通信协议，其中通信主体指的是____。", "options": [{"label": "A", "text": "交换机"}, {"label": "B", "text": "双绞线"}, {"label": "C", "text": "计算机"}, {"label": "D", "text": "网卡"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 构成计算机网络的要素主要有：通信主体、通信设备和通信协议，其中通信主体指的是_D_。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "下列说法错误的_D__。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
+  '{"stem": "下列说法错误的____。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 下列说法错误的_D__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "计算机网络的主要目标是_D___。", "options": [{"label": "A", "text": "分布处理"}, {"label": "B", "text": "将多台计算机连接起来"}], "answer": "?"}',
+  '{"stem": "计算机网络的主要目标是____。", "options": [{"label": "A", "text": "分布处理"}, {"label": "B", "text": "将多台计算机连接起来"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题一: 计算机网络的主要目标是_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "1965年科学家提出超文本概念，其超文本的核心是_A___。", "options": [{"label": "A", "text": "链接"}, {"label": "B", "text": "网络"}, {"label": "C", "text": "图像"}, {"label": "D", "text": "声音"}], "answer": "?"}',
+  '{"stem": "1965年科学家提出超文本概念，其超文本的核心是____。", "options": [{"label": "A", "text": "链接"}, {"label": "B", "text": "网络"}, {"label": "C", "text": "图像"}, {"label": "D", "text": "声音"}], "answer": "A"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 1965年科学家提出超文本概念，其超文本的核心是_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "地址栏中输入的http://zjhk.school.com中，zjhk.school.com 是一个__A__。", "options": [{"label": "A", "text": "域名"}, {"label": "B", "text": "文件"}, {"label": "C", "text": "邮箱"}, {"label": "D", "text": "国家"}], "answer": "?"}',
+  '{"stem": "地址栏中输入的http://zjhk.school.com中，zjhk.school.com 是一个____。", "options": [{"label": "A", "text": "域名"}, {"label": "B", "text": "文件"}, {"label": "C", "text": "邮箱"}, {"label": "D", "text": "国家"}], "answer": "A"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 地址栏中输入的http://zjhk.school.com中，zjhk.school.com 是一个__A__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "通常所说的ADSL是指__A_。", "options": [{"label": "A", "text": "上网方式"}, {"label": "B", "text": "电脑品牌"}, {"label": "C", "text": "网络服务商"}, {"label": "D", "text": "网页制作技术"}], "answer": "?"}',
+  '{"stem": "通常所说的ADSL是指____。", "options": [{"label": "A", "text": "上网方式"}, {"label": "B", "text": "电脑品牌"}, {"label": "C", "text": "网络服务商"}, {"label": "D", "text": "网页制作技术"}], "answer": "A"}',
   '物理层设备', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 通常所说的ADSL是指__A_。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "下列四项中表示电子邮件地址的是___A_。", "options": [{"label": "A", "text": "ks@183.net"}, {"label": "B", "text": "192.168.0.1"}, {"label": "C", "text": "www.gov.cn"}], "answer": "?"}',
+  '{"stem": "下列四项中表示电子邮件地址的是____。", "options": [{"label": "A", "text": "ks@183.net"}, {"label": "B", "text": "192.168.0.1"}, {"label": "C", "text": "www.gov.cn"}], "answer": "A"}',
   '电子邮件协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 下列四项中表示电子邮件地址的是___A_。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "浏览网页过程中，当鼠标移动到已设置了超链接的区域时，鼠标指针形状一般变为__A__。", "options": [{"label": "A", "text": "小手形状"}, {"label": "B", "text": "双向箭头"}, {"label": "C", "text": "禁止图案"}, {"label": "D", "text": "下拉箭头"}], "answer": "?"}',
+  '{"stem": "浏览网页过程中，当鼠标移动到已设置了超链接的区域时，鼠标指针形状一般变为____。", "options": [{"label": "A", "text": "小手形状"}, {"label": "B", "text": "双向箭头"}, {"label": "C", "text": "禁止图案"}, {"label": "D", "text": "下拉箭头"}], "answer": "A"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 浏览网页过程中，当鼠标移动到已设置了超链接的区域时，鼠标指针形状一般变为__A__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "下列四项中表示域名的是_A___。", "options": [{"label": "A", "text": "www.cctv.com"}, {"label": "B", "text": "hk@zj.school.com"}, {"label": "C", "text": "zjwww@china.com"}], "answer": "?"}',
+  '{"stem": "下列四项中表示域名的是____。", "options": [{"label": "A", "text": "www.cctv.com"}, {"label": "B", "text": "hk@zj.school.com"}, {"label": "C", "text": "zjwww@china.com"}], "answer": "A"}',
   'DNS协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 下列四项中表示域名的是_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "下列软件中可以查看WWW信息的是__D___。", "options": [{"label": "A", "text": "游戏软件"}, {"label": "B", "text": "财务软件"}, {"label": "C", "text": "杀毒软件"}, {"label": "D", "text": "浏览器软件"}], "answer": "?"}',
+  '{"stem": "下列软件中可以查看WWW信息的是____。", "options": [{"label": "A", "text": "游戏软件"}, {"label": "B", "text": "财务软件"}, {"label": "C", "text": "杀毒软件"}, {"label": "D", "text": "浏览器软件"}], "answer": "D"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 下列软件中可以查看WWW信息的是__D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "设置文件夹共享属性时，可以选择的三种访问类型为完全控制、更改和_B_。", "options": [{"label": "A", "text": "共享"}, {"label": "B", "text": "只读"}, {"label": "C", "text": "不完全"}, {"label": "D", "text": "不共享"}], "answer": "?"}',
+  '{"stem": "设置文件夹共享属性时，可以选择的三种访问类型为完全控制、更改和____。", "options": [{"label": "A", "text": "共享"}, {"label": "B", "text": "只读"}, {"label": "C", "text": "不完全"}, {"label": "D", "text": "不共享"}], "answer": "B"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 设置文件夹共享属性时，可以选择的三种访问类型为完全控制、更改和_B_。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "计算机网络最突出的特点是_A__。", "options": [{"label": "A", "text": "资源共享"}, {"label": "B", "text": "运算精度高"}, {"label": "C", "text": "运算速度快"}, {"label": "D", "text": "内存容量大"}], "answer": "?"}',
+  '{"stem": "计算机网络最突出的特点是____。", "options": [{"label": "A", "text": "资源共享"}, {"label": "B", "text": "运算精度高"}, {"label": "C", "text": "运算速度快"}, {"label": "D", "text": "内存容量大"}], "answer": "A"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 计算机网络最突出的特点是_A__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "E-mail地址的格式是_C___。", "options": [{"label": "A", "text": "www.zjschool.cn"}, {"label": "B", "text": "网址&#8226;用户名"}], "answer": "?"}',
+  '{"stem": "E-mail地址的格式是____。", "options": [{"label": "A", "text": "www.zjschool.cn"}, {"label": "B", "text": "网址&#8226;用户名"}], "answer": "C"}',
   '电子邮件协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: E-mail地址的格式是_C___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "为了使自己的文件让其他同学浏览，又不想让他们修改文件，一般可将包含该文件的文件夹共享属性的访问类型设置为_C___。", "options": [{"label": "A", "text": "隐藏"}, {"label": "B", "text": "完全"}, {"label": "C", "text": "只读"}, {"label": "D", "text": "不共享"}], "answer": "?"}',
+  '{"stem": "为了使自己的文件让其他同学浏览，又不想让他们修改文件，一般可将包含该文件的文件夹共享属性的访问类型设置为____。", "options": [{"label": "A", "text": "隐藏"}, {"label": "B", "text": "完全"}, {"label": "C", "text": "只读"}, {"label": "D", "text": "不共享"}], "answer": "C"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 为了使自己的文件让其他同学浏览，又不想让他们修改文件，一般可将包含该文件的文件夹共享属性的访问类型设置为_C___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "Internet Explorer(IE)浏览器的收藏夹的主要作用是收藏_C___。", "options": [{"label": "A", "text": "图片"}, {"label": "B", "text": "邮件"}, {"label": "C", "text": "网址"}, {"label": "D", "text": "文档"}], "answer": "?"}',
+  '{"stem": "Internet Explorer(IE)浏览器的收藏夹的主要作用是收藏____。", "options": [{"label": "A", "text": "图片"}, {"label": "B", "text": "邮件"}, {"label": "C", "text": "网址"}, {"label": "D", "text": "文档"}], "answer": "C"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: Internet Explorer(IE)浏览器的收藏夹的主要作用是收藏_C___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "网址www.pku.edu.cn中的cn表示__D__。", "options": [{"label": "A", "text": "英国"}, {"label": "B", "text": "美国"}, {"label": "C", "text": "日本"}, {"label": "D", "text": "中国"}], "answer": "?"}',
+  '{"stem": "网址www.pku.edu.cn中的cn表示____。", "options": [{"label": "A", "text": "英国"}, {"label": "B", "text": "美国"}, {"label": "C", "text": "日本"}, {"label": "D", "text": "中国"}], "answer": "D"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 网址www.pku.edu.cn中的cn表示__D__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "在因特网上专门用于传输文件的协议是_A___。", "options": [{"label": "A", "text": "FTP"}, {"label": "B", "text": "HTTP"}, {"label": "C", "text": "NEWS"}, {"label": "D", "text": "Word"}], "answer": "?"}',
+  '{"stem": "在因特网上专门用于传输文件的协议是____。", "options": [{"label": "A", "text": "FTP"}, {"label": "B", "text": "HTTP"}, {"label": "C", "text": "NEWS"}, {"label": "D", "text": "Word"}], "answer": "A"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 在因特网上专门用于传输文件的协议是_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "www.163.com是指_A___。", "options": [{"label": "A", "text": "域名"}, {"label": "B", "text": "程序语句"}, {"label": "C", "text": "电子邮件地址"}, {"label": "D", "text": "超文本传输协议"}], "answer": "?"}',
+  '{"stem": "www.163.com是指____。", "options": [{"label": "A", "text": "域名"}, {"label": "B", "text": "程序语句"}, {"label": "C", "text": "电子邮件地址"}, {"label": "D", "text": "超文本传输协议"}], "answer": "A"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: www.163.com是指_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "下列四项中主要用于在Internet上交流信息的是_A___。", "options": [{"label": "A", "text": "BBS"}, {"label": "B", "text": "DOS"}, {"label": "C", "text": "Word"}, {"label": "D", "text": "Excel"}], "answer": "?"}',
+  '{"stem": "下列四项中主要用于在Internet上交流信息的是____。", "options": [{"label": "A", "text": "BBS"}, {"label": "B", "text": "DOS"}, {"label": "C", "text": "Word"}, {"label": "D", "text": "Excel"}], "answer": "A"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 下列四项中主要用于在Internet上交流信息的是_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "电子邮件地址格式为：username@hostname,其中hostname为__D__。", "options": [{"label": "A", "text": "用户地址名"}, {"label": "B", "text": "某国家名"}, {"label": "C", "text": "某公司名"}, {"label": "D", "text": "ISP某台主机的域名"}], "answer": "?"}',
+  '{"stem": "电子邮件地址格式为：username@hostname,其中hostname为____。", "options": [{"label": "A", "text": "用户地址名"}, {"label": "B", "text": "某国家名"}, {"label": "C", "text": "某公司名"}, {"label": "D", "text": "ISP某台主机的域名"}], "answer": "D"}',
   '电子邮件协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 电子邮件地址格式为：username@hostname,其中hostname为__D__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "下列四项中主要用于在Internet上交流信息的是_D___。", "options": [{"label": "A", "text": "DOS"}, {"label": "B", "text": "Word"}, {"label": "C", "text": "Excel"}, {"label": "D", "text": "E-mail"}], "answer": "?"}',
+  '{"stem": "下列四项中主要用于在Internet上交流信息的是____。", "options": [{"label": "A", "text": "DOS"}, {"label": "B", "text": "Word"}, {"label": "C", "text": "Excel"}, {"label": "D", "text": "E-mail"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 下列四项中主要用于在Internet上交流信息的是_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "地址ftp://218.0.0.123中的ftp是指__A__。", "options": [{"label": "A", "text": "协议"}, {"label": "B", "text": "网址"}, {"label": "C", "text": "新闻组"}, {"label": "D", "text": "邮件信箱"}], "answer": "?"}',
+  '{"stem": "地址ftp://218.0.0.123中的ftp是指____。", "options": [{"label": "A", "text": "协议"}, {"label": "B", "text": "网址"}, {"label": "C", "text": "新闻组"}, {"label": "D", "text": "邮件信箱"}], "answer": "A"}',
   '文件传输协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 地址ftp://218.0.0.123中的ftp是指__A__。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "http是一种____。", "options": [{"label": "A", "text": "域名"}, {"label": "B", "text": "高级语言"}, {"label": "C", "text": "服务器名称"}, {"label": "D", "text": "超文本传输协议"}], "answer": "?"}',
-  'HTTP协议', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题二: http是一种____。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "上因特网浏览信息时，常用的浏览器是__D__。", "options": [{"label": "A", "text": "KV3000"}, {"label": "B", "text": "Word 97"}, {"label": "C", "text": "WPS 2000"}], "answer": "?"}',
+  '{"stem": "上因特网浏览信息时，常用的浏览器是____。", "options": [{"label": "A", "text": "KV3000"}, {"label": "B", "text": "Word 97"}, {"label": "C", "text": "WPS 2000"}], "answer": "D"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 上因特网浏览信息时，常用的浏览器是__D__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "发送电子邮件时，如果接收方没有开机，那么邮件将_D___。", "options": [{"label": "A", "text": "丢失"}, {"label": "B", "text": "退回给发件人"}, {"label": "C", "text": "开机时重新发送"}], "answer": "?"}',
+  '{"stem": "发送电子邮件时，如果接收方没有开机，那么邮件将____。", "options": [{"label": "A", "text": "丢失"}, {"label": "B", "text": "退回给发件人"}, {"label": "C", "text": "开机时重新发送"}], "answer": "D"}',
   '电子邮件协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 发送电子邮件时，如果接收方没有开机，那么邮件将_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "如果允许其他用户通过网上邻居来读取某一共享文件夹中的信息，但不能对该文件夹中的文件作任何修改，应将该文件夹的共享属性设置为_C___。", "options": [{"label": "A", "text": "隐藏"}, {"label": "B", "text": "完全"}, {"label": "C", "text": "只读"}, {"label": "D", "text": "系统"}], "answer": "?"}',
+  '{"stem": "如果允许其他用户通过网上邻居来读取某一共享文件夹中的信息，但不能对该文件夹中的文件作任何修改，应将该文件夹的共享属性设置为____。", "options": [{"label": "A", "text": "隐藏"}, {"label": "B", "text": "完全"}, {"label": "C", "text": "只读"}, {"label": "D", "text": "系统"}], "answer": "C"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 如果允许其他用户通过网上邻居来读取某一共享文件夹中的信息，但不能对该文件夹中的文件作任何修改，应将该文件夹的共享属性设置
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "下列属于计算机网络通信设备的是_B___。", "options": [{"label": "A", "text": "显卡"}, {"label": "B", "text": "网线"}, {"label": "C", "text": "音箱"}, {"label": "D", "text": "声卡"}], "answer": "?"}',
+  '{"stem": "下列属于计算机网络通信设备的是____。", "options": [{"label": "A", "text": "显卡"}, {"label": "B", "text": "网线"}, {"label": "C", "text": "音箱"}, {"label": "D", "text": "声卡"}], "answer": "B"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 下列属于计算机网络通信设备的是_B___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "个人计算机通过电话线拨号方式接入因特网时，应使用的设备是_B___。", "options": [{"label": "A", "text": "交换机"}, {"label": "B", "text": "调制解调器"}, {"label": "C", "text": "电话机"}, {"label": "D", "text": "浏览器软件"}], "answer": "?"}',
+  '{"stem": "个人计算机通过电话线拨号方式接入因特网时，应使用的设备是____。", "options": [{"label": "A", "text": "交换机"}, {"label": "B", "text": "调制解调器"}, {"label": "C", "text": "电话机"}, {"label": "D", "text": "浏览器软件"}], "answer": "B"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 个人计算机通过电话线拨号方式接入因特网时，应使用的设备是_B___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "用IE浏览器浏览网页，在地址栏中输入网址时，通常可以省略的是_A___。", "options": [{"label": "A", "text": "http://"}, {"label": "B", "text": "ftp://"}, {"label": "C", "text": "mailto://"}, {"label": "D", "text": "news://"}], "answer": "?"}',
+  '{"stem": "用IE浏览器浏览网页，在地址栏中输入网址时，通常可以省略的是____。", "options": [{"label": "A", "text": "http://"}, {"label": "B", "text": "ftp://"}, {"label": "C", "text": "mailto://"}, {"label": "D", "text": "news://"}], "answer": "A"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 用IE浏览器浏览网页，在地址栏中输入网址时，通常可以省略的是_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "网卡属于计算机的_D__。", "options": [{"label": "A", "text": "显示设备"}, {"label": "B", "text": "存储设备"}, {"label": "C", "text": "打印设备"}, {"label": "D", "text": "网络设备"}], "answer": "?"}',
+  '{"stem": "网卡属于计算机的____。", "options": [{"label": "A", "text": "显示设备"}, {"label": "B", "text": "存储设备"}, {"label": "C", "text": "打印设备"}, {"label": "D", "text": "网络设备"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 网卡属于计算机的_D__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "Internet中URL的含义是__A__。", "options": [{"label": "A", "text": "统一资源定位器"}, {"label": "B", "text": "Internet 协议"}], "answer": "?"}',
+  '{"stem": "Internet中URL的含义是____。", "options": [{"label": "A", "text": "统一资源定位器"}, {"label": "B", "text": "Internet 协议"}], "answer": "A"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: Internet中URL的含义是__A__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "ADSL可以在普通电话线上提供10M bps的下行速率，即意味着理论上ADSL可以提供下载文件的速度达到每秒__D__。", "options": [{"label": "A", "text": "1024字节"}, {"label": "B", "text": "10×1024字节"}, {"label": "C", "text": "10×1024位"}], "answer": "?"}',
+  '{"stem": "ADSL可以在普通电话线上提供10M bps的下行速率，即意味着理论上ADSL可以提供下载文件的速度达到每秒____。", "options": [{"label": "A", "text": "1024字节"}, {"label": "B", "text": "10×1024字节"}, {"label": "C", "text": "10×1024位"}], "answer": "D"}',
   '物理层设备', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: ADSL可以在普通电话线上提供10M bps的下行速率，即意味着理论上ADSL可以提供下载文件的速度达到每秒__D__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "要能顺利发送和接收电子邮件，下列设备必需的是_B___。", "options": [{"label": "A", "text": "打印机"}, {"label": "B", "text": "邮件服务器"}, {"label": "C", "text": "扫描仪"}, {"label": "D", "text": "Web服务器"}], "answer": "?"}',
+  '{"stem": "要能顺利发送和接收电子邮件，下列设备必需的是____。", "options": [{"label": "A", "text": "打印机"}, {"label": "B", "text": "邮件服务器"}, {"label": "C", "text": "扫描仪"}, {"label": "D", "text": "Web服务器"}], "answer": "B"}',
   '电子邮件协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 要能顺利发送和接收电子邮件，下列设备必需的是_B___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "构成计算机网络的要素主要有通信协议、通信设备和__C__。", "options": [{"label": "A", "text": "通信线路"}, {"label": "B", "text": "通信人才"}, {"label": "C", "text": "通信主体"}, {"label": "D", "text": "通信卫星"}], "answer": "?"}',
+  '{"stem": "构成计算机网络的要素主要有通信协议、通信设备和____。", "options": [{"label": "A", "text": "通信线路"}, {"label": "B", "text": "通信人才"}, {"label": "C", "text": "通信主体"}, {"label": "D", "text": "通信卫星"}], "answer": "C"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 构成计算机网络的要素主要有通信协议、通信设备和__C__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "区分局域网（LAN）和广域网（WAN）的依据是_D___。", "options": [{"label": "A", "text": "网络用户"}, {"label": "B", "text": "传输协议"}, {"label": "C", "text": "联网设备"}, {"label": "D", "text": "联网范围"}], "answer": "?"}',
+  '{"stem": "区分局域网（LAN）和广域网（WAN）的依据是____。", "options": [{"label": "A", "text": "网络用户"}, {"label": "B", "text": "传输协议"}, {"label": "C", "text": "联网设备"}, {"label": "D", "text": "联网范围"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 区分局域网（LAN）和广域网（WAN）的依据是_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "以下能将模拟信号与数字信号互相转换的设备是_D___。", "options": [{"label": "A", "text": "硬盘"}, {"label": "B", "text": "鼠标"}, {"label": "C", "text": "打印机"}, {"label": "D", "text": "调制解调器"}], "answer": "?"}',
+  '{"stem": "以下能将模拟信号与数字信号互相转换的设备是____。", "options": [{"label": "A", "text": "硬盘"}, {"label": "B", "text": "鼠标"}, {"label": "C", "text": "打印机"}, {"label": "D", "text": "调制解调器"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 以下能将模拟信号与数字信号互相转换的设备是_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "关于Internet, 以下说法正确的是__D__。", "options": [{"label": "A", "text": "Internet 属于美国"}, {"label": "B", "text": "Internet属于联合国"}], "answer": "?"}',
+  '{"stem": "关于Internet, 以下说法正确的是____。", "options": [{"label": "A", "text": "Internet 属于美国"}, {"label": "B", "text": "Internet属于联合国"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 关于Internet, 以下说法正确的是__D__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "要给某人发送一封E-mail,必须知道他的_D___。", "options": [{"label": "A", "text": "姓名"}, {"label": "B", "text": "邮政编码"}, {"label": "C", "text": "家庭地址"}, {"label": "D", "text": "电子邮件地址"}], "answer": "?"}',
+  '{"stem": "要给某人发送一封E-mail,必须知道他的____。", "options": [{"label": "A", "text": "姓名"}, {"label": "B", "text": "邮政编码"}, {"label": "C", "text": "家庭地址"}, {"label": "D", "text": "电子邮件地址"}], "answer": "D"}',
   '电子邮件协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 要给某人发送一封E-mail,必须知道他的_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "Internet的中文规范译名为_A___。", "options": [{"label": "A", "text": "因特网"}, {"label": "B", "text": "教科网"}, {"label": "C", "text": "局域网"}, {"label": "D", "text": "广域网"}], "answer": "?"}',
+  '{"stem": "Internet的中文规范译名为____。", "options": [{"label": "A", "text": "因特网"}, {"label": "B", "text": "教科网"}, {"label": "C", "text": "局域网"}, {"label": "D", "text": "广域网"}], "answer": "A"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: Internet的中文规范译名为_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "学校的校园网络属于_A___。", "options": [{"label": "A", "text": "局域网"}, {"label": "B", "text": "广域网"}, {"label": "C", "text": "城域网"}, {"label": "D", "text": "电话网"}], "answer": "?"}',
+  '{"stem": "学校的校园网络属于____。", "options": [{"label": "A", "text": "局域网"}, {"label": "B", "text": "广域网"}, {"label": "C", "text": "城域网"}, {"label": "D", "text": "电话网"}], "answer": "A"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 学校的校园网络属于_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "连接到Internet的计算机中，必须安装的协议是__B__。", "options": [{"label": "A", "text": "双边协议"}, {"label": "B", "text": "TCP/IP协议"}, {"label": "C", "text": "NetBEUI协议"}, {"label": "D", "text": "SPSS协议"}], "answer": "?"}',
+  '{"stem": "连接到Internet的计算机中，必须安装的协议是____。", "options": [{"label": "A", "text": "双边协议"}, {"label": "B", "text": "TCP/IP协议"}, {"label": "C", "text": "NetBEUI协议"}, {"label": "D", "text": "SPSS协议"}], "answer": "B"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 连接到Internet的计算机中，必须安装的协议是__B__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "下面是某单位的主页的Web地址URL,其中符合URL格式的是__C__。", "options": [{"label": "A", "text": "Http//www.jnu.edu.cn"}, {"label": "B", "text": "Http:www.jnu.edu.cn"}], "answer": "?"}',
+  '{"stem": "下面是某单位的主页的Web地址URL,其中符合URL格式的是____。", "options": [{"label": "A", "text": "Http//www.jnu.edu.cn"}, {"label": "B", "text": "Http:www.jnu.edu.cn"}], "answer": "C"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 下面是某单位的主页的Web地址URL,其中符合URL格式的是__C__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "在地址栏中显示http://www.sina.com.cn/,则所采用的协议是_A___。", "options": [{"label": "A", "text": "HTTP"}, {"label": "B", "text": "FTP"}, {"label": "C", "text": "WWW"}, {"label": "D", "text": "电子邮件"}], "answer": "?"}',
+  '{"stem": "在地址栏中显示http://www.sina.com.cn/,则所采用的协议是____。", "options": [{"label": "A", "text": "HTTP"}, {"label": "B", "text": "FTP"}, {"label": "C", "text": "WWW"}, {"label": "D", "text": "电子邮件"}], "answer": "A"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 在地址栏中显示http://www.sina.com.cn/,则所采用的协议是_A___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "WWW最初是由_C__实验室研制的。", "options": [{"label": "A", "text": "CERN"}, {"label": "B", "text": "AT&T"}, {"label": "C", "text": "ARPA"}, {"label": "D", "text": "Microsoft Internet Lab"}], "answer": "?"}',
+  '{"stem": "WWW最初是由____实验室研制的。", "options": [{"label": "A", "text": "CERN"}, {"label": "B", "text": "AT&T"}, {"label": "C", "text": "ARPA"}, {"label": "D", "text": "Microsoft Internet Lab"}], "answer": "C"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: WWW最初是由_C__实验室研制的。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "Internet 起源于__A__。", "options": [{"label": "A", "text": "美国"}, {"label": "B", "text": "英国"}, {"label": "C", "text": "德国"}, {"label": "D", "text": "澳大利亚"}], "answer": "?"}',
+  '{"stem": "Internet 起源于____。", "options": [{"label": "A", "text": "美国"}, {"label": "B", "text": "英国"}, {"label": "C", "text": "德国"}, {"label": "D", "text": "澳大利亚"}], "answer": "A"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: Internet 起源于__A__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "下列IP地址中书写正确的是_D___。", "options": [{"label": "A", "text": "1681920"}, {"label": "B", "text": "325.255.231.0"}, {"label": "C", "text": "192.168.1"}, {"label": "D", "text": "255.255.255.0"}], "answer": "?"}',
+  '{"stem": "下列IP地址中书写正确的是____。", "options": [{"label": "A", "text": "1681920"}, {"label": "B", "text": "325.255.231.0"}, {"label": "C", "text": "192.168.1"}, {"label": "D", "text": "255.255.255.0"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 下列IP地址中书写正确的是_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "以下软件中不属于浏览器的是_D___。", "options": [{"label": "A", "text": "InternetExplorer"}, {"label": "B", "text": "NetscapeNavigator"}, {"label": "C", "text": "Opera"}, {"label": "D", "text": "CuteFtp"}], "answer": "?"}',
+  '{"stem": "以下软件中不属于浏览器的是____。", "options": [{"label": "A", "text": "InternetExplorer"}, {"label": "B", "text": "NetscapeNavigator"}, {"label": "C", "text": "Opera"}, {"label": "D", "text": "CuteFtp"}], "answer": "D"}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 以下软件中不属于浏览器的是_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "构成计算机网络的要素主要有：通信主体、通信设备和通信协议，其中通信主体指的是__C__。", "options": [{"label": "A", "text": "交换机"}, {"label": "B", "text": "双绞线"}, {"label": "C", "text": "计算机"}, {"label": "D", "text": "网卡"}], "answer": "?"}',
+  '{"stem": "构成计算机网络的要素主要有：通信主体、通信设备和通信协议，其中通信主体指的是____。", "options": [{"label": "A", "text": "交换机"}, {"label": "B", "text": "双绞线"}, {"label": "C", "text": "计算机"}, {"label": "D", "text": "网卡"}], "answer": "C"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 构成计算机网络的要素主要有：通信主体、通信设备和通信协议，其中通信主体指的是__C__。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "下列说法错误的_D___。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
+  '{"stem": "下列说法错误的____。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 下列说法错误的_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "计算机网络的主要目标是_D___。", "options": [{"label": "A", "text": "分布处理"}, {"label": "B", "text": "将多台计算机连接起来"}], "answer": "?"}',
+  '{"stem": "计算机网络的主要目标是____。", "options": [{"label": "A", "text": "分布处理"}, {"label": "B", "text": "将多台计算机连接起来"}], "answer": "D"}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题二: 计算机网络的主要目标是_D___。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "IP地址126.168.0.1属于哪一类IP地址（D ）", "answer": "A、D类 B、C类型 C、B类 D、A类"}',
+  '{"stem": "IP地址126.168.0.1属于哪一类IP地址", "answer": "D", "options": [{"label": "A", "text": "D类"}, {"label": "B", "text": "C类型"}, {"label": "C", "text": "B类"}, {"label": "D", "text": "A类"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: IP地址126.168.0.1属于哪一类IP地址（D ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "以下哪一个设置不是上互联网所必须的（B ）", "answer": "A、IP地址 B、工作组 C、子网掩码 D、网关"}',
+  '{"stem": "以下哪一个设置不是上互联网所必须的", "answer": "B", "options": [{"label": "A", "text": "IP地址"}, {"label": "B", "text": "工作组"}, {"label": "C", "text": "子网掩码"}, {"label": "D", "text": "网关"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 以下哪一个设置不是上互联网所必须的（B ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "以下关于网络的说法错误的是 （A ）", "answer": "A、将两台电脑用网线联在一起就是一个网络"}',
+  '{"stem": "以下关于网络的说法错误的是", "answer": "A", "options": [{"label": "A", "text": "将两台电脑用网线联在一起就是一个网络"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 以下关于网络的说法错误的是 （A ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "OSI模型和TCP/IP协议体系分别分成几层 （ C）", "answer": "A、7 和 7 B、4和 7 C、7 和 4 D、4 和 4"}',
+  '{"stem": "OSI模型和TCP/IP协议体系分别分成几层", "answer": "C", "options": [{"label": "A", "text": "7 和 7"}, {"label": "B", "text": "4和 7"}, {"label": "C", "text": "7 和 4"}, {"label": "D", "text": "4 和 4"}]}',
   'OSI参考模型', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: OSI模型和TCP/IP协议体系分别分成几层 （ C）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "IP电话、电报和专线电话分别使用的数据交换技术是（ ）", "answer": "A、电路交换技术、报文交换技术和分组交换技术"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: IP电话、电报和专线电话分别使用的数据交换技术是（ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "下面说法正确的是（ ）", "answer": "A、动态网页就是指动态HTML ，通过 javascript 和ASP都能实现动态网页"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 下面说法正确的是（ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "不是Ethernet的物理层协议是（）。", "answer": "A、10BASE-T B、1000BASE-T C、FDDI D、100BAE-T"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 不是Ethernet的物理层协议是（）。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "常用的通信信道分为模拟通信信道和数字通信信道，其中数字通信信道是（）。", "answer": "A、ASK B、FSK C、PSK D、NRZ"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 常用的通信信道分为模拟通信信道和数字通信信道，其中数字通信信道是（）。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "下列设备属于资源子网的是（ ）。", "answer": "A、打印机 B、集中器 C、路由器 D、交换机"}',
-  '子网划分与路由算法', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 下列设备属于资源子网的是（ ）。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "下列交换技术中，节点不采用存储—转发方式的是（ ）。", "answer": "A、电路交换技术 B、报文交换技术"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 下列交换技术中，节点不采用存储—转发方式的是（ ）。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "采用虚电路分组交换方式时，可以省去的阶段是（）。", "answer": "A、建立逻辑连接 B、结束本次连接"}',
-  '数据交换技术', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 采用虚电路分组交换方式时，可以省去的阶段是（）。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "国际标准化组织的英文缩写是（ ）。", "answer": "A、OSI B、ISO C、SOS D、ANSI"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 国际标准化组织的英文缩写是（ ）。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "对等层实体之间采用下列哪一个进行通信（ ）。", "answer": "A、服务 B、服务访问点 C、协议 D、上述三者"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 对等层实体之间采用下列哪一个进行通信（ ）。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "当你在网上下载软件时，你享受的网络服务类型是（ ）", "answer": "A、文件传输 B、远程登陆 C、信息浏览 D、即时短信"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 当你在网上下载软件时，你享受的网络服务类型是（ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "根据统计，当前计算机病毒扩散最快的途径是（ ）。", "answer": "A、软件复制 B、网络传播 C、磁盘拷贝 D、运行游戏软件"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 根据统计，当前计算机病毒扩散最快的途径是（ ）。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "以下不属于计算机安全措施的是（ ）", "answer": "A、下载并安装操作系统漏洞补丁程序 B、安装并定时升级正版杀毒软件 C、安装软件防火墙 D、不将计算机联入互联网"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 以下不属于计算机安全措施的是（ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "下面关于域名的说法正确的是（ ）", "answer": "D、域名系统按地理域或机构域分层采用层次结构"}',
-  'DNS协议', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 下面关于域名的说法正确的是（ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "目前使用的IPV4地址由多少个字节组成（ ）", "answer": "A、2 B、4 C、8 D、16"}',
-  'IPv4/IPv6协议', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 目前使用的IPV4地址由多少个字节组成（ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "能实现不同的网络层协议转换功能的互联设备是（ ）。", "answer": "A、集线器 B、交换机 C、路由器 D、网桥"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 能实现不同的网络层协议转换功能的互联设备是（ ）。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "路由器（Router）是用于联接逻辑上分开的（ ）网络。", "answer": "A、1个 B、2个 C、多个 D、无数个"}',
-  '网络层设备', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 路由器（Router）是用于联接逻辑上分开的（ ）网络。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "快速以太网集线器按结构分为（ ）。", "answer": "A、总线型和星型 B、共享型和交换型"}',
-  '物理层设备', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 快速以太网集线器按结构分为（ ）。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "UDP提供面向（ ）的传输服务。", "answer": "A、端口 B、地址 C、连接 D、无连接"}',
-  'TCP/UDP协议', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: UDP提供面向（ ）的传输服务。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "计算机网络中，分层和协议的集合称为计算机网络的（ ）", "answer": "C、TCP/IP参考模型 D、ISO/OSI网"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 计算机网络中，分层和协议的集合称为计算机网络的（ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "IEEE802标准中任意两个站点之间的路径中最多允许有（ ）", "answer": "A、2个中继器 B、4个中继器 C、2个路由器 D、4个路由器"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: IEEE802标准中任意两个站点之间的路径中最多允许有（ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "为用户提供入网连接点的网络设备叫作（ ）", "answer": "A、计算机 B、DTE C、DCE D、接口"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 为用户提供入网连接点的网络设备叫作（ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "因特网中完成域名地址和IP地址转换的系统是（ ）", "answer": "A、POP B、DNS C、SLIP D、Usenet"}',
-  'DNS协议', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 因特网中完成域名地址和IP地址转换的系统是（ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "用于电子邮件的协议是（ ）", "answer": "A、IP B、TCP C、SNMP D、SMTP"}',
-  '电子邮件协议', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 用于电子邮件的协议是（ ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
@@ -2164,361 +2039,316 @@ INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `diff
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "Internet 协议IPv6 将从原来的32位地址扩展到了（ ）位 （ B ）", "answer": "A、64 B、128 C、512 D、256"}',
+  '{"stem": "Internet 协议IPv6 将从原来的32位地址扩展到了（ ）位", "answer": "B", "options": [{"label": "A", "text": "64"}, {"label": "B", "text": "128"}, {"label": "C", "text": "512"}, {"label": "D", "text": "256"}]}',
   'IPv4/IPv6协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: Internet 协议IPv6 将从原来的32位地址扩展到了（ ）位 （ B ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "在Internet上浏览时，浏览器和WWW服务器之间传输网页使用的协议是（ D ）", "answer": "A、IP B、Telnet C、FTP D、HTTP"}',
+  '{"stem": "在Internet上浏览时，浏览器和WWW服务器之间传输网页使用的协议是", "answer": "D", "options": [{"label": "A", "text": "IP"}, {"label": "B", "text": "Telnet"}, {"label": "C", "text": "FTP"}, {"label": "D", "text": "HTTP"}]}',
   'HTTP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 在Internet上浏览时，浏览器和WWW服务器之间传输网页使用的协议是（ D ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "我们将IP地址分为A、B、C三类，其中B类的IP地址第一字节取值范围是 （ B ）", "answer": "A、127—191 B、128—191 C、129—191 D 、126—191"}',
+  '{"stem": "我们将IP地址分为A、B、C三类，其中B类的IP地址第一字节取值范围是", "answer": "B", "options": [{"label": "A", "text": "127—191"}, {"label": "B", "text": "128—191"}, {"label": "C", "text": "129—191"}, {"label": "D", "text": "126—191"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 我们将IP地址分为A、B、C三类，其中B类的IP地址第一字节取值范围是 （ B ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "以下对IP地址说法不正确的是 （ D ）", "answer": "A、一个IP地址共四个字节 B、一个IP地址以二进制表示共32位"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 以下对IP地址说法不正确的是 （ D ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "ftp常用于数据上传，其中在进行数据上传时需进行身份验证，如果以匿名者方式登陆其输入用户名是 （ A ）", "answer": "A、Anonymous B、Anonymouse C、GUEST D、以上都对"}',
+  '{"stem": "ftp常用于数据上传，其中在进行数据上传时需进行身份验证，如果以匿名者方式登陆其输入用户名是", "answer": "A", "options": [{"label": "A", "text": "Anonymous"}, {"label": "B", "text": "Anonymouse"}, {"label": "C", "text": "GUEST"}, {"label": "D", "text": "以上都对"}]}',
   '文件传输协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: ftp常用于数据上传，其中在进行数据上传时需进行身份验证，如果以匿名者方式登陆其输入用户名是 （ A ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "IP地址共5类，常用的有（ ）类，其余留作其他用途 （ C ）", "answer": "A、1 B、2 C、3 D、4"}',
+  '{"stem": "IP地址共5类，常用的有（ ）类，其余留作其他用途", "answer": "C", "options": [{"label": "A", "text": "1"}, {"label": "B", "text": "2"}, {"label": "C", "text": "3"}, {"label": "D", "text": "4"}]}',
   '物理层传输介质', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: IP地址共5类，常用的有（ ）类，其余留作其他用途 （ C ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "文件传输协议是（ ）上的协议 （ C ）", "answer": "A、网络层 B、运输层 C、应用层 D、物理层"}',
+  '{"stem": "文件传输协议是（ ）上的协议", "answer": "C", "options": [{"label": "A", "text": "网络层"}, {"label": "B", "text": "运输层"}, {"label": "C", "text": "应用层"}, {"label": "D", "text": "物理层"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 文件传输协议是（ ）上的协议 （ C ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "对于一个主机域名smt.scut.edu.cn来说，其中（ ）表示主机名 （ D ）", "answer": "A、cn B、edu C、scut D、smt"}',
+  '{"stem": "对于一个主机域名smt.scut.edu.cn来说，其中（ ）表示主机名", "answer": "D", "options": [{"label": "A", "text": "cn"}, {"label": "B", "text": "edu"}, {"label": "C", "text": "scut"}, {"label": "D", "text": "smt"}]}',
   'DNS协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 对于一个主机域名smt.scut.edu.cn来说，其中（ ）表示主机名 （ D ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "Internet 的前身是 （ D ）", "answer": "A、Intranet B、Ethernet C、Cernet D、Arpanet"}',
+  '{"stem": "Internet 的前身是", "answer": "D", "options": [{"label": "A", "text": "Intranet"}, {"label": "B", "text": "Ethernet"}, {"label": "C", "text": "Cernet"}, {"label": "D", "text": "Arpanet"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: Internet 的前身是 （ D ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "在如下网络拓朴结构中，具有一定集中控制功能的网络是 （ B ）", "answer": "A、总线型网络 B、星型网络 C、环形网络 D、全连接型网络"}',
+  '{"stem": "在如下网络拓朴结构中，具有一定集中控制功能的网络是", "answer": "B", "options": [{"label": "A", "text": "总线型网络"}, {"label": "B", "text": "星型网络"}, {"label": "C", "text": "环形网络"}, {"label": "D", "text": "全连接型网络"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 在如下网络拓朴结构中，具有一定集中控制功能的网络是 （ B ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "下述协议中，不建立于IP协议之上的协议是 （ A ）", "answer": "A、ARP B、ICMP C、SNMP D、TCP"}',
+  '{"stem": "下述协议中，不建立于IP协议之上的协议是", "answer": "A", "options": [{"label": "A", "text": "ARP"}, {"label": "B", "text": "ICMP"}, {"label": "C", "text": "SNMP"}, {"label": "D", "text": "TCP"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 下述协议中，不建立于IP协议之上的协议是 （ A ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "下述论述中不正确的是 （ C ）", "answer": "A、IPV6具有高效IP包头 B、IPV6增强了安全性"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 下述论述中不正确的是 （ C ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "在网络互联中，中继器一般工作在 （ D ）", "answer": "A、链路层 B、运输层 C、网络层 D、物理层"}',
+  '{"stem": "在网络互联中，中继器一般工作在", "answer": "D", "options": [{"label": "A", "text": "链路层"}, {"label": "B", "text": "运输层"}, {"label": "C", "text": "网络层"}, {"label": "D", "text": "物理层"}]}',
   '物理层设备', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 在网络互联中，中继器一般工作在 （ D ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "下述协议中不属于应用层协议的是 （A ）", "answer": "A、ICMP B、SNMP C、TELNET D、FIP"}',
+  '{"stem": "下述协议中不属于应用层协议的是", "answer": "A", "options": [{"label": "A", "text": "ICMP"}, {"label": "B", "text": "SNMP"}, {"label": "C", "text": "TELNET"}, {"label": "D", "text": "FIP"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 下述协议中不属于应用层协议的是 （A ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @co_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "网桥及一般的二层交换机在进行数据包转发时，识别的数据包包头中的什么内容进行数据包的转发 （ A ）", "answer": "A、MAC地址 B、IP地址 C、网络号Net ID D、主机号Host ID"}',
+  '{"stem": "网桥及一般的二层交换机在进行数据包转发时，识别的数据包包头中的什么内容进行数据包的转发", "answer": "A", "options": [{"label": "A", "text": "MAC地址"}, {"label": "B", "text": "IP地址"}, {"label": "C", "text": "网络号Net ID"}, {"label": "D", "text": "主机号Host ID"}]}',
   '数据链路层设备', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 网桥及一般的二层交换机在进行数据包转发时，识别的数据包包头中的什么内容进行数据包的转发 （ A ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "在数据传输过程中路由是在（ ）实现的 （ C ）", "answer": "A、运输层 B、物理层 C、网络层 D、应用层"}',
+  '{"stem": "在数据传输过程中路由是在（ ）实现的", "answer": "C", "options": [{"label": "A", "text": "运输层"}, {"label": "B", "text": "物理层"}, {"label": "C", "text": "网络层"}, {"label": "D", "text": "应用层"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 在数据传输过程中路由是在（ ）实现的 （ C ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "B类地址中，在默认子网掩码下用（ ）位来标识网络中的一台主机 （ C ）", "answer": "A、8 B、14 C、16 D、24"}',
+  '{"stem": "B类地址中，在默认子网掩码下用（ ）位来标识网络中的一台主机", "answer": "C", "options": [{"label": "A", "text": "8"}, {"label": "B", "text": "14"}, {"label": "C", "text": "16"}, {"label": "D", "text": "24"}]}',
   'IP地址分类', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: B类地址中，在默认子网掩码下用（ ）位来标识网络中的一台主机 （ C ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "负责电子邮件的应用层协议是 （ C ）", "answer": "A、FTP B、PPP C、SMTP D、IP"}',
+  '{"stem": "负责电子邮件的应用层协议是", "answer": "C", "options": [{"label": "A", "text": "FTP"}, {"label": "B", "text": "PPP"}, {"label": "C", "text": "SMTP"}, {"label": "D", "text": "IP"}]}',
   '电子邮件协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 负责电子邮件的应用层协议是 （ C ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "下列哪一项不属于网络安全的内容 （ D）", "answer": "A、软件安全 B、保密性 C、可用性 D、可靠性"}',
+  '{"stem": "下列哪一项不属于网络安全的内容", "answer": "D", "options": [{"label": "A", "text": "软件安全"}, {"label": "B", "text": "保密性"}, {"label": "C", "text": "可用性"}, {"label": "D", "text": "可靠性"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 下列哪一项不属于网络安全的内容 （ D）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "在顶级域名中，表示教育机构的是 （ D ）", "answer": "A、com B、org C、int D、edu"}',
+  '{"stem": "在顶级域名中，表示教育机构的是", "answer": "D", "options": [{"label": "A", "text": "com"}, {"label": "B", "text": "org"}, {"label": "C", "text": "int"}, {"label": "D", "text": "edu"}]}',
   'DNS协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 在顶级域名中，表示教育机构的是 （ D ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "在IP地址方案中，210.42.194.22表示一个（ ）地址 （ C ）", "answer": "A、A类 B、B类 C、C类 D、D类"}',
+  '{"stem": "在IP地址方案中，210.42.194.22表示一个（ ）地址", "answer": "C", "options": [{"label": "A", "text": "A类"}, {"label": "B", "text": "B类"}, {"label": "C", "text": "C类"}, {"label": "D", "text": "D类"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 在IP地址方案中，210.42.194.22表示一个（ ）地址 （ C ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "在顶级域名中，表示商业机构的是 （ A ）", "answer": "A、com B、org C、net D、edu"}',
+  '{"stem": "在顶级域名中，表示商业机构的是", "answer": "A", "options": [{"label": "A", "text": "com"}, {"label": "B", "text": "org"}, {"label": "C", "text": "net"}, {"label": "D", "text": "edu"}]}',
   'DNS协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 在顶级域名中，表示商业机构的是 （ A ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "两台计算机利用电话线路传输数据信号时，必备的设备是 （ B）", "answer": "A、网卡 B、调制解调器 C、中继器 D、随机错"}',
+  '{"stem": "两台计算机利用电话线路传输数据信号时，必备的设备是", "answer": "B", "options": [{"label": "A", "text": "网卡"}, {"label": "B", "text": "调制解调器"}, {"label": "C", "text": "中继器"}, {"label": "D", "text": "随机错"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 两台计算机利用电话线路传输数据信号时，必备的设备是 （ B）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "网桥是用于（ ）的互连设备 （ D ）", "answer": "A、物理层 B、网络层 C、应用层 D、数据链路层"}',
+  '{"stem": "网桥是用于（ ）的互连设备", "answer": "D", "options": [{"label": "A", "text": "物理层"}, {"label": "B", "text": "网络层"}, {"label": "C", "text": "应用层"}, {"label": "D", "text": "数据链路层"}]}',
   '数据链路层设备', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 网桥是用于（ ）的互连设备 （ D ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "物理层的主要功能是实现（ ）的正确的传输 （ A）", "answer": "A、位流 B、帧 C、分组 D、报文"}',
+  '{"stem": "物理层的主要功能是实现（ ）的正确的传输", "answer": "A", "options": [{"label": "A", "text": "位流"}, {"label": "B", "text": "帧"}, {"label": "C", "text": "分组"}, {"label": "D", "text": "报文"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 物理层的主要功能是实现（ ）的正确的传输 （ A）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "Ethernet局域网采用的媒体访问控制方式为 （ B ）", "answer": "A、CSMA B、CSMA/CD C、CDMA D、CSMA/CA"}',
+  '{"stem": "Ethernet局域网采用的媒体访问控制方式为", "answer": "B", "options": [{"label": "A", "text": "CSMA"}, {"label": "B", "text": "CSMA/CD"}, {"label": "C", "text": "CDMA"}, {"label": "D", "text": "CSMA/CA"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: Ethernet局域网采用的媒体访问控制方式为 （ B ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "早期的计算机网络是由（ ）组成系统。 （ D ）", "answer": "A、计算机—通信线路—计算机v B、PC机—通信线路—PC机"}',
-  '计算机网络组成', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 早期的计算机网络是由（ ）组成系统。 （ D ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "（ ）是一种环形结构的局域网技术 （ B ）", "answer": "A、Ethernet B、FDDI C、ATM D、DQDB"}',
+  '{"stem": "（ ）是一种环形结构的局域网技术", "answer": "B", "options": [{"label": "A", "text": "Ethernet"}, {"label": "B", "text": "FDDI"}, {"label": "C", "text": "ATM"}, {"label": "D", "text": "DQDB"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: （ ）是一种环形结构的局域网技术 （ B ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "如果IP地址为202.130.191.33，子网掩码为255.255.255.0，那么网络地址是 （ D ）", "answer": "A、202.130.0.0 B、202.0.0.0 C、202.130.191.33 D、202.130.191.0"}',
+  '{"stem": "如果IP地址为202.130.191.33，子网掩码为255.255.255.0，那么网络地址是", "answer": "D", "options": [{"label": "A", "text": "202.130.0.0"}, {"label": "B", "text": "202.0.0.0"}, {"label": "C", "text": "202.130.191.33"}, {"label": "D", "text": "202.130.191.0"}]}',
   '子网划分与路由算法', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 如果IP地址为202.130.191.33，子网掩码为255.255.255.0，那么网络地址是 （ D ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "在OSI参考模型的层次中，数据链路层的数据传送单位是 （ B ）", "answer": "A、位 B、帧 C、分组 D、报文"}',
+  '{"stem": "在OSI参考模型的层次中，数据链路层的数据传送单位是", "answer": "B", "options": [{"label": "A", "text": "位"}, {"label": "B", "text": "帧"}, {"label": "C", "text": "分组"}, {"label": "D", "text": "报文"}]}',
   'OSI参考模型', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 在OSI参考模型的层次中，数据链路层的数据传送单位是 （ B ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "交换机一般工作在 （ B ）", "answer": "A、物理层 B、数据链路层 C、网络层 D、高层"}',
+  '{"stem": "交换机一般工作在", "answer": "B", "options": [{"label": "A", "text": "物理层"}, {"label": "B", "text": "数据链路层"}, {"label": "C", "text": "网络层"}, {"label": "D", "text": "高层"}]}',
   '数据链路层设备', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 交换机一般工作在 （ B ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "ISDN的基本速率为 （ A ）", "answer": "A、64kbps B、128kbps C、144kbps D、384kbps"}',
+  '{"stem": "ISDN的基本速率为", "answer": "A", "options": [{"label": "A", "text": "64kbps"}, {"label": "B", "text": "128kbps"}, {"label": "C", "text": "144kbps"}, {"label": "D", "text": "384kbps"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: ISDN的基本速率为 （ A ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "用五类双绞线实现的100M以太网中，单根网线的最大长度为 （ C ）", "answer": "A、200M B、185M C、100M D、500M"}',
+  '{"stem": "用五类双绞线实现的100M以太网中，单根网线的最大长度为", "answer": "C", "options": [{"label": "A", "text": "200M"}, {"label": "B", "text": "185M"}, {"label": "C", "text": "100M"}, {"label": "D", "text": "500M"}]}',
   '物理层传输介质', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 用五类双绞线实现的100M以太网中，单根网线的最大长度为 （ C ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @co_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "星形、总线型、环形和网状形是按照（ ）分类 （ D ）", "answer": "A、网络功能 B、管理性质 C、网络跨度 D、网络拓扑"}',
+  '{"stem": "星形、总线型、环形和网状形是按照（ ）分类", "answer": "D", "options": [{"label": "A", "text": "网络功能"}, {"label": "B", "text": "管理性质"}, {"label": "C", "text": "网络跨度"}, {"label": "D", "text": "网络拓扑"}]}',
   '计算机组成原理', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 星形、总线型、环形和网状形是按照（ ）分类 （ D ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "100Base-T使用（ ）传输介质 （ B ）", "answer": "A、同轴电缆线路 B、双绞线 C、光纤 D、红外线"}',
+  '{"stem": "100Base-T使用（ ）传输介质", "answer": "B", "options": [{"label": "A", "text": "同轴电缆线路"}, {"label": "B", "text": "双绞线"}, {"label": "C", "text": "光纤"}, {"label": "D", "text": "红外线"}]}',
   '以太网标准', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 100Base-T使用（ ）传输介质 （ B ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "ATM传输数据的单位是信元，每个信元净荷是（ ）个字节 （B ）", "answer": "A、5 B、48 C、53 D、64"}',
+  '{"stem": "ATM传输数据的单位是信元，每个信元净荷是（ ）个字节", "answer": "B", "options": [{"label": "A", "text": "5"}, {"label": "B", "text": "48"}, {"label": "C", "text": "53"}, {"label": "D", "text": "64"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: ATM传输数据的单位是信元，每个信元净荷是（ ）个字节 （B ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "通过执行传输层及以上各层协议转换，或者实现不同体系结构的网络协议转换的互连部件称为 （ D ）", "answer": "A、集线器 B、路由器 C、交换器 D、网关"}',
+  '{"stem": "通过执行传输层及以上各层协议转换，或者实现不同体系结构的网络协议转换的互连部件称为", "answer": "D", "options": [{"label": "A", "text": "集线器"}, {"label": "B", "text": "路由器"}, {"label": "C", "text": "交换器"}, {"label": "D", "text": "网关"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 通过执行传输层及以上各层协议转换，或者实现不同体系结构的网络协议转换的互连部件称为 （ D ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "在给主机分配IP地址时，下面哪一个是错误的 （ D ）", "answer": "A、129.9.255.18 B、125.21.19.109 C、195.5.91.254 D、220.258.2.56"}',
+  '{"stem": "在给主机分配IP地址时，下面哪一个是错误的", "answer": "D", "options": [{"label": "A", "text": "129.9.255.18"}, {"label": "B", "text": "125.21.19.109"}, {"label": "C", "text": "195.5.91.254"}, {"label": "D", "text": "220.258.2.56"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 在给主机分配IP地址时，下面哪一个是错误的 （ D ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "相对于传统的调制解调器拨号，ISDN的优越性主要体现在哪些方面：（多选） （ ABE ）", "answer": "A、连接速度快 B、 传输速率高 C、 配置简单 D、 价格便宜"}',
-  '物理层设备', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 相对于传统的调制解调器拨号，ISDN的优越性主要体现在哪些方面：（多选） （ ABE ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @co_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "你是一名公司的网络管理员，现在你的公司需要在某一分支办公室内铺设一个小型以太局域网，总共有4台PC机需要通过一台集线器连接起来。采用线缆类型为5类双绞线。则理论上任一两台PC机的最大间隔距离是 （ C ）", "answer": "A、400米 B、100米 C、200米 D、500米"}',
+  '{"stem": "你是一名公司的网络管理员，现在你的公司需要在某一分支办公室内铺设一个小型以太局域网，总共有4台PC机需要通过一台集线器连接起来。采用线缆类型为5类双绞线。则理论上任一两台PC机的最大间隔距离是", "answer": "C", "options": [{"label": "A", "text": "400米"}, {"label": "B", "text": "100米"}, {"label": "C", "text": "200米"}, {"label": "D", "text": "500米"}]}',
   '物理层传输介质', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 你是一名公司的网络管理员，现在你的公司需要在某一分支办公室内铺设一个小型以太局域网，总共有4台PC机需要通过一台集线器连
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "在网络中使用交换机代替集线器的原因是 （ AC ）", "answer": "A、减少冲突 B、隔绝广播风暴 C、提高带宽率 C、降低网络建设成本"}',
-  '物理层设备', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 在网络中使用交换机代替集线器的原因是 （ AC ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "现有一个B类网络地址160.18.0.0，如要划分子网，每个子网最少允许40台主机，则划分时容纳最多子网时，其子网掩码为 （ E ）", "answer": "A.255.255.192.0 B.255.255.224.0 C.255.255.240.0 D.255.255.252.0"}',
-  '子网划分与路由算法', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 现有一个B类网络地址160.18.0.0，如要划分子网，每个子网最少允许40台主机，则划分时容纳最多子网时，其子网掩码为
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "加密算法包括 （ A ）", "answer": "A、公钥和私钥 B、黑白密钥 C、数字签名 D、通用的和专用的密钥"}',
+  '{"stem": "加密算法包括", "answer": "A", "options": [{"label": "A", "text": "公钥和私钥"}, {"label": "B", "text": "黑白密钥"}, {"label": "C", "text": "数字签名"}, {"label": "D", "text": "通用的和专用的密钥"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 加密算法包括 （ A ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "下列不属于局域网层次的是 （ C ）", "answer": "A、物理层 B、数据链路层 C、传输层 D、网络层"}',
+  '{"stem": "下列不属于局域网层次的是", "answer": "C", "options": [{"label": "A", "text": "物理层"}, {"label": "B", "text": "数据链路层"}, {"label": "C", "text": "传输层"}, {"label": "D", "text": "网络层"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 下列不属于局域网层次的是 （ C ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "目录服务的目标是 （ B ）", "answer": "A、一个用户一个账号 B、用户可以访问不同的域"}',
+  '{"stem": "目录服务的目标是", "answer": "B", "options": [{"label": "A", "text": "一个用户一个账号"}, {"label": "B", "text": "用户可以访问不同的域"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 目录服务的目标是 （ B ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "检查网络联通性的命令是 （ D ）", "answer": "A、ipconfig B、route C、telnet D、ping"}',
+  '{"stem": "检查网络联通性的命令是", "answer": "D", "options": [{"label": "A", "text": "ipconfig"}, {"label": "B", "text": "route"}, {"label": "C", "text": "telnet"}, {"label": "D", "text": "ping"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 检查网络联通性的命令是 （ D ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "Windows 2000 有自己的产品家族,下列产品中不是Windows 2000 系列的产品有 （ E ）", "answer": "A、Windows 2000 Professnal B、Windows 2000 Server"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: Windows 2000 有自己的产品家族,下列产品中不是Windows 2000 系列的产品有 （ E ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @os_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "可以在文件系统级实现文件安全性管理的文件系统是 （C ）", "answer": "A、FAT B、FAT32 C、NTFS"}',
+  '{"stem": "可以在文件系统级实现文件安全性管理的文件系统是", "answer": "C", "options": [{"label": "A", "text": "FAT"}, {"label": "B", "text": "FAT32"}, {"label": "C", "text": "NTFS"}]}',
   '操作系统', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 可以在文件系统级实现文件安全性管理的文件系统是 （C ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "在Windows 2000中，使用什么工具可以创建本地用户帐户 （ C ）", "answer": "A、计算机管理 B、Active Directory用户和计算机 C、本地用户管理器"}',
+  '{"stem": "在Windows 2000中，使用什么工具可以创建本地用户帐户", "answer": "C", "options": [{"label": "A", "text": "计算机管理"}, {"label": "B", "text": "Active Directory用户和计算机"}, {"label": "C", "text": "本地用户管理器"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 在Windows 2000中，使用什么工具可以创建本地用户帐户 （ C ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "以下何者是集线器(Hub)的功能 （ C ）", "answer": "A、增加区域网络的上传输速度。 B、增加区域网络的数据复制速度。"}',
-  '物理层设备', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 以下何者是集线器(Hub)的功能 （ C ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "您有一个Windows2000Server，它是一个成员服务器。您的域正在不断变大，您需要添加另外一台域控制器。下面哪些程序可以把成员服务器升级为域控制器？ （ B ）", "answer": "A、PROMOTE.EXE B、DCPROMO.EXE"}',
+  '{"stem": "您有一个Windows2000Server，它是一个成员服务器。您的域正在不断变大，您需要添加另外一台域控制器。下面哪些程序可以把成员服务器升级为域控制器？", "answer": "B", "options": [{"label": "A", "text": "PROMOTE.EXE"}, {"label": "B", "text": "DCPROMO.EXE"}]}',
   '计算机组成原理', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 您有一个Windows2000Server，它是一个成员服务器。您的域正在不断变大，您需要添加另外一台域控制器。下面哪些
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "在安装DNS服务前，必须在windows2000 sever计算机上安装和设置下列哪一项 （ A ）", "answer": "A、IIS B、WINS C、DHCP D、TCP/IP"}',
+  '{"stem": "在安装DNS服务前，必须在windows2000 sever计算机上安装和设置下列哪一项", "answer": "A", "options": [{"label": "A", "text": "IIS"}, {"label": "B", "text": "WINS"}, {"label": "C", "text": "DHCP"}, {"label": "D", "text": "TCP/IP"}]}',
   'DNS协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 在安装DNS服务前，必须在windows2000 sever计算机上安装和设置下列哪一项 （ A ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "测试DNS主要使用以下哪个命令 （ C）", "answer": "A、Ping B、IPcofig C、nslookup D、Winipcfg"}',
+  '{"stem": "测试DNS主要使用以下哪个命令", "answer": "C", "options": [{"label": "A", "text": "Ping"}, {"label": "B", "text": "IPcofig"}, {"label": "C", "text": "nslookup"}, {"label": "D", "text": "Winipcfg"}]}',
   'DNS协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 测试DNS主要使用以下哪个命令 （ C）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "局域网中为登录域的计算机分配动态 IP 地址的服务器为 （ B ）", "answer": "A、DNS服务器 B、DHCP服务器 C、WWW服务器 D、WINS服务器"}',
+  '{"stem": "局域网中为登录域的计算机分配动态 IP 地址的服务器为", "answer": "B", "options": [{"label": "A", "text": "DNS服务器"}, {"label": "B", "text": "DHCP服务器"}, {"label": "C", "text": "WWW服务器"}, {"label": "D", "text": "WINS服务器"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 局域网中为登录域的计算机分配动态 IP 地址的服务器为 （ B ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "判断下面哪一句话是正确的 （ B）", "answer": "A、Internet中的一台主机只能有一个IP地址 B、一个合法的IP地址在一个时刻只能分配给一台主机"}',
+  '{"stem": "判断下面哪一句话是正确的", "answer": "B", "options": [{"label": "A", "text": "Internet中的一台主机只能有一个IP地址"}, {"label": "B", "text": "一个合法的IP地址在一个时刻只能分配给一台主机"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 判断下面哪一句话是正确的 （ B）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "在网络中提供域名与IP地址解析服务的服务器是 （ C ）", "answer": "A、WWW服务器 B、FTP服务器 C、DNS服务器 D、DHCP服务器"}',
+  '{"stem": "在网络中提供域名与IP地址解析服务的服务器是", "answer": "C", "options": [{"label": "A", "text": "WWW服务器"}, {"label": "B", "text": "FTP服务器"}, {"label": "C", "text": "DNS服务器"}, {"label": "D", "text": "DHCP服务器"}]}',
   'ARP协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 在网络中提供域名与IP地址解析服务的服务器是 （ C ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "Windows 2000 Server为管理员提供的名称是 （ C ）", "answer": "A、Gues B．TsInternetUser C、Administrator D、Domain Admins"}',
+  '{"stem": "Windows 2000 Server为管理员提供的名称是", "answer": "C", "options": [{"label": "A", "text": "Gues"}, {"label": "B", "text": "TsInternetUser"}, {"label": "C", "text": "Administrator"}, {"label": "D", "text": "Domain Admins"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: Windows 2000 Server为管理员提供的名称是 （ C ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "通过哪种方法安装活动目录 （ A ）", "answer": "A、管理工具/配置服务器 B、管理工具/计算机管理"}',
+  '{"stem": "通过哪种方法安装活动目录", "answer": "A", "options": [{"label": "A", "text": "管理工具/配置服务器"}, {"label": "B", "text": "管理工具/计算机管理"}]}',
   '计算机网络基础', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 通过哪种方法安装活动目录 （ A ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "下列说法中正确的是 （ AD ）", "answer": "A、网络中每台计算机的计算机账户唯一 B、网络中每台计算机的计算机账户不唯一"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题三: 下列说法中正确的是 （ AD ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SHORT', 'HARD',
-  '{"stem": "应用层DNS协议主要用于实现哪种网络服务功能 （ A ）", "answer": "A、网络设备名字到IP地址的映射 B、网络硬件地址到IP地址的映射"}',
+  '{"stem": "应用层DNS协议主要用于实现哪种网络服务功能", "answer": "A", "options": [{"label": "A", "text": "网络设备名字到IP地址的映射"}, {"label": "B", "text": "网络硬件地址到IP地址的映射"}]}',
   'DNS协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题三: 应用层DNS协议主要用于实现哪种网络服务功能 （ A ）
 
@@ -2804,11 +2634,6 @@ INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `diff
   'CSMA/CD协议', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题六: 快速以太网的介质访问控制方法是。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "计算机网络中，所有的计算机都连接到一个中心节点上，一个网络节点需", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题六: 计算机网络中，所有的计算机都连接到一个中心节点上，一个网络节点需
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
@@ -2858,11 +2683,6 @@ INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `diff
   'OSI参考模型', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题六: 在OSI/RM参考模型中，处于模型的最底层。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "使用载波信号的两种不同频率来表示二进制值的两种状态的数据编码方式", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题六: 使用载波信号的两种不同频率来表示二进制值的两种状态的数据编码方式
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
@@ -3068,149 +2888,29 @@ INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `diff
   'MAC地址与物理地址', 0, 'APPROVED', NOW()
 ); -- 计算机网络基础试题九: 在局域网中，硬件地址又称为 物理地址 或 MAC地址 。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "计算机网络是通过通信媒体，把各个独立的计算机互相连接而建立起来的系统。它实现了计算机与计算机之间的资源共享和 （ ）", "options": [{"label": "A", "text": "屏蔽"}, {"label": "B", "text": "独占"}, {"label": "C", "text": "通信"}, {"label": "D", "text": "交换"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 计算机网络是通过通信媒体，把各个独立的计算机互相连接而建立起来的系统。它实现了计算机与计算机之间的资源共享和 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "根据计算机网络的覆盖范围，可以把网络划分为三大类，以下不属于其中的是 （ ）A 广域网 B 城域网 C 局域网 D 宽带网", "options": [{"label": "A", "text": "路由器"}, {"label": "B", "text": "资源子网"}, {"label": "C", "text": "通信子网"}, {"label": "D", "text": "FDDI网"}], "answer": "?"}',
-  '网络分类', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 根据计算机网络的覆盖范围，可以把网络划分为三大类，以下不属于其中的是 （ ）A 广域网 B 城域网 C 局域网 D 宽带
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "每发送一个字符其开头都带一位起始位，以便在每一个字符开始时接收端和发送端同步一次，这种传输方式是 （ ）", "options": [{"label": "A", "text": "手动传输方式"}, {"label": "B", "text": "同步传输方式"}, {"label": "C", "text": "自动传输方式"}, {"label": "D", "text": "异步传输方式"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 每发送一个字符其开头都带一位起始位，以便在每一个字符开始时接收端和发送端同步一次，这种传输方式是 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "在数字数据编码方式中，一种自含时钟编码方式是 （ ）", "options": [{"label": "A", "text": "二进制编码"}, {"label": "B", "text": "曼彻斯特编码"}, {"label": "C", "text": "脉冲编码"}, {"label": "D", "text": "非归零码"}], "answer": "?"}',
-  '数据编码技术', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 在数字数据编码方式中，一种自含时钟编码方式是 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "在数字通信信道上，基带传输数字数据信号的方法是 （ ）", "options": [{"label": "A", "text": "调制"}, {"label": "B", "text": "脉冲编码"}, {"label": "C", "text": "间接"}, {"label": "D", "text": "直接"}], "answer": "?"}',
-  '信道容量与带宽', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 在数字通信信道上，基带传输数字数据信号的方法是 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "下列模拟数据编码方法中，抗干扰能力强，实现技术复杂的是（ ）", "options": [{"label": "A", "text": "振幅键控"}, {"label": "B", "text": "移频键控"}, {"label": "C", "text": "移相键控"}, {"label": "D", "text": "以上都不对"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 下列模拟数据编码方法中，抗干扰能力强，实现技术复杂的是（ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "在OSI参考模型中，负责使分组以适当的路径通过通信子网的是", "options": [{"label": "B", "text": "传输层"}, {"label": "C", "text": "网络层"}, {"label": "D", "text": "数据链路层"}], "answer": "?"}',
-  'OSI参考模型', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 在OSI参考模型中，负责使分组以适当的路径通过通信子网的是
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "在计算机网络中，所有的计算机均连接到一条通信传输线路上，在线路", "options": [{"label": "A", "text": "总线结构"}, {"label": "B", "text": "星型结构"}, {"label": "C", "text": "环型结构"}, {"label": "D", "text": "网状结构"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 在计算机网络中，所有的计算机均连接到一条通信传输线路上，在线路
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "TCP/IP协议是Internet中计算机之间通信所必须共同遵循的一种", "options": [{"label": "B", "text": "通信规定"}, {"label": "C", "text": "软件"}, {"label": "D", "text": "硬件"}], "answer": "?"}',
-  'TCP/IP参考模型', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: TCP/IP协议是Internet中计算机之间通信所必须共同遵循的一种
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "1000BASE-T标准使用5类非屏蔽双绞线，其最大长度为 （ ）", "options": [{"label": "A", "text": "550米"}, {"label": "B", "text": "100米"}, {"label": "C", "text": "3000米"}, {"label": "D", "text": "300米"}], "answer": "?"}',
-  '物理层传输介质', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 1000BASE-T标准使用5类非屏蔽双绞线，其最大长度为 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "局域网络服务访问点（SAP）的位置处于 （ ）", "options": [{"label": "A", "text": "LLC子层与高层的交接面上"}, {"label": "B", "text": "MAC子层与高层的交接面上"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 局域网络服务访问点（SAP）的位置处于 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "Netware系统容错技术中，提供了文件服务器镜像功能的是（ ）", "options": [{"label": "A", "text": "第一级"}, {"label": "B", "text": "第二级"}, {"label": "C", "text": "第三级"}, {"label": "D", "text": "第四级"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: Netware系统容错技术中，提供了文件服务器镜像功能的是（ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "下列网络互联设备中，能够有效隔离广播通信信号的是 （ ）", "options": [{"label": "A", "text": "中继器"}, {"label": "B", "text": "透明网桥C 源路由网桥"}, {"label": "D", "text": "路由器"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 下列网络互联设备中，能够有效隔离广播通信信号的是 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "用来实现局域网—广域网互联的是 （ ）", "options": [{"label": "A", "text": "中继器或网桥"}, {"label": "B", "text": "路由器或网关"}, {"label": "C", "text": "网桥或路由器"}, {"label": "D", "text": "网桥或网关"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 用来实现局域网—广域网互联的是 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "应用层的中继系统是 （ ）", "options": [{"label": "A", "text": "中继器"}, {"label": "B", "text": "网桥"}, {"label": "C", "text": "路由器"}, {"label": "D", "text": "网关"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 应用层的中继系统是 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'EASY',
-  '{"stem": "将一个网关分为两个半网关的主要考虑出自 （ ）", "options": [{"label": "A", "text": "协议变换"}, {"label": "B", "text": "管理方便"}, {"label": "C", "text": "提高效率"}, {"label": "D", "text": "编程简单"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 将一个网关分为两个半网关的主要考虑出自 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "Token Ring介质访问控制方法遵循的标准是 （ ）", "options": [{"label": "A", "text": "IEEE802．3"}, {"label": "B", "text": "IEEE802．4"}, {"label": "C", "text": "IEEE802．5"}, {"label": "D", "text": "IEEE802．6"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: Token Ring介质访问控制方法遵循的标准是 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "在IP地址方案中，159．226．181．1是一个 （ ）", "options": [{"label": "A", "text": "A类地址"}, {"label": "B", "text": "B类地址"}, {"label": "C", "text": "C类地址"}, {"label": "D", "text": "D类地址"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 在IP地址方案中，159．226．181．1是一个 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "用来确认网络中信息传递的源结点与目的结点的用户身份是否真实的服务是（ ）", "options": [{"label": "A", "text": "认证"}, {"label": "B", "text": "防抵赖"}, {"label": "C", "text": "数据完整性"}, {"label": "D", "text": "访问控制"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 用来确认网络中信息传递的源结点与目的结点的用户身份是否真实的服务是（ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'MULTI', 'MEDIUM',
-  '{"stem": "组成计算机网络的资源子网的设备是 （ ）", "options": [{"label": "A", "text": "连网外设"}, {"label": "B", "text": "终端控制器"}, {"label": "C", "text": "网络交换机"}, {"label": "D", "text": "终端"}, {"label": "E", "text": "计算机系统"}], "answer": "?"}',
-  '子网划分与路由算法', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 组成计算机网络的资源子网的设备是 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'MULTI', 'MEDIUM',
-  '{"stem": "以太网交换机的帧转发方式有 （ ）", "options": [{"label": "A", "text": "数元交换"}, {"label": "B", "text": "信元交换"}, {"label": "C", "text": "直接交换"}, {"label": "D", "text": "存储转发交换"}, {"label": "E", "text": "改进直接交换"}], "answer": "?"}',
-  'CSMA/CD协议', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 以太网交换机的帧转发方式有 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'MULTI', 'MEDIUM',
-  '{"stem": "TCP/IP的层次包括 （ ）", "options": [{"label": "A", "text": "应用层"}, {"label": "B", "text": "运输层"}, {"label": "C", "text": "互连层"}, {"label": "D", "text": "主机-网络层"}, {"label": "E", "text": "物理层"}], "answer": "?"}',
-  'TCP/UDP协议', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: TCP/IP的层次包括 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @os_course_id, @teacher_id, 'MULTI', 'MEDIUM',
-  '{"stem": "以下各项属于网络操作系统基本功能的是 （ ）", "options": [{"label": "A", "text": "文件服务"}, {"label": "B", "text": "打印服务"}, {"label": "C", "text": "数据库服务D 通信服务"}, {"label": "E", "text": "Internet/Intranet服务"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 以下各项属于网络操作系统基本功能的是 （ ）
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'MULTI', 'MEDIUM',
-  '{"stem": "对网络安全构成威胁的主要因素有 （ ）", "options": [{"label": "A", "text": "网络攻击"}, {"label": "B", "text": "系统漏洞"}, {"label": "C", "text": "网络内部安全隐患D 计算机病毒"}, {"label": "E", "text": "用户未安装防火墙"}], "answer": "?"}',
-  '计算机网络基础', 0, 'APPROVED', NOW()
-); -- 计算机网络基础试题十: 对网络安全构成威胁的主要因素有 （ ）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
@@ -3254,11 +2954,6 @@ INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `diff
   '数据结构', 0, 'APPROVED', NOW()
 ); -- 2023年408统考真题: （2023年408统考第8题）对含有600个元素的有序顺序表进行折半查找，关键字间的比较次数最多是()。
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2023年408统考第9题）现有长度为5,初始为空的散列表HT, 散列表函数H(k)=(k+4)%5, 用线性探查再散列法解 决冲突。若将关键字序列2022,12,25依次插入HT 中，然后删除关键字25,则HT中查找失 败的平均查找长度为()。", "options": [{"label": "A", "text": "1"}, {"label": "B", "text": "1.6"}, {"label": "C", "text": "1.8"}, {"label": "D", "text": "2.2"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2023年408统考真题: （2023年408统考第9题）现有长度为5,初始为空的散列表HT, 散列表函数H(k)=(k+4)%5, 用线性探查再散
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
@@ -3440,281 +3135,181 @@ INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `diff
   '数据结构', 0, 'APPROVED', NOW()
 ); -- 2023年408统考真题: （2023年408统考第40题）下列关于IPv4 和 IPv6 的叙述中，正确的是()。 I.IPv6 地址空间是IPv
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'COMPREHENSIVE', 'MEDIUM',
-  '{"stem": "（2023年408统考第41题）(13分)已知有向图G 采用邻接矩阵存储，类型定义如下： typedef struct { //图的类型定义 int numVertices,numEdges; 1/ 图的顶点数和有向边数 char VerticesList\\\\[MAXV\\\\]; //顶点表，MAXV为已定义常量 int Edge\\\\[MAXV\\\\]\\\\[MAXV\\\\]; // 邻接矩阵 )MGraph; 将图中出度大于入度的顶点称为K 顶点。例如：在右图中，顶点a 和顶 点b 都是K 顶点。请设计算法：int printVertices(MGraph G), 对任意给定的非空有向图G, 输出图G 中所有的K顶点，并返回K 顶 点的个数。要求： (1)给出算法的基本设计思想。 (2)根据设计思想，采用C 或C++ 语言描述算法，关键之处给出注释。", "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2023年408统考真题: （2023年408统考第41题）(13分)已知有向图G 采用邻接矩阵存储，类型定义如下： typedef struct 
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'COMPREHENSIVE', 'MEDIUM',
-  '{"stem": "（2023年408统考第42题）(10分)对含有n(n>0) 个记录的文件进行外部排序，采用置换-选择排序生成初始归并段时需 要使用一个工作区，工作区中能保存m 个记录，请回答下列问题： (1)若文件中有19个记录，其关键字依次是51,94,37,92,14,63,15,99,48,56,23,60, 31,17,43,8,90,166,100。当m=4 时，可生成几个初始归并段?每个归并段各是什么? (2)对任意m(n》m>0), 生成的第一个初始归并段的长度最大值和最小值分别是多少?", "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2023年408统考真题: （2023年408统考第42题）(10分)对含有n(n>0) 个记录的文件进行外部排序，采用置换-选择排序生成初始归并段
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'COMPREHENSIVE', 'MEDIUM',
-  '{"stem": "（2023年408统考第43题）(14分)已知计算机M 字长为32位，按字节编址，采用请求调页策略的虚拟存储管理方式，虚 拟地址32位，页大小为4KB; 数据Cache采用4路组相联映射方式，数据区大小为8KB, 主存 块大小为32B。现有C 语言程序段如下： int a\\\\[24\\\\]\\\\[24\\\\]; for(i=0;i<24;i++) for(j=0;j<64;j++) a\\\\[i\\\\]\\\\[j\\\\]=10; (2)不考虑对变量i 和j, 该程序段的数据访问是否具有时间局部性?为什么? (3)计算机M 的虚拟地址( A31～A0) 中哪几位用作块内地址?哪几位用作Cache 组号?数组 元素a\\\\[1\\\\]\\\\[0\\\\]的虚拟地址是多少?其所在主存块对应的Cache 组号是多少? (4)数组 a 总共占多少主存块?假设上述程序段执行过程中数组 a 的访问不会和其他数据发生 Cache访问冲突，则数组a 的 Cache 命中率是多少?若将循环中i 和j 的次序按如下方式调 换，则数组a 的 Cache 命中率又是多少? for(j=0;j<64;j++) for(i=0;i<24;i++) a\\\\[i\\\\]\\\\[j\\\\]=10; **44.** (9分)题43中C 程序段在计算机M 上的部分机器级代码如下，每个机器级代码行中依次包含 指令序号、虚拟地址、机器指令和汇编指令。 for(i=0;i<24;i++) mov\\\\[ebp-8\\\\],0 jmp 00401084h mov eax,\\\\[ebp-8\\\\] jge 004010bch mov\\\\[ebp-4\\\\],0 1 00401072 C745 F800000000 00401079 EB 09 3 0040107B 8B 55F8 7 00401088 7D 32 for(j=0;j<64;j++) 8 0040108A C745 FC00000000 a\\\\[i\\\\]\\\\[j\\\\]=10; 19004010AE C78482002042000A 000000 mov\\\\[ecx+edx4+00422000h\\\\],0Ah 20 ……. 请回答下列问题。 (1)第20条指令的虚拟地址是多少? (2)已知第2条jmp和第7条jge都是跳转指令，其操作码分别是EBH 和7DH, 跳转目标地址 分别为00401084H和004010BCH, 这两条指令分别采用什么寻址方式?请给出第2条指令 jmp的跳转目标地址计算过程。 (3)已知第19条mov指令的功能是“a\\\\[i\\\\]\\\\[j\\\\]←10”, 其中ecx 和edx为寄存器名，00422000H是 数组a 的首地址，指令中源操作数采用什么寻址方式?已知edx 中存放的是变量j,ecx 中存 放的是什么?根据该指令的机器码判断计算机M 采用的是大端还是小端方式?", "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2023年408统考真题: （2023年408统考第43题）(14分)已知计算机M 字长为32位，按字节编址，采用请求调页策略的虚拟存储管理方式，虚
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'COMPREHENSIVE', 'MEDIUM',
-  '{"stem": "（2023年408统考第45题）(7分)现要求学生使用swap指令和布尔型变量lock实现临界区互斥。lock为线程间共享的变量。 lock的值为TRUE时线程不能进入临界区，为FALSE时线程能够进入临界区。某同学编写的实 现临界区互斥的伪代码如下图(a) 所示。 请回答下列问题。 (1) 图(a)的伪代码中哪些语句存在错误?将其改为正确的语句(不增加语句条数)。 (2)图(b) 给出了交换两个变量值的函数newSwap**()的代码，是否可以用函数调用语句** “newSwap(&key,&lock)” 代替指令“swap key,lock” 以实现临界区互斥?为什么? newSwap()的代码 void newSwap(boola,boolb){ bool temp=a; a=b; b=temp; --- bool lock=FALSE; //共享变量 bool key=TRUE; if (key ==TRUE) swap key,lock;/交换key和lock的值 临界区 ； lock=TRUE; (a) (b)", "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2023年408统考真题: （2023年408统考第45题）(7分)现要求学生使用swap指令和布尔型变量lock实现临界区互斥。lock为线程间共
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'COMPREHENSIVE', 'MEDIUM',
-  '{"stem": "（2023年408统考第46题）(8分)进程P 通过执行系统调用从键盘接收一个字符的输入。已知此过程中与进程P 相关的操 作包括：①将进程P 插入就绪队列；②将进程P 插入阻塞队列；③将字符从键盘控制器读入系 统缓冲区；④启动键盘中断处理程序；⑤进程P 从系统调用返回；⑥用户在键盘上输入字符。 以上编号①~⑥仅用于标记操作，与操作的先后顺序无关。请回答下列问题。 (1)按照正确的操作顺序，操作①的前一个和后一个操作分别是上述操作中的哪一个?操作⑥ 的后一个操作是上述操作中的哪一个? (2)在上述哪个操作之后，CPU一定从进程P 切换到其他进程?在上述哪个操作之后CPU 调度 程序才能选中进程P 执行? (3)完成上述哪个操作的代码属于键盘驱动程序? (4)键盘中断处理程序执行时，进程P 处于什么状态?CPU 处于内核态还是用户态?", "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2023年408统考真题: （2023年408统考第46题）(8分)进程P 通过执行系统调用从键盘接收一个字符的输入。已知此过程中与进程P 相关的操
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'COMPREHENSIVE', 'MEDIUM',
-  '{"stem": "（2023年408统考第47题）(9分)某网络拓扑如下图所示，主机H 登录到FTP 服务器后，向服务器上传一个大小为18000B 的文件F。假设H 为传输F 建立数据连接时，选择的初始序号为100,MSS=1000B, 拥塞控制 的初始阈值是4MSS,RTT=10ms, 忽略TCP的传输时延；在F 的传输过程中，H 均以MSS 段 向服务器发送数据，且未发生差错、丢包和乱序现象。 交换机 路由器 请回答下列问题。 Internet FTP服务器", "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2023年408统考真题: （2023年408统考第47题）(9分)某网络拓扑如下图所示，主机H 登录到FTP 服务器后，向服务器上传一个大小为18
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第41题）（论述题） 2023年10月26日，神州十七号载人飞船发射取得圆满成功，再次彰显了中国航天事业的辉煌成就。载人航天工程是包含众多子工程的复杂系统工程，为了保证工程的有序开展，需要明确各子工程的前导工程，以协调各子工程的实施。该问题可以简化、抽象为有向图的拓扑序列问题。已知有向图G采用邻接矩阵存储，类型定义如下： typedef struct//图的类型定义{ int numVertices,numEdges;//图的顶点数和有向边数 char VerticesList \\\\[ MAXV\\\\];//顶点表，MAXV为已定义常量int Edge \\\\[ MAXV\\\\]\\\\[MAXV\\\\];//邻接矩阵 }MGraph; 请设计算法： int uniquely(MGraph G),判定G是否存在唯一的拓扑序列，若是则返回1，否则返回0。 要求： （1）给出算法的基本设计思想。 （2）根据设计思想，采用C或C++语言描述算法，关键之处给出注释。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第41题）（论述题） 2023年10月26日，神州十七号载人飞船发射取得圆满成功，再次彰显了中国航
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第42题）（论述题） 将关键字20，3，11，18，9，14，7依次存储到长度为11的散列表HT中，散列函数为 H(key)=(key x3)%11 ，H0为初始散列地址， H1、H2、H3、…、Hk分别为第1次冲突、第2次冲突、第3次冲突、 …、第k次冲突时探测的地址。 HK=(H0+k2)%11 。请同答下列问题： （1）画出HT，算装填因子。 （2）查找关键字14时的关键字比较序列。 （3）查找关键字8失败时的哈希地址。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第42题）（论述题） 将关键字20，3，11，18，9，14，7依次存储到长度为11的散列表HT中
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第43题）（论述题） 假定计算机M字长为32位，按字节编址，采用32位定长指令字，指令addslli和lw的格式、编码和功能说明如图43（a）图所示。 其中R\\\\[x\\\\]表示通用寄存器x的内容， M\\\\[x\\\\]表示地址为x的存储单元内容， shamt为位移位数，imm为补码表示的偏移量。 下图给出了计算机M的部分数据通路及控制信号（用箭头虚线表示），其中， A和B分别表示从通用寄存器rs1和rs2中读出的内容， IR\\\\[31:20\\\\]表示指令寄存器中的高12位；控制信号Ext为0、1时扩展器分别实现零扩展，符号扩展ALUctr为000、001、010时ALU分别加、减、逻辑左移运算。 （1）M最多有几个寄存器？为什么shemt占5位？ （2）执行add指令时，控制信号ALUBsrc的取值应该是什么？若rs1和rs2寄存器内容分别是87654321H和 98765432H，则add指令指令后，ALU输出端F、OF和CF的结果分别是什么？若设add指令处理的是无符号整数，则应根据哪个标志判断是否溢出？ （3）执行slli指令时，控制信号Ext的取值可以是0也可以是1，为什么？ （4）执行lw指令时，控制信号Ext、ALUctr的取值分别是什么？ （5）若一条指令的机器码是A040 A103H，则该指令一定是lw指令，为什么？ （6）若执行该指令时， R\\\\[01H\\\\]=FFFFA2D0H，则所读取数据的存储地址是多少？", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第43题）（论述题） 假定计算机M字长为32位，按字节编址，采用32位定长指令字，指令addsll
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第44题）（论述题） 对于题43中的计算机M， C语言程序中包含的语句“sum+=a\\\\[i\\\\]”，在M中对应的指令序列S如下： slli r4,r2,2//R\\\\[r4\\\\]R\\\\[r2\\\\]<<2 add r4,r3,r4//R\\\\[r4\\\\]R\\\\[r3\\\\]+R\\\\[r4\\\\] lw r5,0(r4)//R\\\\[r5\\\\]M\\\\[R\\\\[r4\\\\]+0\\\\] add r1,r1,r5//R\\\\[r1\\\\]R\\\\[r1\\\\]+R\\\\[r5\\\\] 其中， i，sum，数组a都为int型，r1~r5的寄存器编号为01H~05H请回答下列问题： （1）a的首地址、变量i、变量sum存储的寄存器编号是？ （3）slli r4,r2,2的机器码是？若a改为short型，则slli指令的汇编形式应该是？", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第44题）（论述题） 对于题43中的计算机M， C语言程序中包含的语句“sum+=a\\[i\\]”，
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第45题）（论述题） 某计算机采用虚拟页式存储管理，虚拟地址、物理地址为32位，页表项大小为 4B ，页面大小为4B 。虚拟地址结构如下：", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第45题）（论述题） 某计算机采用虚拟页式存储管理，虚拟地址、物理地址为32位，页表项大小为 4B
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第46题）（论述题） 计算机系统中的进程之间往往需要相互协作以完成一个任务，在某网络系统中缓冲区B用于存放一个数据分组，对B的操作有C1、C2和C3。 C1将一个数据分组写入B中， C2从B中读出一个数据分组， C3对B中的数据分组进行修改。要求B为空时才能执行C1， B非空时才能执行C2和C3。请回答下列问题。 （1）假设进程P1和P2均需执行C1，实现C1的代码是否为临界区？为什么？ （2）假设B初始为空，进程P1执行C1一次，进程P2执行C2一次。请定义尽可能少的信号量，并用wait()， signal()操作描述进程P1、P2之间的同步或互斥关系，说明所用信号量的作用及初值。 （3）假设B初始不为空，进程P1和P2各执行C3一次，请定义尽可能少的信号量，并用wait()、signal()操作描述进程P1和P2之间的同步或互斥关系，说明所用信号量的作用及初值。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第46题）（论述题） 计算机系统中的进程之间往往需要相互协作以完成一个任务，在某网络系统中缓冲区B
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第47题）（论述题） 给了4个自治系统， 一个自治系统路由器少于15个， 一个多于20个，最下方的自治系统有一个具体的路由结构表。请回答下列问题： （1）当自治系统内路由器个数大于20时，自治系统内路由选择算法应当采用OSPF还是RIP？ （2）起始交换并建立路由表，每次交换耗时30s不考虑初始建立交换，从第一次正式交换起，经过多长时间下图中所有路由器都可以收到左下网络的到达路径信息？多久可以全部接收到右下网络到达路径信息？ （3）右上方的自治系统检测到了个直连网络，将这个信息通报给左下方的一个自冶系统；第1问是右上方发给右下方的BGP会话是什么？第2问是用的是什么BGP报文？第3问是自治系统边界到自治系统内通知信息用的是BGP哪一个会话？ （4）给了三个BGP通报路径， 一个长度3， 一个长度5， 一个长度3，大概就是AS1、AS2、AS3这样的路径，然后问的是最下方的自治系统中，偏左边和偏右边的路由器R12、R14如果要通过BGP路径到达最上方一个网络，下一跳应该是哪一个路由器？ 数据结构", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第47题）（论述题） 给了4个自治系统， 一个自治系统路由器少于15个， 一个多于20个，最下方的
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第2题）x+y（z-u）/v的等价后缀：", "options": [{"label": "A", "text": "xyzu-v/+"}, {"label": "B", "text": "xuzu-v/+"}, {"label": "C", "text": "+x/y-zuv"}, {"label": "D", "text": "+xy/-zuv 【皮皮灰】A"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第2题）x+y（z-u）/v的等价后缀：", "options": [{"label": "A", "text": "xyzu-v/+"}, {"label": "B", "text": "xuzu-v/+"}, {"label": "C", "text": "+x/y-zuv"}, {"label": "D", "text": "+xy/-zuv"}], "answer": "A"}',
   '计算机网络', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第2题）x+y（z-u）/v的等价后缀：
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第3题）pqv为二叉树T的三个结点，其中v有两个孩子结点，二叉树T的中序遍历 为...p.v.q...，则()", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第3题）pqv为二叉树T的三个结点，其中v有两个孩子结点，二叉树T的中序遍历 为...p.v.q.
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第5题）不适用于折半查找的是()", "options": [{"label": "A", "text": "有序链表"}, {"label": "B", "text": "无序数组"}, {"label": "C", "text": "有序静态链表"}, {"label": "D", "text": "无序静态链表 【皮皮灰】D"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第5题）不适用于折半查找的是()", "options": [{"label": "A", "text": "有序链表"}, {"label": "B", "text": "无序数组"}, {"label": "C", "text": "有序静态链表"}, {"label": "D", "text": "无序静态链表"}], "answer": "D"}',
   '数据结构', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第5题）不适用于折半查找的是()
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第6题）KMP算法使用修正后的next数组进行模式匹配，模式串s：“aabaab“，主串中某字符与s中某字符失去配对， s右滑最长距离为：", "options": [{"label": "A", "text": "5"}, {"label": "B", "text": "4"}, {"label": "C", "text": "3"}, {"label": "D", "text": "2 【皮皮灰】A"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第6题）KMP算法使用修正后的next数组进行模式匹配，模式串s：“aabaab“，主串中某字符与s中某字符失去配对， s右滑最长距离为：", "options": [{"label": "A", "text": "5"}, {"label": "B", "text": "4"}, {"label": "C", "text": "3"}, {"label": "D", "text": "2"}], "answer": "A"}',
   '数据结构', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第6题）KMP算法使用修正后的next数组进行模式匹配，模式串s："aabaab"，主串中某字符与
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第7题）一棵二叉搜索树如下图所示，K1 、K2 、K3分别是对应结点中保存的关键字。子树T的任一结点中保存的关键字X满足的是", "options": [{"label": "A", "text": "、X<K1"}, {"label": "B", "text": "、X>K2"}, {"label": "C", "text": "、K1<X<K3"}, {"label": "D", "text": "、K3<X<K2 【皮皮灰】D"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第7题）一棵二叉搜索树如下图所示，K1 、K2 、K3分别是对应结点中保存的关键字。子树T的任一结点中保存的关键字X满足的是", "options": [{"label": "A", "text": "、X<K1"}, {"label": "B", "text": "、X>K2"}, {"label": "C", "text": "、K1<X<K3"}, {"label": "D", "text": "、K3<X<K2"}], "answer": "D"}',
   '数据结构', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第7题）一棵二叉搜索树如下图所示，K1 、K2 、K3分别是对应结点中保存的关键字。子树T的任一结
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第8题）使用快速排序算法对含N（N23）个元素的数组M进行排序， 若第一趟排序将M中除枢轴外的N-1个元素划分为均不空的P和Q两块，则下列叙述中， 正确的是()", "options": [{"label": "A", "text": "、P与Q块间有序"}, {"label": "B", "text": "、P与Q均块内有序"}, {"label": "C", "text": "、P和Q的元素个数大致相等"}, {"label": "D", "text": "、P和Q中均不存在相等的元素 【皮皮灰】A"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第8题）使用快速排序算法对含N（N23）个元素的数组M进行排序， 若第一趟排序将M中除枢轴外的N-1个元素划分为均不空的P和Q两块，则下列叙述中， 正确的是()", "options": [{"label": "A", "text": "、P与Q块间有序"}, {"label": "B", "text": "、P与Q均块内有序"}, {"label": "C", "text": "、P和Q的元素个数大致相等"}, {"label": "D", "text": "、P和Q中均不存在相等的元素"}], "answer": "A"}',
   '数据结构', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第8题）使用快速排序算法对含N（N23）个元素的数组M进行排序， 若第一趟排序将M中除枢轴外的N-
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第9题）已知关键字序列28 ，22 ，20 ，19 ，8 ，12 ，15 ，5是大根堆（最大堆），对该堆进行两次删除操作后，得到的新堆是()", "options": [{"label": "A", "text": "20 ，19 ，15 ，12 ，8 ，5"}, {"label": "B", "text": "20 ，19 ，15 ，5 ，8 ，1 ，2"}, {"label": "C", "text": "20 ，19 ，12 ，15 ，8 ，5"}, {"label": "D", "text": "20 ，19 ，8 ，12 ，15 ，5 【皮皮灰】B"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第9题）已知关键字序列28 ，22 ，20 ，19 ，8 ，12 ，15 ，5是大根堆（最大堆），对该堆进行两次删除操作后，得到的新堆是()", "options": [{"label": "A", "text": "20 ，19 ，15 ，12 ，8 ，5"}, {"label": "B", "text": "20 ，19 ，15 ，5 ，8 ，1 ，2"}, {"label": "C", "text": "20 ，19 ，12 ，15 ，8 ，5"}, {"label": "D", "text": "20 ，19 ，8 ，12 ，15 ，5"}], "answer": "B"}',
   '数据结构', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第9题）已知关键字序列28 ，22 ，20 ，19 ，8 ，12 ，15 ，5是大根堆（最大堆），
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第10题）现有由关键字组成的3个有序序列（3 ，5）、（7 ，9）、和（6），若按从左至右的次序选择有序序列进二路归并排序， 则关键字之间的总比较次数是()", "options": [{"label": "A", "text": "3"}, {"label": "B", "text": "4"}, {"label": "C", "text": "5"}, {"label": "D", "text": "6 【皮皮灰】C"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第10题）现有由关键字组成的3个有序序列（3 ，5）、（7 ，9）、和（6），若按从左至右的次序选择有序序列进二路归并排序， 则关键字之间的总比较次数是()", "options": [{"label": "A", "text": "3"}, {"label": "B", "text": "4"}, {"label": "C", "text": "5"}, {"label": "D", "text": "6"}], "answer": "C"}',
   '数据结构', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第10题）现有由关键字组成的3个有序序列（3 ，5）、（7 ，9）、和（6），若按从左至右的次序选
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第11题）外部排序使用败者树进行升序归并，记录“冠军”节点保存的是（ ）。 【皮皮灰】D. 最小关键字所在的归并段号 计算机组成原理", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第11题）外部排序使用败者树进行升序归并，记录“冠军”节点保存的是（ ）。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "D"}',
   '数据结构', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第11题）外部排序使用败者树进行升序归并，记录“冠军”节点保存的是（ ）。 【皮皮灰】D. 最小关
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第12题）C 语言代码如下： int i=32777； short si= i； int j= si； 执行上述代码段后，j的值是", "options": [{"label": "A", "text": "-32777"}, {"label": "B", "text": "-32759"}, {"label": "C", "text": "32759"}, {"label": "D", "text": "32777 【皮皮灰】B"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第12题）C 语言代码如下： int i=32777； short si= i； int j= si； 执行上述代码段后，j的值是", "options": [{"label": "A", "text": "-32777"}, {"label": "B", "text": "-32759"}, {"label": "C", "text": "32759"}, {"label": "D", "text": "32777"}], "answer": "B"}',
   '计算机网络', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第12题）C 语言代码如下： int i=32777； short si= i； int j= s
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第13题）将汇编语言程序中实现特定功能的指令序列定义成一条伪指令。下列选项中，CPU能理解并直接执行的是 I.伪指令 II.微指令 III.机器指令 IV.汇编指令", "options": [{"label": "A", "text": "仅I和 IV"}, {"label": "B", "text": "仅II和III"}, {"label": "C", "text": "仅III和IV"}, {"label": "D", "text": "仅I 、III和IV 【皮皮灰】B 14，某科学实验中， 需要使用大量的整型参数， 为了保证表数精读度的基础上提高运算速度， 需要选择合理的数据表示方法。若整型参数a和β的取值范围分别为-2的20次方~-2的20次方、-2的40次方~2的40次方，则下列选项中，a和β最适宜采用的数据表示方法分别是()"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第13题）将汇编语言程序中实现特定功能的指令序列定义成一条伪指令。下列选项中，CPU能理解并直接执行的是 I.伪指令 II.微指令 III.机器指令 IV.汇编指令", "options": [{"label": "A", "text": "仅I和 IV"}, {"label": "B", "text": "仅II和III"}, {"label": "C", "text": "仅III和IV"}, {"label": "D", "text": "仅I 、III和IV"}], "answer": "B"}',
   '计算机组成原理', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第13题）将汇编语言程序中实现特定功能的指令序列定义成一条伪指令。下列选项中，CPU能理解并直接执
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第15题）下列关于整数乘法运算的叙述中，错误的是", "options": [{"label": "A", "text": "用阵列乘法器实现乘运算可以在一个时钟周期内完成"}, {"label": "B", "text": "用ALU和位移器实现的乘运算无法在一个时钟周期内完成"}, {"label": "C", "text": "变量与常数的乘运算可以编译优化为若干条移位及加/减运算指令"}, {"label": "D", "text": "两个变量的乘运算无法编译转换为位移及加法等指令的循环实现 【皮皮灰】B"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第15题）下列关于整数乘法运算的叙述中，错误的是", "options": [{"label": "A", "text": "用阵列乘法器实现乘运算可以在一个时钟周期内完成"}, {"label": "B", "text": "用ALU和位移器实现的乘运算无法在一个时钟周期内完成"}, {"label": "C", "text": "变量与常数的乘运算可以编译优化为若干条移位及加/减运算指令"}, {"label": "D", "text": "两个变量的乘运算无法编译转换为位移及加法等指令的循环实现"}], "answer": "B"}',
   '计算机网络', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第15题）下列关于整数乘法运算的叙述中，错误的是
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第16题）对于页式虚拟存储管理系统，下列关于存储器层次结构的叙述中，错误的是", "options": [{"label": "A", "text": "Cache-主存层次的交换单位为主存块，主存-外存层次的交换单位为页"}, {"label": "B", "text": "Cache-主存层次替换算法由硬件实现，主存-外存层次由软件实现"}, {"label": "C", "text": "Cache-主存层次可采用回写法写策略，主存-外存层次通常采用回写法写策略"}, {"label": "D", "text": "Cache-主存层次可采用直接映射方式，主存-外存层次通常采用直接映射方式 【皮皮灰】D"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第16题）对于页式虚拟存储管理系统，下列关于存储器层次结构的叙述中，错误的是", "options": [{"label": "A", "text": "Cache-主存层次的交换单位为主存块，主存-外存层次的交换单位为页"}, {"label": "B", "text": "Cache-主存层次替换算法由硬件实现，主存-外存层次由软件实现"}, {"label": "C", "text": "Cache-主存层次可采用回写法写策略，主存-外存层次通常采用回写法写策略"}, {"label": "D", "text": "Cache-主存层次可采用直接映射方式，主存-外存层次通常采用直接映射方式"}], "answer": "D"}',
   '计算机组成原理', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第16题）对于页式虚拟存储管理系统，下列关于存储器层次结构的叙述中，错误的是
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第17题）某计算机按字节编址，采用页式虚拟存储管理方式，虚拟地址为32位，主存地址为30位，页大小为1 KB。若TLB共有32个表项，采用4路组相联映射方式，则TLB表项中标记字段的位数至少是()", "options": [{"label": "A", "text": "17"}, {"label": "B", "text": "18"}, {"label": "C", "text": "19"}, {"label": "D", "text": "20 【皮皮灰】C 18，下列事件中，不是在MMU地址转换过程检测的是"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第17题）某计算机按字节编址，采用页式虚拟存储管理方式，虚拟地址为32位，主存地址为30位，页大小为1 KB。若TLB共有32个表项，采用4路组相联映射方式，则TLB表项中标记字段的位数至少是()", "options": [{"label": "A", "text": "17"}, {"label": "B", "text": "18"}, {"label": "C", "text": "19"}, {"label": "D", "text": "20"}], "answer": "C"}',
   '计算机组成原理', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第17题）某计算机按字节编址，采用页式虚拟存储管理方式，虚拟地址为32位，主存地址为30位，页大小
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第19题）5段流水线RISC说法错误的是（）。 【皮皮灰】C.所有数据冒险都可以通过加入转发（旁路）电路解决", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第19题）5段流水线RISC说法错误的是（）。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "C"}',
   '计算机组成原理', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第19题）5段流水线RISC说法错误的是（）。 【皮皮灰】C.所有数据冒险都可以通过加入转发（旁路
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第20题）存储器总线的时钟频率为 420MHz，总线宽度为 64 位，每个时钟周期传送2 次数据，支持突发传输， 最多传8 次，第一个时钟传地址和读写命令， 从第 4~7 个始终连续传8 次。总线带宽最大传输速率为（）。", "options": [{"label": "A", "text": "3.84GB/s"}, {"label": "B", "text": "6.72GB/s"}, {"label": "C", "text": "30.72GB/s"}, {"label": "D", "text": "53.76GB/s 【皮皮灰】A"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第20题）存储器总线的时钟频率为 420MHz，总线宽度为 64 位，每个时钟周期传送2 次数据，支持突发传输， 最多传8 次，第一个时钟传地址和读写命令， 从第 4~7 个始终连续传8 次。总线带宽最大传输速率为（）。", "options": [{"label": "A", "text": "3.84GB/s"}, {"label": "B", "text": "6.72GB/s"}, {"label": "C", "text": "30.72GB/s"}, {"label": "D", "text": "53.76GB/s"}], "answer": "A"}',
   '计算机组成原理', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第20题）存储器总线的时钟频率为 420MHz，总线宽度为 64 位，每个时钟周期传送2 次数据，
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第21题）关于中断1/O方式，错误的是（）。 【皮皮灰】A. 中断屏蔽字决定中断响应顺序", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第21题）关于中断1/O方式，错误的是（）。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "A"}',
   '计算机组成原理', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第21题）关于中断1/O方式，错误的是（）。 【皮皮灰】A. 中断屏蔽字决定中断响应顺序
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第22题）DMA 方式中，DMA控制器控制的数据传输通路位于（）。 【皮皮灰】C.设备接口和主存之间 操作系统：", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第22题）DMA 方式中，DMA控制器控制的数据传输通路位于（）。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "C"}',
   '计算机组成原理', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第22题）DMA 方式中，DMA控制器控制的数据传输通路位于（）。 【皮皮灰】C.设备接口和主存之
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第23题）下面关于中断和异常的说法中，错误的是（）。 【皮皮灰】A中断或异常发生时，CPU处于内核态", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第23题）下面关于中断和异常的说法中，错误的是（）。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "A"}',
   '计算机组成原理', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第23题）下面关于中断和异常的说法中，错误的是（）。 【皮皮灰】A中断或异常发生时，CPU处于内核
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第24题）终止进程时，不一定执行的是（）。 【皮皮灰】A.终止子进程", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第24题）终止进程时，不一定执行的是（）。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "A"}',
   '操作系统', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第24题）终止进程时，不一定执行的是（）。 【皮皮灰】A.终止子进程
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第25题）支持页式存储管理的系统，进程切换时OS要执行（）。 【皮皮灰】D.I 、 Ⅱ 、Ⅲ", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第25题）支持页式存储管理的系统，进程切换时OS要执行（）。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "D"}',
   '操作系统', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第25题）支持页式存储管理的系统，进程切换时OS要执行（）。 【皮皮灰】D.I 、 Ⅱ 、Ⅲ
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第26题）文件系统需要额外的外存空间记录空闲块的位置，占用外存空间大小与当前空闲块数量无关的是（）。 【皮皮灰】A.位图法 27\\\\. 回收分区时，仅合并大小相等的空闲分区的算法是（）。", "options": [{"label": "A", "text": "伙伴算法"}, {"label": "B", "text": "最佳适应算法"}, {"label": "C", "text": "最坏适应算法"}, {"label": "D", "text": "首次适应算法 【皮皮灰】A.伙伴算法"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第26题）文件系统需要额外的外存空间记录空闲块的位置，占用外存空间大小与当前空闲块数量无关的是（）
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第28题）进程P有一个线程T，打开文件后获得fd，再创建线程Ta，Tb，则线程Ta， Tb可共享的资源是（）。 I.进程 P的地址空间 聂.线程T的栈 Ⅲfd 【皮皮灰】B.仅I 、Ⅲ", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第28题）进程P有一个线程T，打开文件后获得fd，再创建线程Ta，Tb，则线程Ta， Tb可共享的资源是（）。 I.进程 P的地址空间 聂.线程T的栈 Ⅲfd", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "B"}',
   '数据结构', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第28题）进程P有一个线程T，打开文件后获得fd，再创建线程Ta，Tb，则线程Ta， Tb可共享的
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第29题）包含文件按名查找功能的系统调用是（）。 [A.open](A.open)（）[B.read](B.read) ()", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第29题）包含文件按名查找功能的系统调用是（）。 [A.open](A.open)（）[B.rea
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第30题）RR 调度，时间片为5ms，有 10个进程，初始状态均处于就绪队列，执行结束前仅处于执行态或就绪态，队尾进程 P所需 CPU 时间最短，为 25ms，不考虑系统开销，则 P 的周转时间为（）。 【皮皮灰】C.250ms", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第30题）RR 调度，时间片为5ms，有 10个进程，初始状态均处于就绪队列，执行结束前仅处于执行态或就绪态，队尾进程 P所需 CPU 时间最短，为 25ms，不考虑系统开销，则 P 的周转时间为（）。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "C"}',
   '数据结构', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第30题）RR 调度，时间片为5ms，有 10个进程，初始状态均处于就绪队列，执行结束前仅处于执行
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第31题）键盘中断服务例程执行结束时，所输入的数据存放位置是（）。", "options": [{"label": "A", "text": "用户缓冲区"}, {"label": "B", "text": "CPU的通用膏存器"}, {"label": "C", "text": "内核缓中区"}, {"label": "D", "text": "键盘控制器的数据缓冲区 【皮皮灰】B"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第31题）键盘中断服务例程执行结束时，所输入的数据存放位置是（）。", "options": [{"label": "A", "text": "用户缓冲区"}, {"label": "B", "text": "CPU的通用膏存器"}, {"label": "C", "text": "内核缓中区"}, {"label": "D", "text": "键盘控制器的数据缓冲区"}], "answer": "B"}',
   '计算机组成原理', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第31题）键盘中断服务例程执行结束时，所输入的数据存放位置是（）。
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第32题）磁道数400（号为0-399），用循环扫描算法（CSCAN）进行调度，完成对200号磁道的请求后， 磁头想磁道号减小的方向移动， 若还有7个请求，磁道号分别为300 ，120 ，110 ，0 ，160 ，210 ，399，则完成上述请求后磁头移动的距离", "options": [{"label": "A", "text": "599"}, {"label": "B", "text": "619"}, {"label": "C", "text": "788D. 799 【皮皮灰】C 计算机网络： 33若分组交换网络及每段链路的带宽如下图，则H1到H2的最大吞吐量约为"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第32题）磁道数400（号为0-399），用循环扫描算法（CSCAN）进行调度，完成对200号磁道的请求后， 磁头想磁道号减小的方向移动， 若还有7个请求，磁道号分别为300 ，120 ，110 ，0 ，160 ，210 ，399，则完成上述请求后磁头移动的距离", "options": [{"label": "A", "text": "599"}, {"label": "B", "text": "619"}, {"label": "C", "text": "788D. 799"}], "answer": "C"}',
   '操作系统', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第32题）磁道数400（号为0-399），用循环扫描算法（CSCAN）进行调度，完成对200号磁道
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第34题）在下列二进制数字调制方法中，需要2个不同频率载波的()", "options": [{"label": "A", "text": "、ASK"}, {"label": "B", "text": "PSK"}, {"label": "C", "text": "FSK"}, {"label": "D", "text": "DPSK 【皮皮灰】D 37，主机甲通过选择重传（SR）滑动窗口协议向主机乙发送帧的部分过程如下图所示。F为数据帧，ACKx为确认帧，X是位数为了比特的序号。乙只对正确接收的数据帧进行独立确认。发送窗口与接收窗口大小相同且均为最大值。甲在t1时刻和t2时刻发送的数据帧分别是："}], "answer": "?"}',
+  '{"stem": "（2024年408统考第34题）在下列二进制数字调制方法中，需要2个不同频率载波的()", "options": [{"label": "A", "text": "、ASK"}, {"label": "B", "text": "PSK"}, {"label": "C", "text": "FSK"}, {"label": "D", "text": "DPSK"}], "answer": "D"}',
   '计算机网络', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第34题）在下列二进制数字调制方法中，需要2个不同频率载波的()
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第40题）若浏览器不支持并行TCP连接，便用非持久的[HTTP/.10](HTTP/.10)协议请求浏览1个web页，该页中引用同一个网站上7个小图像文件， 则从浏览器传输web页请求建立TCP连接开始后，到接收完所有内容为止。所需要的往返时间RTT数至少是", "options": [{"label": "A", "text": "4"}, {"label": "B", "text": "9"}, {"label": "C", "text": "14"}, {"label": "D", "text": "16 【皮皮灰】D **【皮皮灰->大题】**"}], "answer": "?"}',
+  '{"stem": "（2024年408统考第40题）若浏览器不支持并行TCP连接，便用非持久的[HTTP/.10](HTTP/.10)协议请求浏览1个web页，该页中引用同一个网站上7个小图像文件， 则从浏览器传输web页请求建立TCP连接开始后，到接收完所有内容为止。所需要的往返时间RTT数至少是", "options": [{"label": "A", "text": "4"}, {"label": "B", "text": "9"}, {"label": "C", "text": "14"}, {"label": "D", "text": "16"}], "answer": "D"}',
   '数据结构', 0, 'APPROVED', NOW()
 ); -- 2024年408统考真题: （2024年408统考第40题）若浏览器不支持并行TCP连接，便用非持久的[HTTP/.10](HTTP/.10)协议请
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第41题）已知图G 采用邻接矩阵存储是，其定义如下 Typedef struct{ //图的类型定艾- Int numberVertices,numEgges; // 图的顶点数和有向边数 Char VerticesList\\\\[maxV\\\\]; // 顶点表,MAXV 为已定义常量 Int edge\\\\[maxV\\\\]\\\\[maxV\\\\]; //邻接矩阵 }MGraph; 邻接矩阵， intquely（MGraph G）{", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第41题）已知图G 采用邻接矩阵存储是，其定义如下 Typedef struct{ //图的类型定
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第42题）将关键字数列20.3.11.18.9.14.7.依次存储到初始为空长度为11的散列表HT中，散列函数H（key）=（key×3）%11 ，H（key）计算出的初始散列地址为HO。发生冲突时探查地址序列是H，H2H， 其中Hk=（HO+K2）%11。K=1.2.3 （1）画出所构造的HT并计算HT的装填因子。 （2）画出在HT查找关键字14的关键字比较序列。 （3）在HT中查找关键字8，确认查找失败时散列地址是多少。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第42题）将关键字数列20.3.11.18.9.14.7.依次存储到初始为空长度为11的散列表HT
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第43题）计算机M字长32位，字节编址， 32位定长指令字 --- --- --- rs2 000 011001 1 shemt 010 1 010 1 第一条是add指令 R【rs1】+R【rs2】->R\\\\[rd \\\\] 第二条是slli指令，R【rs1】&lt;<shemt-&gt;R\\\\[rd\\\\] 第三条是lw指令，M【R【rs1】+imm】->R\\\\[rd\\\\] imm是补码 （1）M最多有几个寄存器，为什么shemt占5位。 （2）add指令， ALUBsrc为？若rs1为87654321H ，rs2为98765432H，则add执行后，F ，OF,CF为多少？若add处理的是无符号数， 则应该根据哪个标志位判断溢出。 （3）执行slli时，EXT可零可一，为什么？ （4）执行lw指令时，EXT ，ALUctr=？ （5）若指令为A040A103H，则一定是lw指令，为什么，若执行该指令时， R【01H】=FFFFA2D0H,则读取数据的存储地址是多少？ 44，对于题43中的计算机M ，C语言程序中包含的语句 “sum +=a【i】；“在M中对应的指令序列S如下： slli r4 ，r2 ，2 //R【r4】-R【r2】<<2", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第43题）计算机M字长32位，字节编址， 32位定长指令字 | | | | | | | | | -
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2024年408统考第46题）缓冲B存放一数据，C1将一数写入B ，C2找从B中读一数据，C3对B修改，B为空时才能执C1 ，B非空时才能执C2和C3 （1）设进程P1P2执行C1，实现C1代码是否为临界区？why？ （2）设B为空，P1执行C1一次，P2执C2，定义尽可能少用wait ，signal描述P1 P2之间同步互斥关系，所用信号作用与初值。 （3）B不为空，P1 P2各执C3一次，少的信号，用wait signl描述P1 ，P2的同斥，说明信号作用与初值。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 2024年408统考真题: （2024年408统考第46题）缓冲B存放一数据，C1将一数写入B ，C2找从B中读一数据，C3对B修改，B为空时才能执
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
@@ -3724,243 +3319,48 @@ INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `diff
 
 INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
   @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第10题）在最坏情况下，移动次数最少的是 ( )", "options": [{"label": "A", "text": "冒泡排序"}, {"label": "B", "text": "直接插入排序"}, {"label": "C", "text": "快速排序"}, {"label": "D", "text": "简单选择排序 【解析】 冒泡排序、直接插入排序和快速排序在最坏情况下移动次数均为 n(n-1)/2 ，而简单选择排序在最坏情况下移动次数为 0 。因为简单选择排序每次都是从待排序列 \\\\- 3 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 4 - 中选择最小（或最大）的一个元素，然后将其与当前位置的元素交换，所以它不会移动比待排序列长度更多的元素。因此，在最坏情况下移动次数最少的是简单选择排序。故正确答案为 D。"}], "answer": "?"}',
+  '{"stem": "（2025年408统考第10题）在最坏情况下，移动次数最少的是 ( )", "options": [{"label": "A", "text": "冒泡排序"}, {"label": "B", "text": "直接插入排序"}, {"label": "C", "text": "快速排序"}, {"label": "D", "text": "简单选择排序 【解析】 冒泡排序、直接插入排序和快速排序在最坏情况下移动次数均为 n(n-1)/2 ，而简单选择排序在最坏情况下移动次数为 0 。因为简单选择排序每次都是从待排序列 \\\\- 3 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 4 - 中选择最小（或最大）的一个元素，然后将其与当前位置的元素交换，所以它不会移动比待排序列长度更多的元素。因此，在最坏情况下移动次数最少的是简单选择排序。故正确答案为 D。"}], "answer": "D"}',
   '计算机网络', 0, 'APPROVED', NOW()
 ); -- 2025年408统考真题: （2025年408统考第10题）在最坏情况下，移动次数最少的是 ( )
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第11题）在第二趟排序之后的结果如下，请问是用的哪种排序 ( )", "options": [{"label": "A", "text": "希尔排序"}, {"label": "B", "text": "基数排序"}, {"label": "C", "text": "归并排序"}, {"label": "D", "text": "折半插入排序 【解析】 希尔排序是一种基于插入排序的排序算法，通过比较和移动距离较远的元素来加快排序速度。希尔排序的特点是分组和逐步缩小增量进行排序。 基数排序是一种非比较型整数排序算法，它按位处理数字，通常用于对整数或字符串进行排序。基数排序的特点是按位数进行多次分配和收集过程。 归并排序是一种分治排序算法，它将数组分成两个子数组分别排序，然后合并两个有序子数组。归并排序的一个显著特点是，在排序过程中，数组会被不断地分割和合并。如果第二趟排序后的结果呈现出部分有序（即某些子数组已经有序）的特点，那么这可能是归并排序的结果。 归并排序是一种分治排序算法，它将数组分成两个子数组分别排序，然后合并两个有序子数组。归并排序的一个显著特点是，在排序过程中，数组会被不断地分割和合并。 【计算机组成原理部分】"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第11题）在第二趟排序之后的结果如下，请问是用的哪种排序 ( )
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第13题）IEEE754，float 类型是 4730 0000H，请问真值是多少?", "options": [{"label": "A", "text": "0.375x214"}, {"label": "B", "text": "1.375x214"}, {"label": "C", "text": "0.375x215"}, {"label": "D", "text": "1.375x215"}], "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第13题）IEEE754，float 类型是 4730 0000H，请问真值是多少?
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第14题）x=A3H，y=75H，计算 x-y，求真值和 OF 标志? A.24，0", "options": [{"label": "B", "text": "24,1"}, {"label": "C", "text": "46，0"}, {"label": "D", "text": "46，1"}], "answer": "?"}',
-  '计算机网络', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第14题）x=A3H，y=75H，计算 x-y，求真值和 OF 标志? A.24，0
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第16题）ISA 规定了以下哪个?", "options": [{"label": "A", "text": "阵列乘法器"}, {"label": "B", "text": "定长指令字"}, {"label": "C", "text": "、微程序控制器"}, {"label": "D", "text": "、单总线数据通路"}], "answer": "?"}',
-  '计算机网络', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第16题）ISA 规定了以下哪个?
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第17题）关于 RISC 说法错误的是?", "options": [{"label": "A", "text": "硬连线方式B.load/store"}, {"label": "C", "text": "难以采用流水线数据通路实现微架构"}, {"label": "D", "text": "寄存器传递过程调用函数"}], "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第17题）关于 RISC 说法错误的是?
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第18题）关于 CPI 和 CPU 说法错误的是?", "options": [{"label": "A", "text": "不同指令的 CPI 可能不同"}, {"label": "B", "text": "程序的 CPI 与 Cache 缺失率无关"}, {"label": "C", "text": "微程序控制器 \\\\- 6 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 7 -"}, {"label": "D", "text": "单总线数据通路"}], "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第18题）关于 CPI 和 CPU 说法错误的是?
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第19题）关于数据通路说法错误的是?", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第19题）关于数据通路说法错误的是?
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第20题）处理机总线带宽 64b，同步方式，并行传输方式。每个总线时钟周期传 4 次数据(quad-pumped)，总线工作频率 1333MHZ", "options": [{"label": "A", "text": "10.665 GB/s"}, {"label": "B", "text": "42.66 GB/s"}], "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第20题）处理机总线带宽 64b，同步方式，并行传输方式。每个总线时钟周期传 4 次数据(quad
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第21题）适合 DMA 的设备 Ⅰ.键盘 Ⅱ. 网卡 Ⅲ. 固态硬盘 Ⅳ.针式打印机A. Ⅰ 、 Ⅱ", "options": [{"label": "B", "text": "Ⅱ 、 Ⅲ"}, {"label": "C", "text": "Ⅱ 、 Ⅳ"}, {"label": "D", "text": "Ⅲ 、 Ⅳ"}], "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第21题）适合 DMA 的设备 Ⅰ.键盘 Ⅱ. 网卡 Ⅲ. 固态硬盘 Ⅳ.针式打印机A. Ⅰ 、 
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第23题）虚拟页式管理系统中，进程上下文切换时，不用更新的是()", "options": [{"label": "A", "text": "通用寄存器"}, {"label": "B", "text": "页表基址寄存器 \\\\- 7 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 8 -"}, {"label": "C", "text": "程序计数器"}, {"label": "D", "text": "内核中断向量表基址寄存器"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第23题）虚拟页式管理系统中，进程上下文切换时，不用更新的是()
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第24题）关于虚拟化技术，错误的是", "options": [{"label": "A", "text": "操作系统可以在虚拟机上运行"}, {"label": "B", "text": "一台主机可以支持多个虚拟机"}, {"label": "C", "text": "VMM 与操作系统特权级相同"}, {"label": "D", "text": "通过虚拟机技术，可以用一台主机上模拟多种 ISA"}], "answer": "?"}',
-  '计算机网络', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第24题）关于虚拟化技术，错误的是
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第25题）优先权调度，采用单链表保存进程就绪队列，高优先级进程在队头 。就绪队列长度为 n， 问插入进程 、选出进程的时间复杂度", "options": [{"label": "A", "text": "O(1) O(1)"}, {"label": "B", "text": "O(1) O(n)"}, {"label": "C", "text": "O(n) O(1)"}, {"label": "D", "text": "O(n) O(n)"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第25题）优先权调度，采用单链表保存进程就绪队列，高优先级进程在队头 。就绪队列长度为 n， 问插
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第26题）LRU 算法， 固定分配局部置换， 已为进程分配 3 个页框，页面访问序列为{0， 1 ，2 ，0 ，5 ，1 ，4 ，3 ，0 ，2 ，3 ，2 ，0}，其中 0 ，1 ，2 已调入内存 。 问缺页次数", "options": [{"label": "A", "text": "5"}, {"label": "B", "text": "6"}, {"label": "C", "text": "7"}, {"label": "D", "text": "8"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第26题）LRU 算法， 固定分配局部置换， 已为进程分配 3 个页框，页面访问序列为{0， 1 
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第27题）(本题易错)确定进程运行所需的最少页框数时，要考虑的指标是( )", "options": [{"label": "A", "text": "代码段长"}, {"label": "B", "text": "虚拟地址空间大小 \\\\- 8 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 9 -"}, {"label": "C", "text": "物理地址空间大小"}, {"label": "D", "text": "指令系统支持的寻址方式"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第27题）(本题易错)确定进程运行所需的最少页框数时，要考虑的指标是( )
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第28题）关于虚拟文件系统，正确的是()", "options": [{"label": "A", "text": "NULL"}, {"label": "B", "text": "NULL"}, {"label": "C", "text": "VFS 定义了可访问不同文件系统的统一接口"}, {"label": "D", "text": "VFS 只能访问本地文件系统，不能访问网络文件系统"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第28题）关于虚拟文件系统，正确的是()
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第29题）某文件系统采用索引节点方式 。用户在目录中新建文件 F 时 ，文件系统不会做的是( )", "options": [{"label": "A", "text": "初始化文件"}, {"label": "B", "text": "在目录文件中写入"}, {"label": "C", "text": "在目录文件中写入"}, {"label": "D", "text": "在目录文件中增加一条文件"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第29题）某文件系统采用索引节点方式 。用户在目录中新建文件 F 时 ，文件系统不会做的是( )
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第30题）关于内存映射文件，正确的是() Ⅰ.可实现进程间通信 Ⅱ.实现了页面到磁盘块的映射 Ⅲ.将文件映射到进程的虚拟地址空间 Ⅳ. 将文件映射到系统的物理地址空间A. Ⅰ 、 Ⅲ", "options": [{"label": "B", "text": "Ⅰ 、 IV"}, {"label": "C", "text": "Ⅱ 、 Ⅲ"}, {"label": "D", "text": "Ⅰ 、 Ⅱ 、 Ⅲ"}], "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第30题）关于内存映射文件，正确的是() Ⅰ.可实现进程间通信 Ⅱ.实现了页面到磁盘块的映射 Ⅲ.
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第31题）可用于记录外存空间使用情况的是( ) \\\\- 9 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 10 -", "options": [{"label": "A", "text": "目录"}, {"label": "B", "text": "系统打开文件表"}, {"label": "C", "text": "文件分配表(FAT)"}, {"label": "D", "text": "进程控制块"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第31题）可用于记录外存空间使用情况的是( ) \\- 9 - 官方网站:[www.youlu.co
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第32题）文件系统要为温彻斯特硬盘 、 固态硬盘都提供的功能是()", "options": [{"label": "A", "text": "划分扇区"}, {"label": "B", "text": "确定盘块大小"}, {"label": "C", "text": "降低寻道时间"}, {"label": "D", "text": "实现均衡磨损 【计算机网络】"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第32题）文件系统要为温彻斯特硬盘 、 固态硬盘都提供的功能是()
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第33题）H1、H2 之间按电路交换方式、报文交换方式、分组交换方式传送 2MB(1M=106)文件。接收文件全部内容所需时间记为 Tcs、TMS、TPS 问这三个耗时的大小关系是( ) A. TCS>TMS>TPS", "options": [{"label": "B", "text": "TMS>TPS>TCS"}, {"label": "C", "text": "TMS >TCS>TPS"}, {"label": "D", "text": "TPS>TMs>TCS"}], "answer": "?"}',
-  '计算机网络', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第33题）H1、H2 之间按电路交换方式、报文交换方式、分组交换方式传送 2MB(1M=106)文
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第34题）某差错编码的编码集为{10011010,01011100,11110000,00001111}，其检错纠错 能力是( )", "options": [{"label": "A", "text": "可以检测不超过 2 位错，检错率 100%;可纠正不超过 1 位错"}, {"label": "B", "text": "可以检测不超过 2 位错，检错率 100%;可纠正不超过 2 位错"}, {"label": "C", "text": "可以检测不超过 3 位错，检错率 100%;可纠正不超过 1 位错"}, {"label": "D", "text": "可以检测不超过 3 位错，检错率 100%;可纠正不超过 2 位错"}], "answer": "?"}',
-  '计算机网络', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第34题）某差错编码的编码集为{10011010,01011100,11110000,000011
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第35题）10BaseT 以太网，甲乙处于同一个冲突域，连续发生 11 次冲突，甲再次发送的 \\\\- 10 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 11 -", "options": [{"label": "A", "text": "0.512ms"}, {"label": "B", "text": "0.5632ms"}, {"label": "C", "text": "52.3776ms"}, {"label": "D", "text": "104.8064ms"}], "answer": "?"}',
-  '计算机网络', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第35题）10BaseT 以太网，甲乙处于同一个冲突域，连续发生 11 次冲突，甲再次发送的 \\-
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第36题）DHCP 协议的 REQUEST 报文， 目的 IP 、源 IP 为( ) A. B.", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '计算机网络', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第36题）DHCP 协议的 REQUEST 报文， 目的 IP 、源 IP 为( ) A. B.
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第37题）NAT 路由器从内网转发一个 IP 分组到外网，IP 分组内携带 UDP 数据报， 问UDP 首部被修改的是( ) Ⅰ.源端口号 Ⅱ. 目的端口号 Ⅲ.总长度 Ⅳ.校验和", "options": [{"label": "A", "text": "Ⅱ 、 Ⅲ"}, {"label": "B", "text": "Ⅰ 、 Ⅳ"}, {"label": "C", "text": "Ⅱ 、 Ⅲ"}, {"label": "D", "text": "Ⅱ 、 Ⅳ"}], "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第37题）NAT 路由器从内网转发一个 IP 分组到外网，IP 分组内携带 UDP 数据报， 问U
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第38题）(本题易错)t0 时刻，甲的 ssthresh=8，拥塞窗口=2，发送窗口=2，MSS=1000B。在 t1 时刻， 甲可以再给乙发送( )个 TCP 段 \\\\- 11 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 12", "options": [{"label": "A", "text": "2"}, {"label": "B", "text": "3"}, {"label": "C", "text": "4"}, {"label": "D", "text": "5"}], "answer": "?"}',
-  '计算机网络', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第38题）(本题易错)t0 时刻，甲的 ssthresh=8，拥塞窗口=2，发送窗口=2，MSS=
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第39题）Time 服务器采用 C/S 模型，RTT=8ms 。采用 UDP 、TCP 请求时间服务器，最短耗时为( )", "options": [{"label": "A", "text": "8ms 8ms"}, {"label": "B", "text": "8ms 16ms C16ms 8ms"}, {"label": "D", "text": "16ms 16ms"}], "answer": "?"}',
-  '计算机网络', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第39题）Time 服务器采用 C/S 模型，RTT=8ms 。采用 UDP 、TCP 请求时间服
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第40题）关于 POP3 ，正确的是 Ⅰ.支持用户代理从邮件服务器读取邮件 Ⅱ.支持用户代理向邮件服务器发送邮件 I Ⅲ.支持邮件服务器之间发送与接收邮件 I Ⅳ.支持一条 TCP 连接收取多封邮件", "options": [{"label": "A", "text": "Ⅰ 、 Ⅳ"}, {"label": "B", "text": "Ⅱ 、 Ⅲ"}, {"label": "C", "text": "Ⅰ 、 Ⅱ 、 Ⅲ \\\\- 12 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 13 -"}, {"label": "D", "text": "Ⅰ 、 Ⅲ 、 Ⅳ 二 、综合应用题"}], "answer": "?"}',
-  '计算机网络', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第40题）关于 POP3 ，正确的是 Ⅰ.支持用户代理从邮件服务器读取邮件 Ⅱ.支持用户代理向邮件
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第41题）(13 分) 有两个长度均为 n 的一维整型数组 A\\\\[n\\\\]、res\\\\[n\\\\]，计算 A\\\\[i\\\\]与 A\\\\[j\\\\](0 ≤ i ≤j ≤n-1)乘积的最大值， 并将其保存到 res\\\\[i\\\\]中 。 若 A \\\\[\\\\] ={1， 4 ， -9， 6}，则得到 res \\\\[\\\\] ={6， 24， 81， 36} 。 现给定数组 A， 请设计时间空间上尽可能高效的算法 CalMul Max，求 res 中各元素的值。函数原型为 ：void CalMul Max (int A \\\\[\\\\] ， int res \\\\[\\\\] ， int n)。 （1）给出算法的基本思想 。(4 分) （2）用 C/C++ 描述算法关键之处给出注释 。(7 分) （3）说明时间 、空间复杂度 。(2 分) 【评分标准】 （1）算法基本思想（4 分） ①若考生清晰 、准确地描述了能达到时间复杂度为 O(n)的算法基本思想，可得 4分。 ②若描述的算法思想存在一些不清晰的地方，但能大致体现出正确的方向，可酌情给 2 - 3 分。 ③若算法思想完全错误，得 0 分。 （2）C/C++ 算法实现及注释（7 分） ①若考生所给算法实现正确，且时间复杂度为 O(n)，可给 7 分。 ②若算法实现正确，但时间复杂度超过 O(n)（如 O(n2)） ，则最高可给 5 分。 ③若算法实现部分正确（例如逻辑有小错误，但整体思路可辨） ，可参照上述两种情况的相应给分标准酌情给分。 ④若算法实现完全错误，得 0 分。 （3） 时间和空间复杂度及评分（2 分）", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '计算机网络', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第41题）(13 分) 有两个长度均为 n 的一维整型数组 A\\[n\\]、res\\[n\\]，计算 
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @net_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第42题）AOE 网 ，描述 12 个工程活动及持续时间 \\\\- 16 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 17 （1）完成该工程的最短时间是多少 ？哪些是关键活动 ？ （2）若以最短时间完成工程，则与活动 e 同时进行的活动可能有哪些 ？ （3） 时间余量最大的活动是哪个？其时间余量是多少 ？ （4）假设工程从时刻 0 启动，因某种原因，活动 b 在时刻6 开始，为保证工程不延期，在其它活动持续时间保持不变的情况下，b 的持续时间最多是多少 ？若不改变 b 的持续时间，则压缩哪个活动的持续时间也能保证工程不延期？ 【解析】 (1) 12 。关键活动为 ：a, e, m, n (2) b, c, d (3) j ，6 (4)如果活动 b 在时刻 6 开始，重新计算 b 的最大允许持续时间为 4。如果 b 的持续时间不能改变，则可以压缩活动k 来弥补 b 的延迟。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '计算机网络', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第42题）AOE 网 ，描述 12 个工程活动及持续时间 \\- 16 - 官方网站:[www.yo
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第43题）计算机 M 的字长为 32 位 ，采用字节编址 。 数据 cache 的数据区大小为32KB，采用 8 路组相联映射方式，主存块大小为 64B 。cache 命中时所需时间为 2 个时钟周期，发生缺失时的损失为 200 个时钟周期 。该计算机采用页式虚拟存储管理，页的大小为 4KB。数组 d 的起始地址为 0180 0020H（VA31 ~ VA0）。 \\\\- 17 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 18 - （1）在主存地址中，Cache 组号和块内地址分别占几位 ？VA 中的哪些位可作为Cache 索引 ？ （2）d \\\\[[100](#bookmark8)\\\\] 的虚拟地址（VA）是多少 ？d \\\\[[100](#bookmark8)\\\\] 所在主存块对应的 Cache 组号是多少 ？ （3）假设代码已经在 cache 中 ，变量 i 和 x 已装入内存，但不在 cache 中 ，那么 d \\\\[[0](#bookmark9)\\\\] 在其主存块内的偏移量是多少 ？在执行 for 循环的过程中，访问 d的 Cache 缺失率是多少 ？数组元素的平均访问时间是多少 ？（缺失率用百分比表示 ，保留两位小数） （4）数组 d 分布在几个页中 ？若代码已在主存中，但 d 不在主存中，那么在执行 for 循环的过程中，访问 d 所引起的缺页次数是多少 ？ 已知 ： int x, d \\\\[[2048](#bookmark10)\\\\], i; for (i = 0; i < 2048; i++) d\\\\[i\\\\] = d\\\\[i\\\\] / x; 【解析】 （1）Cache 映射方式 ：本题采用 8 路组相联映射方式，需要根据这种映射方式来计算 Cache 组号和块内地址的位数： ①Cache 数据区大小为 32KB，即 2^15B。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第43题）计算机 M 的字长为 32 位 ，采用字节编址 。 数据 cache 的数据区大小为32
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第44题）接上题， R0~R4 为通用寄存器，SEXT 表示按符号扩展， M 中补码除法器，逻辑结构图如下: 机器级代码 ： //x 存储在 R2 寄存器中,i 存储在 R4 寄存器中 \\\\- 19 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 20 - //数组d 的首地址存储在 R3 寄存器中 mov R1, (R3 + R4 4) //R1<-d\\\\[i\\\\](将-d\\\\[i\\\\]加载到 R1 寄存器中) scov R1 //{R0,R1}<-SEXT(R1) idiv R1 //R1<-({R0,R1}/R2) (1)当执行 idiv 指令时，若 d\\\\[i\\\\] = 0x87654321 且 x = 0xff，则在补码除法器中 R、Q、 Y 的初始值（用十六进制表示）分别是多少 ？图 b 中哪个部分包含计数器？在补码除法器执行过程中，ALUop 所控制的 ALU 运算有哪几种 ？ (2)假设 idiv 执行过程中会检测并触发除法异常，那么执行 idiv 指令时，在哪些情况下会发生除法异常（需给出此时 d\\\\[i\\\\]和 x 的十六进制机器数）？发生除法异常时，在异常响应过程中，CPU 需要完成哪些操作 ？ 【解析】 在补码除法中，被除数 A（这里 A=d\\\\[i\\\\]） 放在 R 中 ，除数 B（这里 B=x）放在 Y中 ，商 Q 初始为 0。 通常在补码除法器的控制逻辑部分会包含计数器， 用于控制除法运算的步骤 。 ALUop 所控制的 ALU 运算包括加法（用于恢复余数等操作） 、减法（用于求部分余数等操作）等。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第44题）接上题， R0~R4 为通用寄存器，SEXT 表示按符号扩展， M 中补码除法器，逻辑结
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第44题）三个人共同参与植树活动，其中甲负责挖树坑，乙负责将树苗放入坑中并填土，丙负责给新种的树苗浇水 。整个植树过程依次包括挖树坑 、放树苗 、填土和浇水这几个步骤 。现场有一把铁锹和一个水桶，铁锹用于挖树坑和填土，水桶用于浇水。当树坑数量小于 3 时，甲才能进行挖树坑的操作。假设初始时树坑数量为 0，铁锹和水桶都处于可用状态 。请定义尽可能少的信号量，并用 wait()和 signal()操作来描述三人在植树过程中的同步与互斥关系，并解释所使用信号量的作用及其初始值。 【解析 1】 这是一个典型的进程同步与互斥问题，涉及到多个人（进程）对有限资源（铁锹、水桶） 的操作和特定条件（树坑数量）下的工作流程。 需要定义信号量来控制进程的执行顺序和资源的访问。 定义信号量 ： 设 emptyHole 为表示空树坑数量的信号量，初始值为 3，因为最多可以有 3 个树坑 ； 设 spade 为表示铁锹是否可用的信号量，初始值为 1 ， 因为只有一把铁锹 ；设 bucket 为表示水桶是否可用的信号量，初始值为 1 ， 因为只有一个水桶。 \\\\- 21 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 22 \\\\- 22 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 23 - 【解析 2】 semaphoer mutexT=1;//对铁锹的使用需要互斥访问 1 分semaphore sk=3;//可挖的树坑数量，初值为 3; 2 分", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第44题）三个人共同参与植树活动，其中甲负责挖树坑，乙负责将树苗放入坑中并填土，丙负责给新种的树苗
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第45题）某进程的虚拟地址空间如图， 阴影部分为未占用区域，有 C 程序 ： char ptr; void main(){ int length; ptr=(char)malloc(100); scanf( “%s“,ptr); length=strlen(ptr); printf(“length=%d\\\\n“,length); free(ptr); }", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第45题）某进程的虚拟地址空间如图， 阴影部分为未占用区域，有 C 程序 ： char ptr; 
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第1题）上述程序执行时，PCB 位于哪个区域，执行 scanf () 等待键盘输入时，该进程处于什么状态 ？ \\\\- 24 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 25 -", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第1题）上述程序执行时，PCB 位于哪个区域，执行 scanf () 等待键盘输入时，该进程处于什
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第2题）main () 函数的代码位于哪个区域？其直接调用的哪些函数的功能需要通过执行驱动程序实现 ？", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第2题）main () 函数的代码位于哪个区域？其直接调用的哪些函数的功能需要通过执行驱动程序实现
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第3题）变量 ptr 被分配在哪个区域？若变量 length 没有被分配在寄存器中，则会被分配在哪个区域 ？ptr 指向的字符串位于哪个区域 ？ 【解析】 （1） 涉及进程控制块（PCB） 的位置和进程在等待键盘输入时的状态。 当程序执行时，PCB 通常位于操作系统内核为进程分配的特定数据结构区域 。 当执行 scanf 等待键盘输入时，进程会进入阻塞状态， 因为它在等待外部 I/O 操作完成。 （2） 询问 main 函数代码的存储位置。 在一般的进程虚拟地址空间中，main 函数的代码通常位于代码段（text segment）。 \\\\- 25 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 26 - 直接调用的函数中，malloc、scanf、strlen、printf 和 free 这些函数的实现通常由 C 标准库提供，而这些库函数的底层功能（如内存分配 、 I/O 操作等）需要通过操作系统的执行驱动程序（如系统调用）来实现 （3）涉及变量 ptr 和 length 的内存分配位置。 ptr 是一个指针，通过 malloc 分配内存，所以 ptr 本身可能在栈区（stack），但它指向的内存区域在堆区 。length 如果没有被分配到寄存器中，通常会在栈区 。ptr指向的字符串存储在堆区， 因为这是 malloc 分配的内存空间。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第3题）变量 ptr 被分配在哪个区域？若变量 length 没有被分配在寄存器中，则会被分配在哪
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @co_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第1题）PCB 位于内核区，执行 scanf()时，进程处于阻塞态;", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '计算机组成原理', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第1题）PCB 位于内核区，执行 scanf()时，进程处于阻塞态;
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @os_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第2题）main()函数的代码位于只读代码段，其直接调用的 scanf()和 printf()需要执行驱动程序。", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '操作系统', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第2题）main()函数的代码位于只读代码段，其直接调用的 scanf()和 printf()需要
 
-INSERT INTO `t_question_bank` (`course_id`, `teacher_id`, `question_type`, `difficulty`, `content`, `knowledge_points`, `ai_generated`, `status`, `create_time`) VALUES (
-  @ds_course_id, @teacher_id, 'SINGLE', 'MEDIUM',
-  '{"stem": "（2025年408统考第3题）ptr 被分配在可读写数据段，length 在用户栈，ptr 指向的字符串在运行时堆。 47. \\\\- 26 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考研公众号 \\\\- 27 -", "options": [{"label": "A", "text": "选项A"}, {"label": "B", "text": "选项B"}, {"label": "C", "text": "选项C"}, {"label": "D", "text": "选项D"}], "answer": "?"}',
-  '数据结构', 0, 'APPROVED', NOW()
-); -- 2025年408统考真题: （2025年408统考第3题）ptr 被分配在可读写数据段，length 在用户栈，ptr 指向的字符串在运行时堆。 4
 
 
 -- 总计: 652 道题目

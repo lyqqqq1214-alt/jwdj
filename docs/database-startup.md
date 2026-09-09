@@ -22,6 +22,18 @@
 - 本机已安装并启动 MySQL 8.x，默认端口 `3306`
 - `mysql` 命令行客户端可用（Windows 安装 MySQL 后通常已加入 PATH）
 
+### 一键初始化（推荐）
+
+直接双击项目根目录的 `init-db.bat`（或在 Git Bash 中执行 `./init-db.bat`），脚本会依次自动完成：
+
+1. 创建数据库 `aitaes_db`（如不存在）
+2. 执行 `db/init.sql`（建表 + 预置账号）
+3. 执行 `test-data/simulated_data.sql`（模拟业务数据）
+4. 执行 `test-data/question_bank_seed.sql`（题库种子数据）
+5. 执行 `test-data/enrich_data.sql`（数据补充，保证各表 10 条以上）
+
+数据库账号密码集中在脚本顶部变量中，与 `application-mysql.yml` 一致（`root` / `1234`），如有不同请同步修改脚本。手动分步执行请继续往下看「步骤 1～3」。
+
 ### 步骤 1：创建数据库
 
 ```bash
@@ -51,6 +63,9 @@ mysql -u root -p1234 --default-character-set=utf8mb4 aitaes_db < test-data/simul
 
 # 题库种子数据（计算机网络 & 408 考研真题）
 mysql -u root -p1234 --default-character-set=utf8mb4 aitaes_db < test-data/question_bank_seed.sql
+
+# 数据补充（保证各表 10 条以上）
+mysql -u root -p1234 --default-character-set=utf8mb4 aitaes_db < test-data/enrich_data.sql
 ```
 
 两份脚本均使用 `INSERT IGNORE` / `ON DUPLICATE KEY UPDATE`，可重复执行；它们之间无相互依赖，可按需单独导入。

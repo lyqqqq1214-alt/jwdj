@@ -1,0 +1,598 @@
+FIXED: 172
+DELETED: 119
+
+===== FIXED =====
+L1451 [underscore] ans '?' -> 'A'
+    stem: 1965年科学家提出超文本概念，其超文本的核心是__A__。
+L1457 [underscore] ans '?' -> 'A'
+    stem: 地址栏中输入的http://zjhk.school.com中，zjhk.school.com 是一个_A___。
+L1463 [underscore] ans '?' -> 'A'
+    stem: 通常所说的ADSL是指_A__。
+L1469 [underscore] ans '?' -> 'A'
+    stem: 下列四项中表示电子邮件地址的是_A__。
+L1475 [underscore] ans '?' -> 'A'
+    stem: 浏览网页过程中，当鼠标移动到已设置了超链接的区域时，鼠标指针形状一般变为__A__。
+L1481 [underscore] ans '?' -> 'A'
+    stem: 下列四项中表示域名的是_A___。
+L1487 [underscore] ans '?' -> 'D'
+    stem: 下列软件中可以查看WWW信息的是_D_。
+L1493 [underscore] ans '?' -> 'B'
+    stem: 设置文件夹共享属性时，可以选择的三种访问类型为完全控制、更改和_B_。
+L1499 [underscore] ans '?' -> 'A'
+    stem: 计算机网络最突出的特点是_A__。
+L1505 [underscore] ans '?' -> 'C'
+    stem: E-mail地址的格式是_C___。
+L1511 [underscore] ans '?' -> 'C'
+    stem: 为了使自己的文件让其他同学浏览，又不想让他们修改文件，一般可将包含该文件的文件夹共享属性的访问类型设置为_C___。
+L1517 [underscore] ans '?' -> 'C'
+    stem: Internet Explorer(IE)浏览器的收藏夹的主要作用是收藏_C___。
+L1523 [underscore] ans '?' -> 'D'
+    stem: 网址www.pku.edu.cn中的cn表示_D___。
+L1529 [underscore] ans '?' -> 'A'
+    stem: 在因特网上专门用于传输文件的协议是_A_ 。
+L1535 [underscore] ans '?' -> 'A'
+    stem: www.163.com是指__ A___。
+L1541 [underscore] ans '?' -> 'A'
+    stem: 下列四项中主要用于在Internet上交流信息的是__A__。
+L1547 [underscore] ans '?' -> 'D'
+    stem: 电子邮件地址格式为：username@hostname,其中hostname为__D__。
+L1553 [underscore] ans '?' -> 'D'
+    stem: 下列四项中主要用于在Internet上交流信息的是_D___。
+L1559 [underscore] ans '?' -> 'A'
+    stem: 地址ftp://218.0.0.123中的ftp是指___A_。
+L1565 [underscore] ans '?' -> 'D'
+    stem: http是一种_D___。
+L1571 [underscore] ans '?' -> 'D'
+    stem: 上因特网浏览信息时，常用的浏览器是_D___。
+L1577 [underscore] ans '?' -> 'D'
+    stem: 发送电子邮件时，如果接收方没有开机，那么邮件将__D__。
+L1583 [underscore] ans '?' -> 'C'
+    stem: 如果允许其他用户通过网上邻居来读取某一共享文件夹中的信息，但不能对该文件夹中的文件作任何修改，应将该文件夹的共享属性设置为__C__。
+L1589 [underscore] ans '?' -> 'B'
+    stem: 下列属于计算机网络通信设备的是_B___。
+L1595 [underscore] ans '?' -> 'B'
+    stem: 个人计算机通过电话线拨号方式接入因特网时，应使用的设备是_B___。
+L1601 [underscore] ans '?' -> 'A'
+    stem: 用IE浏览器浏览网页，在地址栏中输入网址时，通常可以省略的是_A___。
+L1607 [underscore] ans '?' -> 'D'
+    stem: 网卡属于计算机的_D__。
+L1613 [underscore] ans '?' -> 'A'
+    stem: Internet中URL的含义是_A___。
+L1619 [underscore] ans '?' -> 'D'
+    stem: ADSL可以在普通电话线上提供10M bps的下行速率，即意味着理论上ADSL可以提供下载文件的速度达到每秒___D_。
+L1625 [underscore] ans '?' -> 'B'
+    stem: 要能顺利发送和接收电子邮件，下列设备必需的是_B___。
+L1631 [underscore] ans '?' -> 'D'
+    stem: 区分局域网（LAN）和广域网（WAN）的依据是__ D__。
+L1637 [underscore] ans '?' -> 'D'
+    stem: 关于Internet, 以下说法正确的是_D___。
+L1643 [underscore] ans '?' -> 'D'
+    stem: 要给某人发送一封E-mail,必须知道他的_D___。
+L1649 [underscore] ans '?' -> 'A'
+    stem: Internet的中文规范译名为_A___。
+L1655 [underscore] ans '?' -> 'A'
+    stem: 学校的校园网络属于__A__。
+L1661 [underscore] ans '?' -> 'B'
+    stem: 连接到Internet的计算机中，必须安装的协议是__B__。
+L1673 [underscore] ans '?' -> 'C'
+    stem: 在地址栏中显示http://www.sina.com.cn/,则所采用的协议是__C__。
+L1679 [underscore] ans '?' -> 'C'
+    stem: WWW最初是由_C__实验室研制的。
+L1685 [underscore] ans '?' -> 'A'
+    stem: Internet 起源于__A__。
+L1691 [underscore] ans '?' -> 'D'
+    stem: 下列IP地址中书写正确的是_D___。
+L1697 [underscore] ans '?' -> 'D'
+    stem: 构成计算机网络的要素主要有：通信主体、通信设备和通信协议，其中通信主体指的是_D_。
+L1703 [underscore] ans '?' -> 'D'
+    stem: 下列说法错误的_D__。
+L1709 [underscore] ans '?' -> 'D'
+    stem: 计算机网络的主要目标是_D___。
+L1715 [underscore] ans '?' -> 'A'
+    stem: 1965年科学家提出超文本概念，其超文本的核心是_A___。
+L1721 [underscore] ans '?' -> 'A'
+    stem: 地址栏中输入的http://zjhk.school.com中，zjhk.school.com 是一个__A__。
+L1727 [underscore] ans '?' -> 'A'
+    stem: 通常所说的ADSL是指__A_。
+L1733 [underscore] ans '?' -> 'A'
+    stem: 下列四项中表示电子邮件地址的是___A_。
+L1739 [underscore] ans '?' -> 'A'
+    stem: 浏览网页过程中，当鼠标移动到已设置了超链接的区域时，鼠标指针形状一般变为__A__。
+L1745 [underscore] ans '?' -> 'A'
+    stem: 下列四项中表示域名的是_A___。
+L1751 [underscore] ans '?' -> 'D'
+    stem: 下列软件中可以查看WWW信息的是__D___。
+L1757 [underscore] ans '?' -> 'B'
+    stem: 设置文件夹共享属性时，可以选择的三种访问类型为完全控制、更改和_B_。
+L1763 [underscore] ans '?' -> 'A'
+    stem: 计算机网络最突出的特点是_A__。
+L1769 [underscore] ans '?' -> 'C'
+    stem: E-mail地址的格式是_C___。
+L1775 [underscore] ans '?' -> 'C'
+    stem: 为了使自己的文件让其他同学浏览，又不想让他们修改文件，一般可将包含该文件的文件夹共享属性的访问类型设置为_C___。
+L1781 [underscore] ans '?' -> 'C'
+    stem: Internet Explorer(IE)浏览器的收藏夹的主要作用是收藏_C___。
+L1787 [underscore] ans '?' -> 'D'
+    stem: 网址www.pku.edu.cn中的cn表示__D__。
+L1793 [underscore] ans '?' -> 'A'
+    stem: 在因特网上专门用于传输文件的协议是_A___。
+L1799 [underscore] ans '?' -> 'A'
+    stem: www.163.com是指_A___。
+L1805 [underscore] ans '?' -> 'A'
+    stem: 下列四项中主要用于在Internet上交流信息的是_A___。
+L1811 [underscore] ans '?' -> 'D'
+    stem: 电子邮件地址格式为：username@hostname,其中hostname为__D__。
+L1817 [underscore] ans '?' -> 'D'
+    stem: 下列四项中主要用于在Internet上交流信息的是_D___。
+L1823 [underscore] ans '?' -> 'A'
+    stem: 地址ftp://218.0.0.123中的ftp是指__A__。
+L1835 [underscore] ans '?' -> 'D'
+    stem: 上因特网浏览信息时，常用的浏览器是__D__。
+L1841 [underscore] ans '?' -> 'D'
+    stem: 发送电子邮件时，如果接收方没有开机，那么邮件将_D___。
+L1847 [underscore] ans '?' -> 'C'
+    stem: 如果允许其他用户通过网上邻居来读取某一共享文件夹中的信息，但不能对该文件夹中的文件作任何修改，应将该文件夹的共享属性设置为_C___。
+L1853 [underscore] ans '?' -> 'B'
+    stem: 下列属于计算机网络通信设备的是_B___。
+L1859 [underscore] ans '?' -> 'B'
+    stem: 个人计算机通过电话线拨号方式接入因特网时，应使用的设备是_B___。
+L1865 [underscore] ans '?' -> 'A'
+    stem: 用IE浏览器浏览网页，在地址栏中输入网址时，通常可以省略的是_A___。
+L1871 [underscore] ans '?' -> 'D'
+    stem: 网卡属于计算机的_D__。
+L1877 [underscore] ans '?' -> 'A'
+    stem: Internet中URL的含义是__A__。
+L1883 [underscore] ans '?' -> 'D'
+    stem: ADSL可以在普通电话线上提供10M bps的下行速率，即意味着理论上ADSL可以提供下载文件的速度达到每秒__D__。
+L1889 [underscore] ans '?' -> 'B'
+    stem: 要能顺利发送和接收电子邮件，下列设备必需的是_B___。
+L1895 [underscore] ans '?' -> 'C'
+    stem: 构成计算机网络的要素主要有通信协议、通信设备和__C__。
+L1901 [underscore] ans '?' -> 'D'
+    stem: 区分局域网（LAN）和广域网（WAN）的依据是_D___。
+L1907 [underscore] ans '?' -> 'D'
+    stem: 以下能将模拟信号与数字信号互相转换的设备是_D___。
+L1913 [underscore] ans '?' -> 'D'
+    stem: 关于Internet, 以下说法正确的是__D__。
+L1919 [underscore] ans '?' -> 'D'
+    stem: 要给某人发送一封E-mail,必须知道他的_D___。
+L1925 [underscore] ans '?' -> 'A'
+    stem: Internet的中文规范译名为_A___。
+L1931 [underscore] ans '?' -> 'A'
+    stem: 学校的校园网络属于_A___。
+L1937 [underscore] ans '?' -> 'B'
+    stem: 连接到Internet的计算机中，必须安装的协议是__B__。
+L1943 [underscore] ans '?' -> 'C'
+    stem: 下面是某单位的主页的Web地址URL,其中符合URL格式的是__C__。
+L1949 [underscore] ans '?' -> 'A'
+    stem: 在地址栏中显示http://www.sina.com.cn/,则所采用的协议是_A___。
+L1955 [underscore] ans '?' -> 'C'
+    stem: WWW最初是由_C__实验室研制的。
+L1961 [underscore] ans '?' -> 'A'
+    stem: Internet 起源于__A__。
+L1967 [underscore] ans '?' -> 'D'
+    stem: 下列IP地址中书写正确的是_D___。
+L1973 [underscore] ans '?' -> 'D'
+    stem: 以下软件中不属于浏览器的是_D___。
+L1979 [underscore] ans '?' -> 'C'
+    stem: 构成计算机网络的要素主要有：通信主体、通信设备和通信协议，其中通信主体指的是__C__。
+L1985 [underscore] ans '?' -> 'D'
+    stem: 下列说法错误的_D___。
+L1991 [underscore] ans '?' -> 'D'
+    stem: 计算机网络的主要目标是_D___。
+L1997 [paren+options] ans 'A、D类 B、C类型 C、B类 D、A类' -> 'D'
+    stem: IP地址126.168.0.1属于哪一类IP地址（D ）
+L2003 [paren+options] ans 'A、IP地址 B、工作组 C、子网掩码 D、网关' -> 'B'
+    stem: 以下哪一个设置不是上互联网所必须的（B ）
+L2009 [paren+options] ans 'A、将两台电脑用网线联在一起就是一个网络' -> 'A'
+    stem: 以下关于网络的说法错误的是 （A ）
+L2015 [paren+options] ans 'A、7 和 7 B、4和 7 C、7 和 4 D、4 和 4' -> 'C'
+    stem: OSI模型和TCP/IP协议体系分别分成几层 （ C）
+L2165 [paren+options] ans 'A、64 B、128 C、512 D、256' -> 'B'
+    stem: Internet 协议IPv6 将从原来的32位地址扩展到了（ ）位 （ B ）
+L2171 [paren+options] ans 'A、IP B、Telnet C、FTP D、HTTP' -> 'D'
+    stem: 在Internet上浏览时，浏览器和WWW服务器之间传输网页使用的协议是（ D ）
+L2177 [paren+options] ans 'A、127—191 B、128—191 C、129—191 D 、126—191' -> 'B'
+    stem: 我们将IP地址分为A、B、C三类，其中B类的IP地址第一字节取值范围是 （ B ）
+L2189 [paren+options] ans 'A、Anonymous B、Anonymouse C、GUEST D、以上都对' -> 'A'
+    stem: ftp常用于数据上传，其中在进行数据上传时需进行身份验证，如果以匿名者方式登陆其输入用户名是 （ A ）
+L2195 [paren+options] ans 'A、1 B、2 C、3 D、4' -> 'C'
+    stem: IP地址共5类，常用的有（ ）类，其余留作其他用途 （ C ）
+L2201 [paren+options] ans 'A、网络层 B、运输层 C、应用层 D、物理层' -> 'C'
+    stem: 文件传输协议是（ ）上的协议 （ C ）
+L2207 [paren+options] ans 'A、cn B、edu C、scut D、smt' -> 'D'
+    stem: 对于一个主机域名smt.scut.edu.cn来说，其中（ ）表示主机名 （ D ）
+L2213 [paren+options] ans 'A、Intranet B、Ethernet C、Cernet D、Arpanet' -> 'D'
+    stem: Internet 的前身是 （ D ）
+L2219 [paren+options] ans 'A、总线型网络 B、星型网络 C、环形网络 D、全连接型网络' -> 'B'
+    stem: 在如下网络拓朴结构中，具有一定集中控制功能的网络是 （ B ）
+L2225 [paren+options] ans 'A、ARP B、ICMP C、SNMP D、TCP' -> 'A'
+    stem: 下述协议中，不建立于IP协议之上的协议是 （ A ）
+L2237 [paren+options] ans 'A、链路层 B、运输层 C、网络层 D、物理层' -> 'D'
+    stem: 在网络互联中，中继器一般工作在 （ D ）
+L2243 [paren+options] ans 'A、ICMP B、SNMP C、TELNET D、FIP' -> 'A'
+    stem: 下述协议中不属于应用层协议的是 （A ）
+L2249 [paren+options] ans 'A、MAC地址 B、IP地址 C、网络号Net ID D、主机号Host ID' -> 'A'
+    stem: 网桥及一般的二层交换机在进行数据包转发时，识别的数据包包头中的什么内容进行数据包的转发 （ A ）
+L2255 [paren+options] ans 'A、运输层 B、物理层 C、网络层 D、应用层' -> 'C'
+    stem: 在数据传输过程中路由是在（ ）实现的 （ C ）
+L2261 [paren+options] ans 'A、8 B、14 C、16 D、24' -> 'C'
+    stem: B类地址中，在默认子网掩码下用（ ）位来标识网络中的一台主机 （ C ）
+L2267 [paren+options] ans 'A、FTP B、PPP C、SMTP D、IP' -> 'C'
+    stem: 负责电子邮件的应用层协议是 （ C ）
+L2273 [paren+options] ans 'A、软件安全 B、保密性 C、可用性 D、可靠性' -> 'D'
+    stem: 下列哪一项不属于网络安全的内容 （ D）
+L2279 [paren+options] ans 'A、com B、org C、int D、edu' -> 'D'
+    stem: 在顶级域名中，表示教育机构的是 （ D ）
+L2285 [paren+options] ans 'A、A类 B、B类 C、C类 D、D类' -> 'C'
+    stem: 在IP地址方案中，210.42.194.22表示一个（ ）地址 （ C ）
+L2291 [paren+options] ans 'A、com B、org C、net D、edu' -> 'A'
+    stem: 在顶级域名中，表示商业机构的是 （ A ）
+L2297 [paren+options] ans 'A、网卡 B、调制解调器 C、中继器 D、随机错' -> 'B'
+    stem: 两台计算机利用电话线路传输数据信号时，必备的设备是 （ B）
+L2303 [paren+options] ans 'A、物理层 B、网络层 C、应用层 D、数据链路层' -> 'D'
+    stem: 网桥是用于（ ）的互连设备 （ D ）
+L2309 [paren+options] ans 'A、位流 B、帧 C、分组 D、报文' -> 'A'
+    stem: 物理层的主要功能是实现（ ）的正确的传输 （ A）
+L2315 [paren+options] ans 'A、CSMA B、CSMA/CD C、CDMA D、CSMA/CA' -> 'B'
+    stem: Ethernet局域网采用的媒体访问控制方式为 （ B ）
+L2327 [paren+options] ans 'A、Ethernet B、FDDI C、ATM D、DQDB' -> 'B'
+    stem: （ ）是一种环形结构的局域网技术 （ B ）
+L2333 [paren+options] ans 'A、202.130.0.0 B、202.0.0.0 C、202.130.191.33 D、202.130.191.0' -> 'D'
+    stem: 如果IP地址为202.130.191.33，子网掩码为255.255.255.0，那么网络地址是 （ D ）
+L2339 [paren+options] ans 'A、位 B、帧 C、分组 D、报文' -> 'B'
+    stem: 在OSI参考模型的层次中，数据链路层的数据传送单位是 （ B ）
+L2345 [paren+options] ans 'A、物理层 B、数据链路层 C、网络层 D、高层' -> 'B'
+    stem: 交换机一般工作在 （ B ）
+L2351 [paren+options] ans 'A、64kbps B、128kbps C、144kbps D、384kbps' -> 'A'
+    stem: ISDN的基本速率为 （ A ）
+L2357 [paren+options] ans 'A、200M B、185M C、100M D、500M' -> 'C'
+    stem: 用五类双绞线实现的100M以太网中，单根网线的最大长度为 （ C ）
+L2363 [paren+options] ans 'A、网络功能 B、管理性质 C、网络跨度 D、网络拓扑' -> 'D'
+    stem: 星形、总线型、环形和网状形是按照（ ）分类 （ D ）
+L2369 [paren+options] ans 'A、同轴电缆线路 B、双绞线 C、光纤 D、红外线' -> 'B'
+    stem: 100Base-T使用（ ）传输介质 （ B ）
+L2375 [paren+options] ans 'A、5 B、48 C、53 D、64' -> 'B'
+    stem: ATM传输数据的单位是信元，每个信元净荷是（ ）个字节 （B ）
+L2381 [paren+options] ans 'A、集线器 B、路由器 C、交换器 D、网关' -> 'D'
+    stem: 通过执行传输层及以上各层协议转换，或者实现不同体系结构的网络协议转换的互连部件称为 （ D ）
+L2387 [paren+options] ans 'A、129.9.255.18 B、125.21.19.109 C、195.5.91.254 D、220.258.2.56' -> 'D'
+    stem: 在给主机分配IP地址时，下面哪一个是错误的 （ D ）
+L2399 [paren+options] ans 'A、400米 B、100米 C、200米 D、500米' -> 'C'
+    stem: 你是一名公司的网络管理员，现在你的公司需要在某一分支办公室内铺设一个小型以太局域网，总共有4台PC机需要通过一台集线器连接起来。采用线缆类型为5类双绞线。则理论上任一两台PC机的最
+L2417 [paren+options] ans 'A、公钥和私钥 B、黑白密钥 C、数字签名 D、通用的和专用的密钥' -> 'A'
+    stem: 加密算法包括 （ A ）
+L2423 [paren+options] ans 'A、物理层 B、数据链路层 C、传输层 D、网络层' -> 'C'
+    stem: 下列不属于局域网层次的是 （ C ）
+L2429 [paren+options] ans 'A、一个用户一个账号 B、用户可以访问不同的域' -> 'B'
+    stem: 目录服务的目标是 （ B ）
+L2435 [paren+options] ans 'A、ipconfig B、route C、telnet D、ping' -> 'D'
+    stem: 检查网络联通性的命令是 （ D ）
+L2447 [paren+options] ans 'A、FAT B、FAT32 C、NTFS' -> 'C'
+    stem: 可以在文件系统级实现文件安全性管理的文件系统是 （C ）
+L2453 [paren+options] ans 'A、计算机管理 B、Active Directory用户和计算机 C、本地用户管理器' -> 'C'
+    stem: 在Windows 2000中，使用什么工具可以创建本地用户帐户 （ C ）
+L2465 [paren+options] ans 'A、PROMOTE.EXE B、DCPROMO.EXE' -> 'B'
+    stem: 您有一个Windows2000Server，它是一个成员服务器。您的域正在不断变大，您需要添加另外一台域控制器。下面哪些程序可以把成员服务器升级为域控制器？ （ B ）
+L2471 [paren+options] ans 'A、IIS B、WINS C、DHCP D、TCP/IP' -> 'A'
+    stem: 在安装DNS服务前，必须在windows2000 sever计算机上安装和设置下列哪一项 （ A ）
+L2477 [paren+options] ans 'A、Ping B、IPcofig C、nslookup D、Winipcfg' -> 'C'
+    stem: 测试DNS主要使用以下哪个命令 （ C）
+L2483 [paren+options] ans 'A、DNS服务器 B、DHCP服务器 C、WWW服务器 D、WINS服务器' -> 'B'
+    stem: 局域网中为登录域的计算机分配动态 IP 地址的服务器为 （ B ）
+L2489 [paren+options] ans 'A、Internet中的一台主机只能有一个IP地址 B、一个合法的IP地址在一个时刻只能分配给一台主机' -> 'B'
+    stem: 判断下面哪一句话是正确的 （ B）
+L2495 [paren+options] ans 'A、WWW服务器 B、FTP服务器 C、DNS服务器 D、DHCP服务器' -> 'C'
+    stem: 在网络中提供域名与IP地址解析服务的服务器是 （ C ）
+L2501 [paren+options] ans 'A、Gues B．TsInternetUser C、Administrator D、Domain Admins' -> 'C'
+    stem: Windows 2000 Server为管理员提供的名称是 （ C ）
+L2507 [paren+options] ans 'A、管理工具/配置服务器 B、管理工具/计算机管理' -> 'A'
+    stem: 通过哪种方法安装活动目录 （ A ）
+L2519 [paren+options] ans 'A、网络设备名字到IP地址的映射 B、网络硬件地址到IP地址的映射' -> 'A'
+    stem: 应用层DNS协议主要用于实现哪种网络服务功能 （ A ）
+L3521 [pipihui-option] ans '?' -> 'A'
+    stem: （2024年408统考第2题）x+y（z-u）/v的等价后缀：
+L3533 [pipihui-option] ans '?' -> 'D'
+    stem: （2024年408统考第5题）不适用于折半查找的是()
+L3539 [pipihui-option] ans '?' -> 'A'
+    stem: （2024年408统考第6题）KMP算法使用修正后的next数组进行模式匹配，模式串s：“aabaab“，主串中某字符与s中某字符失去配对， s右滑最长距离为：
+L3545 [pipihui-option] ans '?' -> 'D'
+    stem: （2024年408统考第7题）一棵二叉搜索树如下图所示，K1 、K2 、K3分别是对应结点中保存的关键字。子树T的任一结点中保存的关键字X满足的是
+L3551 [pipihui-option] ans '?' -> 'A'
+    stem: （2024年408统考第8题）使用快速排序算法对含N（N23）个元素的数组M进行排序， 若第一趟排序将M中除枢轴外的N-1个元素划分为均不空的P和Q两块，则下列叙述中， 正确的是(
+L3557 [pipihui-option] ans '?' -> 'B'
+    stem: （2024年408统考第9题）已知关键字序列28 ，22 ，20 ，19 ，8 ，12 ，15 ，5是大根堆（最大堆），对该堆进行两次删除操作后，得到的新堆是()
+L3563 [pipihui-option] ans '?' -> 'C'
+    stem: （2024年408统考第10题）现有由关键字组成的3个有序序列（3 ，5）、（7 ，9）、和（6），若按从左至右的次序选择有序序列进二路归并排序， 则关键字之间的总比较次数是()
+L3569 [pipihui-stem] ans '?' -> 'D'
+    stem: （2024年408统考第11题）外部排序使用败者树进行升序归并，记录“冠军”节点保存的是（ ）。 【皮皮灰】D. 最小关键字所在的归并段号 计算机组成原理
+L3575 [pipihui-option] ans '?' -> 'B'
+    stem: （2024年408统考第12题）C 语言代码如下： int i=32777； short si= i； int j= si； 执行上述代码段后，j的值是
+L3581 [pipihui-option] ans '?' -> 'B'
+    stem: （2024年408统考第13题）将汇编语言程序中实现特定功能的指令序列定义成一条伪指令。下列选项中，CPU能理解并直接执行的是 I.伪指令 II.微指令 III.机器指令 IV.汇
+L3587 [pipihui-option] ans '?' -> 'B'
+    stem: （2024年408统考第15题）下列关于整数乘法运算的叙述中，错误的是
+L3593 [pipihui-option] ans '?' -> 'D'
+    stem: （2024年408统考第16题）对于页式虚拟存储管理系统，下列关于存储器层次结构的叙述中，错误的是
+L3599 [pipihui-option] ans '?' -> 'C'
+    stem: （2024年408统考第17题）某计算机按字节编址，采用页式虚拟存储管理方式，虚拟地址为32位，主存地址为30位，页大小为1 KB。若TLB共有32个表项，采用4路组相联映射方式，
+L3605 [pipihui-stem] ans '?' -> 'C'
+    stem: （2024年408统考第19题）5段流水线RISC说法错误的是（）。 【皮皮灰】C.所有数据冒险都可以通过加入转发（旁路）电路解决
+L3611 [pipihui-option] ans '?' -> 'A'
+    stem: （2024年408统考第20题）存储器总线的时钟频率为 420MHz，总线宽度为 64 位，每个时钟周期传送2 次数据，支持突发传输， 最多传8 次，第一个时钟传地址和读写命令， 
+L3617 [pipihui-stem] ans '?' -> 'A'
+    stem: （2024年408统考第21题）关于中断1/O方式，错误的是（）。 【皮皮灰】A. 中断屏蔽字决定中断响应顺序
+L3623 [pipihui-stem] ans '?' -> 'C'
+    stem: （2024年408统考第22题）DMA 方式中，DMA控制器控制的数据传输通路位于（）。 【皮皮灰】C.设备接口和主存之间 操作系统：
+L3629 [pipihui-stem] ans '?' -> 'A'
+    stem: （2024年408统考第23题）下面关于中断和异常的说法中，错误的是（）。 【皮皮灰】A中断或异常发生时，CPU处于内核态
+L3635 [pipihui-stem] ans '?' -> 'A'
+    stem: （2024年408统考第24题）终止进程时，不一定执行的是（）。 【皮皮灰】A.终止子进程
+L3641 [pipihui-stem] ans '?' -> 'D'
+    stem: （2024年408统考第25题）支持页式存储管理的系统，进程切换时OS要执行（）。 【皮皮灰】D.I 、 Ⅱ 、Ⅲ
+L3647 [pipihui-option] ans '?' -> 'A'
+    stem: （2024年408统考第26题）文件系统需要额外的外存空间记录空闲块的位置，占用外存空间大小与当前空闲块数量无关的是（）。 【皮皮灰】A.位图法 27\\. 回收分区时，仅合并大小
+L3653 [pipihui-stem] ans '?' -> 'B'
+    stem: （2024年408统考第28题）进程P有一个线程T，打开文件后获得fd，再创建线程Ta，Tb，则线程Ta， Tb可共享的资源是（）。 I.进程 P的地址空间 聂.线程T的栈 Ⅲfd
+L3665 [pipihui-stem] ans '?' -> 'C'
+    stem: （2024年408统考第30题）RR 调度，时间片为5ms，有 10个进程，初始状态均处于就绪队列，执行结束前仅处于执行态或就绪态，队尾进程 P所需 CPU 时间最短，为 25ms
+L3671 [pipihui-option] ans '?' -> 'B'
+    stem: （2024年408统考第31题）键盘中断服务例程执行结束时，所输入的数据存放位置是（）。
+L3677 [pipihui-option] ans '?' -> 'C'
+    stem: （2024年408统考第32题）磁道数400（号为0-399），用循环扫描算法（CSCAN）进行调度，完成对200号磁道的请求后， 磁头想磁道号减小的方向移动， 若还有7个请求，磁
+L3683 [pipihui-option] ans '?' -> 'D'
+    stem: （2024年408统考第34题）在下列二进制数字调制方法中，需要2个不同频率载波的()
+L3689 [pipihui-option] ans '?' -> 'D'
+    stem: （2024年408统考第40题）若浏览器不支持并行TCP连接，便用非持久的[HTTP/.10](HTTP/.10)协议请求浏览1个web页，该页中引用同一个网站上7个小图像文件， 
+L3725 [jiexi] ans '?' -> 'D'
+    stem: （2025年408统考第10题）在最坏情况下，移动次数最少的是 ( )
+
+===== DELETED =====
+L1667 [no answer marker -> DELETE] ans='?'
+    stem: 下面是某单位的主页的Web地址URL,其中符合URL格式的是____。
+L1829 [no answer marker -> DELETE] ans='?'
+    stem: http是一种____。
+L2021 [no answer marker -> DELETE] ans='A、电路交换技术、报文交换技术和分组交换技术'
+    stem: IP电话、电报和专线电话分别使用的数据交换技术是（ ）
+L2027 [no answer marker -> DELETE] ans='A、动态网页就是指动态HTML ，通过 javascript 和ASP都能实现动态网页'
+    stem: 下面说法正确的是（ ）
+L2033 [no answer marker -> DELETE] ans='A、10BASE-T B、1000BASE-T C、FDDI D、100BAE-T'
+    stem: 不是Ethernet的物理层协议是（）。
+L2039 [no answer marker -> DELETE] ans='A、ASK B、FSK C、PSK D、NRZ'
+    stem: 常用的通信信道分为模拟通信信道和数字通信信道，其中数字通信信道是（）。
+L2045 [no answer marker -> DELETE] ans='A、打印机 B、集中器 C、路由器 D、交换机'
+    stem: 下列设备属于资源子网的是（ ）。
+L2051 [no answer marker -> DELETE] ans='A、电路交换技术 B、报文交换技术'
+    stem: 下列交换技术中，节点不采用存储—转发方式的是（ ）。
+L2057 [no answer marker -> DELETE] ans='A、建立逻辑连接 B、结束本次连接'
+    stem: 采用虚电路分组交换方式时，可以省去的阶段是（）。
+L2063 [no answer marker -> DELETE] ans='A、OSI B、ISO C、SOS D、ANSI'
+    stem: 国际标准化组织的英文缩写是（ ）。
+L2069 [no answer marker -> DELETE] ans='A、服务 B、服务访问点 C、协议 D、上述三者'
+    stem: 对等层实体之间采用下列哪一个进行通信（ ）。
+L2075 [no answer marker -> DELETE] ans='A、文件传输 B、远程登陆 C、信息浏览 D、即时短信'
+    stem: 当你在网上下载软件时，你享受的网络服务类型是（ ）
+L2081 [no answer marker -> DELETE] ans='A、软件复制 B、网络传播 C、磁盘拷贝 D、运行游戏软件'
+    stem: 根据统计，当前计算机病毒扩散最快的途径是（ ）。
+L2087 [no answer marker -> DELETE] ans='A、下载并安装操作系统漏洞补丁程序 B、安装并定时升级正版杀毒软件 C、安装软件防火墙 D、不将计算机联入互联网'
+    stem: 以下不属于计算机安全措施的是（ ）
+L2093 [no answer marker -> DELETE] ans='D、域名系统按地理域或机构域分层采用层次结构'
+    stem: 下面关于域名的说法正确的是（ ）
+L2099 [no answer marker -> DELETE] ans='A、2 B、4 C、8 D、16'
+    stem: 目前使用的IPV4地址由多少个字节组成（ ）
+L2105 [no answer marker -> DELETE] ans='A、集线器 B、交换机 C、路由器 D、网桥'
+    stem: 能实现不同的网络层协议转换功能的互联设备是（ ）。
+L2111 [no answer marker -> DELETE] ans='A、1个 B、2个 C、多个 D、无数个'
+    stem: 路由器（Router）是用于联接逻辑上分开的（ ）网络。
+L2117 [no answer marker -> DELETE] ans='A、总线型和星型 B、共享型和交换型'
+    stem: 快速以太网集线器按结构分为（ ）。
+L2123 [no answer marker -> DELETE] ans='A、端口 B、地址 C、连接 D、无连接'
+    stem: UDP提供面向（ ）的传输服务。
+L2129 [no answer marker -> DELETE] ans='C、TCP/IP参考模型 D、ISO/OSI网'
+    stem: 计算机网络中，分层和协议的集合称为计算机网络的（ ）
+L2135 [no answer marker -> DELETE] ans='A、2个中继器 B、4个中继器 C、2个路由器 D、4个路由器'
+    stem: IEEE802标准中任意两个站点之间的路径中最多允许有（ ）
+L2141 [no answer marker -> DELETE] ans='A、计算机 B、DTE C、DCE D、接口'
+    stem: 为用户提供入网连接点的网络设备叫作（ ）
+L2147 [no answer marker -> DELETE] ans='A、POP B、DNS C、SLIP D、Usenet'
+    stem: 因特网中完成域名地址和IP地址转换的系统是（ ）
+L2153 [no answer marker -> DELETE] ans='A、IP B、TCP C、SNMP D、SMTP'
+    stem: 用于电子邮件的协议是（ ）
+L2183 [paren: answer letter not in options -> DELETE] ans='A、一个IP地址共四个字节 B、一个IP地址以二进制表示共32位'
+    stem: 以下对IP地址说法不正确的是 （ D ）
+L2231 [paren: answer letter not in options -> DELETE] ans='A、IPV6具有高效IP包头 B、IPV6增强了安全性'
+    stem: 下述论述中不正确的是 （ C ）
+L2321 [paren: answer letter not in options -> DELETE] ans='A、计算机—通信线路—计算机v B、PC机—通信线路—PC机'
+    stem: 早期的计算机网络是由（ ）组成系统。 （ D ）
+L2393 [multi-paren: answer letters not in options -> DELETE] ans='A、连接速度快 B、 传输速率高 C、 配置简单 D、 价格便宜'
+    stem: 相对于传统的调制解调器拨号，ISDN的优越性主要体现在哪些方面：（多选） （ ABE ）
+L2405 [multi-paren: answer letters not in options -> DELETE] ans='A、减少冲突 B、隔绝广播风暴 C、提高带宽率 C、降低网络建设成本'
+    stem: 在网络中使用交换机代替集线器的原因是 （ AC ）
+L2411 [paren: answer letter not in options -> DELETE] ans='A.255.255.192.0 B.255.255.224.0 C.255.255.240.0 D.255.255.252.0'
+    stem: 现有一个B类网络地址160.18.0.0，如要划分子网，每个子网最少允许40台主机，则划分时容纳最多子网时，其子网掩码为 （ E ）
+L2441 [paren: answer letter not in options -> DELETE] ans='A、Windows 2000 Professnal B、Windows 2000 Server'
+    stem: Windows 2000 有自己的产品家族,下列产品中不是Windows 2000 系列的产品有 （ E ）
+L2459 [paren: answer letter not in options -> DELETE] ans='A、增加区域网络的上传输速度。 B、增加区域网络的数据复制速度。'
+    stem: 以下何者是集线器(Hub)的功能 （ C ）
+L2513 [multi-paren: answer letters not in options -> DELETE] ans='A、网络中每台计算机的计算机账户唯一 B、网络中每台计算机的计算机账户不唯一'
+    stem: 下列说法中正确的是 （ AD ）
+L2807 [no answer marker -> DELETE] ans='?'
+    stem: 计算机网络中，所有的计算机都连接到一个中心节点上，一个网络节点需
+L2861 [no answer marker -> DELETE] ans='?'
+    stem: 使用载波信号的两种不同频率来表示二进制值的两种状态的数据编码方式
+L3071 [no answer marker -> DELETE] ans='?'
+    stem: 计算机网络是通过通信媒体，把各个独立的计算机互相连接而建立起来的系统。它实现了计算机与计算机之间的资源共享和 （ ）
+L3077 [no answer marker -> DELETE] ans='?'
+    stem: 根据计算机网络的覆盖范围，可以把网络划分为三大类，以下不属于其中的是 （ ）A 广域网 B 城域网 C 局域网 D 宽带网
+L3083 [no answer marker -> DELETE] ans='?'
+    stem: 每发送一个字符其开头都带一位起始位，以便在每一个字符开始时接收端和发送端同步一次，这种传输方式是 （ ）
+L3089 [no answer marker -> DELETE] ans='?'
+    stem: 在数字数据编码方式中，一种自含时钟编码方式是 （ ）
+L3095 [no answer marker -> DELETE] ans='?'
+    stem: 在数字通信信道上，基带传输数字数据信号的方法是 （ ）
+L3101 [no answer marker -> DELETE] ans='?'
+    stem: 下列模拟数据编码方法中，抗干扰能力强，实现技术复杂的是（ ）
+L3107 [no answer marker -> DELETE] ans='?'
+    stem: 在OSI参考模型中，负责使分组以适当的路径通过通信子网的是
+L3113 [no answer marker -> DELETE] ans='?'
+    stem: 在计算机网络中，所有的计算机均连接到一条通信传输线路上，在线路
+L3119 [no answer marker -> DELETE] ans='?'
+    stem: TCP/IP协议是Internet中计算机之间通信所必须共同遵循的一种
+L3125 [no answer marker -> DELETE] ans='?'
+    stem: 1000BASE-T标准使用5类非屏蔽双绞线，其最大长度为 （ ）
+L3131 [no answer marker -> DELETE] ans='?'
+    stem: 局域网络服务访问点（SAP）的位置处于 （ ）
+L3137 [no answer marker -> DELETE] ans='?'
+    stem: Netware系统容错技术中，提供了文件服务器镜像功能的是（ ）
+L3143 [no answer marker -> DELETE] ans='?'
+    stem: 下列网络互联设备中，能够有效隔离广播通信信号的是 （ ）
+L3149 [no answer marker -> DELETE] ans='?'
+    stem: 用来实现局域网—广域网互联的是 （ ）
+L3155 [no answer marker -> DELETE] ans='?'
+    stem: 应用层的中继系统是 （ ）
+L3161 [no answer marker -> DELETE] ans='?'
+    stem: 将一个网关分为两个半网关的主要考虑出自 （ ）
+L3167 [no answer marker -> DELETE] ans='?'
+    stem: Token Ring介质访问控制方法遵循的标准是 （ ）
+L3173 [no answer marker -> DELETE] ans='?'
+    stem: 在IP地址方案中，159．226．181．1是一个 （ ）
+L3179 [no answer marker -> DELETE] ans='?'
+    stem: 用来确认网络中信息传递的源结点与目的结点的用户身份是否真实的服务是（ ）
+L3185 [no answer marker -> DELETE] ans='?'
+    stem: 组成计算机网络的资源子网的设备是 （ ）
+L3191 [no answer marker -> DELETE] ans='?'
+    stem: 以太网交换机的帧转发方式有 （ ）
+L3197 [no answer marker -> DELETE] ans='?'
+    stem: TCP/IP的层次包括 （ ）
+L3203 [no answer marker -> DELETE] ans='?'
+    stem: 以下各项属于网络操作系统基本功能的是 （ ）
+L3209 [no answer marker -> DELETE] ans='?'
+    stem: 对网络安全构成威胁的主要因素有 （ ）
+L3257 [no answer marker -> DELETE] ans='?'
+    stem: （2023年408统考第9题）现有长度为5,初始为空的散列表HT, 散列表函数H(k)=(k+4)%5, 用线性探查再散列法解 决冲突。若将关键字序列2022,12,25依次插入H
+L3443 [no answer marker -> DELETE] ans='?'
+    stem: （2023年408统考第41题）(13分)已知有向图G 采用邻接矩阵存储，类型定义如下： typedef struct { //图的类型定义 int numVertices,num
+L3449 [no answer marker -> DELETE] ans='?'
+    stem: （2023年408统考第42题）(10分)对含有n(n>0) 个记录的文件进行外部排序，采用置换-选择排序生成初始归并段时需 要使用一个工作区，工作区中能保存m 个记录，请回答下列
+L3455 [no answer marker -> DELETE] ans='?'
+    stem: （2023年408统考第43题）(14分)已知计算机M 字长为32位，按字节编址，采用请求调页策略的虚拟存储管理方式，虚 拟地址32位，页大小为4KB; 数据Cache采用4路组相
+L3461 [no answer marker -> DELETE] ans='?'
+    stem: （2023年408统考第45题）(7分)现要求学生使用swap指令和布尔型变量lock实现临界区互斥。lock为线程间共享的变量。 lock的值为TRUE时线程不能进入临界区，为F
+L3467 [no answer marker -> DELETE] ans='?'
+    stem: （2023年408统考第46题）(8分)进程P 通过执行系统调用从键盘接收一个字符的输入。已知此过程中与进程P 相关的操 作包括：①将进程P 插入就绪队列；②将进程P 插入阻塞队列
+L3473 [no answer marker -> DELETE] ans='?'
+    stem: （2023年408统考第47题）(9分)某网络拓扑如下图所示，主机H 登录到FTP 服务器后，向服务器上传一个大小为18000B 的文件F。假设H 为传输F 建立数据连接时，选择的
+L3479 [no answer marker -> DELETE] ans='?'
+    stem: （2024年408统考第41题）（论述题） 2023年10月26日，神州十七号载人飞船发射取得圆满成功，再次彰显了中国航天事业的辉煌成就。载人航天工程是包含众多子工程的复杂系统工程
+L3485 [no answer marker -> DELETE] ans='?'
+    stem: （2024年408统考第42题）（论述题） 将关键字20，3，11，18，9，14，7依次存储到长度为11的散列表HT中，散列函数为 H(key)=(key x3)%11 ，H0为
+L3491 [no answer marker -> DELETE] ans='?'
+    stem: （2024年408统考第43题）（论述题） 假定计算机M字长为32位，按字节编址，采用32位定长指令字，指令addslli和lw的格式、编码和功能说明如图43（a）图所示。 其中R
+L3497 [no answer marker -> DELETE] ans='?'
+    stem: （2024年408统考第44题）（论述题） 对于题43中的计算机M， C语言程序中包含的语句“sum+=a\\[i\\]”，在M中对应的指令序列S如下： slli r4,r2,2/
+L3503 [no answer marker -> DELETE] ans='?'
+    stem: （2024年408统考第45题）（论述题） 某计算机采用虚拟页式存储管理，虚拟地址、物理地址为32位，页表项大小为 4B ，页面大小为4B 。虚拟地址结构如下：
+L3509 [no answer marker -> DELETE] ans='?'
+    stem: （2024年408统考第46题）（论述题） 计算机系统中的进程之间往往需要相互协作以完成一个任务，在某网络系统中缓冲区B用于存放一个数据分组，对B的操作有C1、C2和C3。 C1将
+L3515 [no answer marker -> DELETE] ans='?'
+    stem: （2024年408统考第47题）（论述题） 给了4个自治系统， 一个自治系统路由器少于15个， 一个多于20个，最下方的自治系统有一个具体的路由结构表。请回答下列问题： （1）当自
+L3527 [no answer marker -> DELETE] ans='?'
+    stem: （2024年408统考第3题）pqv为二叉树T的三个结点，其中v有两个孩子结点，二叉树T的中序遍历 为...p.v.q...，则()
+L3659 [no answer marker -> DELETE] ans='?'
+    stem: （2024年408统考第29题）包含文件按名查找功能的系统调用是（）。 [A.open](A.open)（）[B.read](B.read) ()
+L3695 [no answer marker -> DELETE] ans='?'
+    stem: （2024年408统考第41题）已知图G 采用邻接矩阵存储是，其定义如下 Typedef struct{ //图的类型定艾- Int numberVertices,numEgges
+L3701 [no answer marker -> DELETE] ans='?'
+    stem: （2024年408统考第42题）将关键字数列20.3.11.18.9.14.7.依次存储到初始为空长度为11的散列表HT中，散列函数H（key）=（key×3）%11 ，H（key
+L3707 [no answer marker -> DELETE] ans='?'
+    stem: （2024年408统考第43题）计算机M字长32位，字节编址， 32位定长指令字 --- --- --- rs2 000 011001 1 shemt 010 1 010 1 第一
+L3713 [no answer marker -> DELETE] ans='?'
+    stem: （2024年408统考第46题）缓冲B存放一数据，C1将一数写入B ，C2找从B中读一数据，C3对B修改，B为空时才能执C1 ，B非空时才能执C2和C3 （1）设进程P1P2执行C
+L3731 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第11题）在第二趟排序之后的结果如下，请问是用的哪种排序 ( )
+L3737 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第13题）IEEE754，float 类型是 4730 0000H，请问真值是多少?
+L3743 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第14题）x=A3H，y=75H，计算 x-y，求真值和 OF 标志? A.24，0
+L3749 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第16题）ISA 规定了以下哪个?
+L3755 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第17题）关于 RISC 说法错误的是?
+L3761 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第18题）关于 CPI 和 CPU 说法错误的是?
+L3767 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第19题）关于数据通路说法错误的是?
+L3773 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第20题）处理机总线带宽 64b，同步方式，并行传输方式。每个总线时钟周期传 4 次数据(quad-pumped)，总线工作频率 1333MHZ
+L3779 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第21题）适合 DMA 的设备 Ⅰ.键盘 Ⅱ. 网卡 Ⅲ. 固态硬盘 Ⅳ.针式打印机A. Ⅰ 、 Ⅱ
+L3785 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第23题）虚拟页式管理系统中，进程上下文切换时，不用更新的是()
+L3791 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第24题）关于虚拟化技术，错误的是
+L3797 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第25题）优先权调度，采用单链表保存进程就绪队列，高优先级进程在队头 。就绪队列长度为 n， 问插入进程 、选出进程的时间复杂度
+L3803 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第26题）LRU 算法， 固定分配局部置换， 已为进程分配 3 个页框，页面访问序列为{0， 1 ，2 ，0 ，5 ，1 ，4 ，3 ，0 ，2 ，3 ，2 
+L3809 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第27题）(本题易错)确定进程运行所需的最少页框数时，要考虑的指标是( )
+L3815 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第28题）关于虚拟文件系统，正确的是()
+L3821 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第29题）某文件系统采用索引节点方式 。用户在目录中新建文件 F 时 ，文件系统不会做的是( )
+L3827 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第30题）关于内存映射文件，正确的是() Ⅰ.可实现进程间通信 Ⅱ.实现了页面到磁盘块的映射 Ⅲ.将文件映射到进程的虚拟地址空间 Ⅳ. 将文件映射到系统的物理
+L3833 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第31题）可用于记录外存空间使用情况的是( ) \\- 9 - 官方网站:[www.youlu.com](https://www.youlu.com) 优路考
+L3839 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第32题）文件系统要为温彻斯特硬盘 、 固态硬盘都提供的功能是()
+L3845 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第33题）H1、H2 之间按电路交换方式、报文交换方式、分组交换方式传送 2MB(1M=106)文件。接收文件全部内容所需时间记为 Tcs、TMS、TPS 问
+L3851 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第34题）某差错编码的编码集为{10011010,01011100,11110000,00001111}，其检错纠错 能力是( )
+L3857 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第35题）10BaseT 以太网，甲乙处于同一个冲突域，连续发生 11 次冲突，甲再次发送的 \\- 10 - 官方网站:[www.youlu.com](ht
+L3863 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第36题）DHCP 协议的 REQUEST 报文， 目的 IP 、源 IP 为( ) A. B.
+L3869 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第37题）NAT 路由器从内网转发一个 IP 分组到外网，IP 分组内携带 UDP 数据报， 问UDP 首部被修改的是( ) Ⅰ.源端口号 Ⅱ. 目的端口号 
+L3875 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第38题）(本题易错)t0 时刻，甲的 ssthresh=8，拥塞窗口=2，发送窗口=2，MSS=1000B。在 t1 时刻， 甲可以再给乙发送( )个 TC
+L3881 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第39题）Time 服务器采用 C/S 模型，RTT=8ms 。采用 UDP 、TCP 请求时间服务器，最短耗时为( )
+L3887 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第40题）关于 POP3 ，正确的是 Ⅰ.支持用户代理从邮件服务器读取邮件 Ⅱ.支持用户代理向邮件服务器发送邮件 I Ⅲ.支持邮件服务器之间发送与接收邮件 I
+L3893 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第41题）(13 分) 有两个长度均为 n 的一维整型数组 A\\[n\\]、res\\[n\\]，计算 A\\[i\\]与 A\\[j\\](0 ≤ i ≤
+L3899 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第42题）AOE 网 ，描述 12 个工程活动及持续时间 \\- 16 - 官方网站:[www.youlu.com](https://www.youlu.co
+L3905 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第43题）计算机 M 的字长为 32 位 ，采用字节编址 。 数据 cache 的数据区大小为32KB，采用 8 路组相联映射方式，主存块大小为 64B 。c
+L3911 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第44题）接上题， R0~R4 为通用寄存器，SEXT 表示按符号扩展， M 中补码除法器，逻辑结构图如下: 机器级代码 ： //x 存储在 R2 寄存器中,
+L3917 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第44题）三个人共同参与植树活动，其中甲负责挖树坑，乙负责将树苗放入坑中并填土，丙负责给新种的树苗浇水 。整个植树过程依次包括挖树坑 、放树苗 、填土和浇水这
+L3923 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第45题）某进程的虚拟地址空间如图， 阴影部分为未占用区域，有 C 程序 ： char ptr; void main(){ int length; ptr=(
+L3929 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第1题）上述程序执行时，PCB 位于哪个区域，执行 scanf () 等待键盘输入时，该进程处于什么状态 ？ \\- 24 - 官方网站:[www.youlu
+L3935 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第2题）main () 函数的代码位于哪个区域？其直接调用的哪些函数的功能需要通过执行驱动程序实现 ？
+L3941 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第3题）变量 ptr 被分配在哪个区域？若变量 length 没有被分配在寄存器中，则会被分配在哪个区域 ？ptr 指向的字符串位于哪个区域 ？ 【解析】 （
+L3947 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第1题）PCB 位于内核区，执行 scanf()时，进程处于阻塞态;
+L3953 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第2题）main()函数的代码位于只读代码段，其直接调用的 scanf()和 printf()需要执行驱动程序。
+L3959 [no answer marker -> DELETE] ans='?'
+    stem: （2025年408统考第3题）ptr 被分配在可读写数据段，length 在用户栈，ptr 指向的字符串在运行时堆。 47. \\- 26 - 官方网站:[www.youlu.co
+
+============================================================
+补充删除（合并题，无法拆分）
+============================================================
+原 L3649（现约 L3274）：2024年408统考第26题与第27题被合并为一条记录，
+题干残留【皮皮灰】A.位图法，选项却是第27题的伙伴算法等，无法干净拆分 → 整条删除。
+
+最终结果：共删除 120 条，修复 172 条，剩余 532 条。
+校验：JSON 解析错误 0；placeholder/缺失答案 0；答案泄漏 0（唯一被正则标记的
+L2405 为论述题整段答案，属误报）；内容 JSON 中【皮皮灰】残留 0（仅存于 -- 注释）。
