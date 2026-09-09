@@ -7,7 +7,7 @@ import {
 import {
   getExamPapers, getExamPaperById, getPaperQuestions, createExamPaper,
   updateExamPaper, deleteExamPaper, publishExamPaper, closeExamPaper,
-  getExamResults, getPaperGrading, submitStudentGrade,
+  getExamResults, getPaperGrading, submitStudentGrade, getAiGradeSuggestion,
   ExamPaper, ExamResultDTO, PaperGradingVO, StudentGradeItem,
 } from "../../../services/examService";
 import { getMyCourses, ClassVO } from "../../../services/dashboardService";
@@ -67,6 +67,7 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
   const [gradingLoading, setGradingLoading] = useState(false);
   const [activeStudentIdx, setActiveStudentIdx] = useState(0);
   const [gradeInputs, setGradeInputs] = useState<Record<number, { score: string; comment: string }>>({});
+  const [aiScoringAnswerId, setAiScoringAnswerId] = useState<number | null>(null);
 
   // 结果排序
   const [sortKey, setSortKey] = useState<"score" | "studentNo" | "submitTime" | null>(null);
@@ -478,6 +479,23 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
     setGradeInputs(prev => ({ ...prev, [answerId]: { score: "", comment: "", ...(prev[answerId] || {}), ...patch } }));
   };
 
+  // AI 只提供建议，最终分数仍由教师确认并提交。
+  const suggestGradeWithAi = async (answerId: number) => {
+    setAiScoringAnswerId(answerId);
+    try {
+      const suggestion = await getAiGradeSuggestion(answerId);
+      updateGradeInput(answerId, {
+        score: String(suggestion.suggestedScore),
+        comment: suggestion.comment || "",
+      });
+      showToastMsg("AI 预评分已填入，请确认或修改后再提交");
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "AI 预评分失败");
+    } finally {
+      setAiScoringAnswerId(null);
+    }
+  };
+
   const submitGrading = async (recordId: number) => {
     const grades: StudentGradeItem[] = Object.entries(gradeInputs)
       .filter(([, v]) => v.score !== "" && !Number.isNaN(Number(v.score)))
@@ -670,6 +688,9 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
                           <div className="flex items-center gap-3 pt-1 flex-wrap">
                             <label className="text-xs text-muted-foreground whitespace-nowrap">评分（0~{q.maxScore ?? 0}）</label>
                             <input type="number" min={0} max={q.maxScore ?? undefined} value={g?.score ?? ""} onChange={e => updateGradeInput(q.answerId, { score: e.target.value })} className="w-24 px-2 py-1 border border-border rounded-md text-sm" />
+                            <button type="button" onClick={() => suggestGradeWithAi(q.answerId)} disabled={aiScoringAnswerId === q.answerId} className="px-2 py-1 text-xs border border-primary text-primary rounded-md hover:bg-primary/10 disabled:opacity-50">
+                              {aiScoringAnswerId === q.answerId ? "AI 评分中…" : "AI 预评分"}
+                            </button>
                             <input placeholder="评语（可选）" value={g?.comment ?? ""} onChange={e => updateGradeInput(q.answerId, { comment: e.target.value })} className="flex-1 min-w-[160px] px-2 py-1 border border-border rounded-md text-sm" />
                           </div>
                         )}
@@ -823,7 +844,7 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">考试管理</h2>
         <button onClick={openWizard} className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">
-          <Plus size={16} /> 创建考试
+          <Plus size={16} /> 手动组卷
         </button>
       </div>
 
@@ -1069,7 +1090,7 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
       ) : papers.length === 0 ? (
         <div className="bg-card rounded-lg border border-border p-10 text-center">
           <FileText size={32} className="mx-auto text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">暂无试卷，点击右上角「创建考试」</p>
+          <p className="text-sm text-muted-foreground">暂无试卷，点击右上角「手动组卷」</p>
         </div>
       ) : (
         <>

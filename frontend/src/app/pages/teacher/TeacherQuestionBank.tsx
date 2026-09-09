@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { CheckCircle, Plus, Upload, Brain, Target, FileText, Database, Search, BookMarked, X } from "lucide-react";
 import { getMyCourses, ClassVO } from "../../../services/dashboardService";
-import { getQuestionList, getQuestionById, updateQuestion, deleteQuestion, QuestionBank } from "../../../services/questionBankService";
+import { getQuestionList, getQuestionById, updateQuestion, deleteQuestion, createQuestion, updateQuestionLabels, QuestionBank } from "../../../services/questionBankService";
 import { Page } from "../../types";
 import { Tag } from "../../utils";
 
@@ -41,6 +41,13 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
     analysis: "",
   });
   const scrolledRef = useRef<number | null>(null);
+  const [showManualQuestionModal, setShowManualQuestionModal] = useState(false);
+  const [manualQuestion, setManualQuestion] = useState({
+    courseId: "", questionType: "SINGLE", difficulty: "MEDIUM", stem: "",
+    optionA: "", optionB: "", optionC: "", optionD: "", answer: "", analysis: "", knowledgePoints: "",
+  });
+  const [editingLabels, setEditingLabels] = useState<QuestionBank | null>(null);
+  const [labelDraft, setLabelDraft] = useState({ knowledgePoints: "", difficulty: "MEDIUM" });
 
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
 
@@ -210,6 +217,65 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
     }).catch(() => showToastMsg("删除失败"));
   };
 
+  const openManualQuestionModal = () => {
+    setManualQuestion({
+      courseId: selectedCourseId ? String(selectedCourseId) : (courses[0] ? String(courses[0].id) : ""),
+      questionType: "SINGLE", difficulty: "MEDIUM", stem: "", optionA: "", optionB: "", optionC: "", optionD: "", answer: "", analysis: "", knowledgePoints: "",
+    });
+    setShowManualQuestionModal(true);
+  };
+
+  const saveManualQuestion = async () => {
+    const choice = ["SINGLE", "MULTI"].includes(manualQuestion.questionType);
+    if (!manualQuestion.courseId || !manualQuestion.stem.trim() || !manualQuestion.answer.trim() || !manualQuestion.knowledgePoints.trim()) {
+      showToastMsg("请填写课程、题干、答案和知识点");
+      return;
+    }
+    if (choice && [manualQuestion.optionA, manualQuestion.optionB, manualQuestion.optionC, manualQuestion.optionD].some(v => !v.trim())) {
+      showToastMsg("选择题请完整填写 A、B、C、D 四个选项");
+      return;
+    }
+    try {
+      await createQuestion({
+        courseId: Number(manualQuestion.courseId),
+        questionType: manualQuestion.questionType,
+        difficulty: manualQuestion.difficulty,
+        knowledgePoints: manualQuestion.knowledgePoints.trim(),
+        aiGenerated: 0,
+        status: "APPROVED",
+        content: JSON.stringify({
+          stem: manualQuestion.stem.trim(),
+          options: choice ? { A: manualQuestion.optionA.trim(), B: manualQuestion.optionB.trim(), C: manualQuestion.optionC.trim(), D: manualQuestion.optionD.trim() } : {},
+          answer: manualQuestion.answer.trim(),
+          analysis: manualQuestion.analysis.trim(),
+        }),
+      });
+      setShowManualQuestionModal(false);
+      showToastMsg("题目已加入题库");
+      loadQuestions();
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "保存题目失败");
+    }
+  };
+
+  const openLabelEditor = (question: QuestionBank) => {
+    setEditingLabels(question);
+    setLabelDraft({ knowledgePoints: question.knowledgePoints || "", difficulty: question.difficulty || "MEDIUM" });
+  };
+
+  const saveLabels = async () => {
+    if (!editingLabels) return;
+    if (!labelDraft.knowledgePoints.trim()) { showToastMsg("请填写知识点"); return; }
+    try {
+      await updateQuestionLabels(editingLabels.id, labelDraft.knowledgePoints.trim(), labelDraft.difficulty);
+      setEditingLabels(null);
+      showToastMsg("知识点和难度标签已更新");
+      loadQuestions();
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "更新标签失败");
+    }
+  };
+
   const handleUploadExam = () => {
     setUploadedFile("计算机网络考研真题.pdf");
     showToastMsg("文件上传成功");
@@ -293,6 +359,9 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
           )}
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={openManualQuestionModal} className="flex items-center gap-2 px-4 py-2 border border-primary text-primary rounded-md text-sm hover:bg-primary/10">
+            <Plus size={14} />手动录题
+          </button>
           <button onClick={() => onNav("teacher-ai-quiz")} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
             <Plus size={14} />AI生成题目
           </button>
@@ -437,6 +506,7 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
                       加入组卷
                     </button>
                     <button onClick={() => handleEditClick(q)} className="px-2.5 py-1.5 text-xs border border-border rounded-md hover:bg-accent whitespace-nowrap">编辑</button>
+                    <button onClick={() => openLabelEditor(q)} className="px-2.5 py-1.5 text-xs border border-border rounded-md hover:bg-accent whitespace-nowrap">编辑标签</button>
                     <button onClick={() => handleDelete(q.id)} className="px-2.5 py-1.5 text-xs text-[#DD7373] hover:bg-[#E88383]/20 rounded-md whitespace-nowrap">删除</button>
                   </div>
                 </div>
@@ -461,7 +531,7 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
               <button onClick={() => { setShowUploadModal(false); setUploadedFile(null); setExtractedCount(0); }}><X size={16} /></button>
             </div>
             <p className="text-xs text-muted-foreground">上传已有的试卷或练习题，AI会自动识别并提取题目到题库中</p>
-            
+
             <div className={`border-2 border-dashed rounded-lg p-8 text-center ${uploadedFile ? "border-primary bg-primary/5" : "border-border hover:border-primary"} cursor-pointer transition-colors`} onClick={handleUploadExam}>
               {uploadedFile ? (
                 <div className="flex items-center justify-center gap-2 text-primary">
@@ -590,6 +660,38 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
                 {saving ? "保存中…" : "保存修改"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showManualQuestionModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-4">
+            <div className="flex items-center justify-between"><h3 className="font-semibold">手动录入题目</h3><button onClick={() => setShowManualQuestionModal(false)}><X size={16} /></button></div>
+            {courses.length === 0 ? <p className="text-sm text-[#DD7373]">暂无可用课程，请先在班级管理中创建课程。</p> : <>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <select value={manualQuestion.courseId} onChange={e => setManualQuestion(p => ({ ...p, courseId: e.target.value }))} className="px-3 py-2 border border-border rounded-md text-sm"><option value="">选择课程</option>{courses.map(c => <option key={c.id} value={c.id}>{c.courseName || c.className}</option>)}</select>
+                <select value={manualQuestion.questionType} onChange={e => setManualQuestion(p => ({ ...p, questionType: e.target.value }))} className="px-3 py-2 border border-border rounded-md text-sm">{questionTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select>
+                <select value={manualQuestion.difficulty} onChange={e => setManualQuestion(p => ({ ...p, difficulty: e.target.value }))} className="px-3 py-2 border border-border rounded-md text-sm">{difficulties.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}</select>
+              </div>
+              <textarea value={manualQuestion.stem} onChange={e => setManualQuestion(p => ({ ...p, stem: e.target.value }))} rows={3} placeholder="题干" className="w-full px-3 py-2 border border-border rounded-md text-sm resize-none" />
+              {["SINGLE", "MULTI"].includes(manualQuestion.questionType) && <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{(["A", "B", "C", "D"] as const).map(label => <input key={label} value={manualQuestion[`option${label}`]} onChange={e => setManualQuestion(p => ({ ...p, [`option${label}`]: e.target.value }))} placeholder={`选项 ${label}`} className="px-3 py-2 border border-border rounded-md text-sm" />)}</div>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><input value={manualQuestion.answer} onChange={e => setManualQuestion(p => ({ ...p, answer: e.target.value }))} placeholder={manualQuestion.questionType === "MULTI" ? "答案，如 A,B" : "参考答案"} className="px-3 py-2 border border-border rounded-md text-sm" /><input value={manualQuestion.knowledgePoints} onChange={e => setManualQuestion(p => ({ ...p, knowledgePoints: e.target.value }))} placeholder="知识点，如 网络层/路由协议" className="px-3 py-2 border border-border rounded-md text-sm" /></div>
+              <textarea value={manualQuestion.analysis} onChange={e => setManualQuestion(p => ({ ...p, analysis: e.target.value }))} rows={3} placeholder="答案解析（可选）" className="w-full px-3 py-2 border border-border rounded-md text-sm resize-none" />
+              <div className="flex justify-end gap-3"><button onClick={() => setShowManualQuestionModal(false)} className="px-4 py-2 border border-border rounded-md text-sm">取消</button><button onClick={saveManualQuestion} className="px-4 py-2 bg-primary text-white rounded-md text-sm">保存题目</button></div>
+            </>}
+          </div>
+        </div>
+      )}
+
+      {editingLabels && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg border border-border w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between"><h3 className="font-semibold">编辑题目标签</h3><button onClick={() => setEditingLabels(null)}><X size={16} /></button></div>
+            <p className="text-sm text-muted-foreground line-clamp-2">{stemOf(editingLabels)}</p>
+            <label className="block text-sm">知识点（支持一级/二级，如：网络层/路由协议）<input value={labelDraft.knowledgePoints} onChange={e => setLabelDraft(p => ({ ...p, knowledgePoints: e.target.value }))} className="mt-1 w-full px-3 py-2 border border-border rounded-md" /></label>
+            <label className="block text-sm">难度<select value={labelDraft.difficulty} onChange={e => setLabelDraft(p => ({ ...p, difficulty: e.target.value }))} className="mt-1 w-full px-3 py-2 border border-border rounded-md">{difficulties.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}</select></label>
+            <div className="flex justify-end gap-3"><button onClick={() => setEditingLabels(null)} className="px-4 py-2 border border-border rounded-md text-sm">取消</button><button onClick={saveLabels} className="px-4 py-2 bg-primary text-white rounded-md text-sm">保存标签</button></div>
           </div>
         </div>
       )}
