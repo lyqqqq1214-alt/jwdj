@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { CheckCircle, FileText } from "lucide-react";
 import { getMyCourses, ClassVO } from "../../../services/dashboardService";
-import { getGradingList, submitGrade, GradingItemVO } from "../../../services/examService";
+import { getGradingList, submitGrade, getAiGradeSuggestion, GradingItemVO } from "../../../services/examService";
 import { Tag } from "../../utils";
 
 function TA_Grading() {
@@ -12,6 +12,7 @@ function TA_Grading() {
   const [selectedAnswerId, setSelectedAnswerId] = useState<number | null>(null);
   const [score, setScore] = useState("");
   const [comment, setComment] = useState("");
+  const [aiGrading, setAiGrading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
@@ -56,6 +57,21 @@ function TA_Grading() {
       setComment("");
     } catch (e) {
       showToastMsg(e instanceof Error ? e.message : "批阅失败");
+    }
+  };
+
+  const handleAiSuggestion = async () => {
+    if (!currentItem) return;
+    setAiGrading(true);
+    try {
+      const suggestion = await getAiGradeSuggestion(currentItem.answerId);
+      setScore(String(suggestion.suggestedScore));
+      setComment(suggestion.comment || "");
+      showToastMsg("AI 预评分已填入，请确认或修改后提交");
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "AI 预评分失败");
+    } finally {
+      setAiGrading(false);
     }
   };
 
@@ -142,6 +158,9 @@ function TA_Grading() {
                     placeholder={`满分 ${currentItem.maxScore ?? "—"}`}
                     className="w-28 px-3 py-2 border border-border rounded-md text-sm"
                   />
+                  <button onClick={handleAiSuggestion} disabled={aiGrading} className="px-3 py-2 text-xs border border-primary text-primary rounded-md hover:bg-primary/10 disabled:opacity-50">
+                    {aiGrading ? "AI 评分中…" : "AI 预评分"}
+                  </button>
                   <span className="text-xs text-muted-foreground">/ {currentItem.maxScore ?? "—"} 分</span>
                 </div>
                 <div>
