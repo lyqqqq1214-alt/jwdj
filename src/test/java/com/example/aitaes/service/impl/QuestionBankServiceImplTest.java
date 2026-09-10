@@ -179,12 +179,16 @@ class QuestionBankServiceImplTest {
         @Test
         @DisplayName("QB-08: 应调用 AI 并返回去除首尾空白的解析文本")
         void shouldGenerateAndTrim() {
-            when(ollamaService.generate(anyString())).thenReturn("  解析内容  \n");
+            org.mockito.ArgumentCaptor<String> captor = org.mockito.ArgumentCaptor.forClass(String.class);
+            when(ollamaService.generate(captor.capture())).thenReturn("  解析内容  \n");
 
             String result = questionBankService.generateAnalysis(request);
 
             assertEquals("解析内容", result);
-            verify(ollamaService).generate(anyString());
+            String prompt = captor.getValue();
+            assertTrue(prompt.contains(request.getStem()));
+            assertTrue(prompt.contains(request.getAnswer()));
+            assertTrue(prompt.contains("【选项】"));
         }
 
         @Test
@@ -203,6 +207,14 @@ class QuestionBankServiceImplTest {
 
             assertThrows(BusinessException.class, () -> questionBankService.generateAnalysis(request));
             verify(ollamaService, never()).generate(anyString());
+        }
+
+        @Test
+        @DisplayName("QB-11: AI 调用抛异常时应向上传播")
+        void shouldPropagate_WhenAiThrows() {
+            when(ollamaService.generate(anyString())).thenThrow(new BusinessException(503, "AI服务暂不可用"));
+
+            assertThrows(BusinessException.class, () -> questionBankService.generateAnalysis(request));
         }
     }
 }

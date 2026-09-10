@@ -173,7 +173,9 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
     if (editing) {
       if (!form.stem.trim() || !form.answer.trim()) { showToastMsg("请先填写题干和答案"); return; }
       const options: Record<string, string> = {};
-      form.options.forEach(o => { if (o.label.trim()) options[o.label.trim()] = o.text; });
+      if (isChoice) {
+        form.options.forEach(o => { if (o.label.trim()) options[o.label.trim()] = o.text; });
+      }
       const analysis = await generateAnalysisCore({
         questionType: form.questionType, difficulty: form.difficulty,
         knowledgePoints: form.knowledgePoints, stem: form.stem, options, answer: form.answer,
