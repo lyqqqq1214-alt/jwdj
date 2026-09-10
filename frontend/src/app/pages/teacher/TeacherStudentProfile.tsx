@@ -13,6 +13,7 @@ import { getMyClasses, getClassStudents, ClassVO as ClsVO, StudentVO } from "../
 import { getStudentProfile, toggleFocusStudent, generateAiEvaluation, generateAiSuggestions, StudentProfile as StudentProfileData, LearningSuggestion } from "../../../services/portraitService";
 import { Page } from "../../types";
 import { Tag, normalizeAttendanceStatus, getAttendanceTagColor } from "../../utils";
+import { calculateCTAchievements, getCTRadarData, COURSE_OBJECTIVES } from "../../ctObjectives";
 
 function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { onNav: (p: Page) => void; initialStudentId?: number | null; initialCourseId?: number | null }) {
   const [activeTab, setActiveTab] = useState("score");
@@ -110,6 +111,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
     { key: "homework", label: "作业情况" },
     { key: "experiment", label: "实验报告" },
     { key: "knowledge", label: "知识掌握度" },
+    { key: "ct", label: "课程目标" },
     { key: "ai", label: "AI综合评价" },
   ];
 
@@ -431,6 +433,135 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
               </div>
             </div>
           )}
+
+          {activeTab === "ct" && profile && (() => {
+            const achievements = calculateCTAchievements(profile);
+            const radarData = getCTRadarData(achievements);
+            const overallScore = Math.round(
+              achievements.reduce((s, a) => s + a.score * a.objective.weight, 0)
+            );
+            const levelColor: Record<string, string> = {
+              "优秀": "green", "良好": "blue", "合格": "gray", "需加强": "red",
+            };
+            const levelBarColor: Record<string, string> = {
+              "优秀": "bg-[#74C2A0]", "良好": "bg-primary", "合格": "bg-[#F5A623]", "需加强": "bg-[#E88383]",
+            };
+            return (
+              <div className="space-y-4">
+                {/* 总览 */}
+                <div className="bg-card rounded-lg border border-border p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="font-medium text-sm">课程目标达成总览</h4>
+                      <p className="text-xs text-muted-foreground mt-1">依据《计算机网络》教学大纲 CT1-CT4 课程目标</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground">综合达成度</p>
+                      <p className="text-2xl font-bold text-primary">{overallScore}<span className="text-sm">分</span></p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 gap-3">
+                    {achievements.map(a => (
+                      <div key={a.objective.id} className="bg-muted rounded-lg p-3 text-center">
+                        <p className="text-xs text-muted-foreground">{a.objective.id}</p>
+                        <p className="text-lg font-bold mt-1">{a.score}</p>
+                        <Tag color={levelColor[a.level]}>{a.level}</Tag>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 雷达图 */}
+                <div className="bg-card rounded-lg border border-border p-5">
+                  <h4 className="font-medium text-sm mb-4">课程目标达成度雷达图</h4>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <RadarChart data={radarData}>
+                      <PolarGrid stroke="var(--border)" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12, fontWeight: 600 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10 }} />
+                      <Radar dataKey="value" stroke="#969BE7" fill="#969BE7" fillOpacity={0.35} name="达成度" strokeWidth={2} />
+                      <Tooltip
+                        formatter={(v: any, _n: any, p: any) => [`${v}分`, `${p.payload.name}`]}
+                        contentStyle={{ fontSize: "12px", padding: "8px 12px" }}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* 各目标详情 */}
+                <div className="bg-card rounded-lg border border-border p-5">
+                  <h4 className="font-medium text-sm mb-4">课程目标达成详情</h4>
+                  <div className="space-y-5">
+                    {achievements.map(a => (
+                      <div key={a.objective.id}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <span className="w-12 h-7 rounded bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">{a.objective.id}</span>
+                            <div>
+                              <p className="text-sm font-medium">{a.objective.name}
+                                <span className="ml-2 text-xs text-muted-foreground">（{a.objective.category}）</span>
+                              </p>
+                              <p className="text-xs text-muted-foreground">{a.objective.description}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold">{a.score}<span className="text-xs text-muted-foreground">/100</span></p>
+                            <Tag color={levelColor[a.level]}>{a.level}</Tag>
+                          </div>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2.5 mb-2">
+                          <div className={`h-2.5 rounded-full ${levelBarColor[a.level]}`} style={{ width: `${a.score}%` }} />
+                        </div>
+                        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                          {a.evidence.map((e, i) => (
+                            <span key={i}>· {e}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 支撑章节 */}
+                <div className="bg-card rounded-lg border border-border p-5">
+                  <h4 className="font-medium text-sm mb-3">课程目标与教学内容支撑关系</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-border text-muted-foreground">
+                          <th className="px-3 py-2 text-left">课程内容</th>
+                          {COURSE_OBJECTIVES.map(ct => (
+                            <th key={ct.id} className="px-3 py-2 text-center">{ct.id}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          { name: "第1章 概论", cts: ["CT1"] },
+                          { name: "第2章 应用层", cts: ["CT1", "CT2", "CT4"] },
+                          { name: "第3章 传输层", cts: ["CT1", "CT2", "CT4"] },
+                          { name: "第4章 网络层", cts: ["CT1", "CT2", "CT3", "CT4"] },
+                          { name: "第5章 链路层与局域网", cts: ["CT1", "CT2", "CT3", "CT4"] },
+                          { name: "小班讨论", cts: ["CT4"] },
+                          { name: "课程实验", cts: ["CT4"] },
+                          { name: "课程设计", cts: ["CT4"] },
+                        ].map(row => (
+                          <tr key={row.name} className="border-b border-border last:border-0">
+                            <td className="px-3 py-2">{row.name}</td>
+                            {COURSE_OBJECTIVES.map(ct => (
+                              <td key={ct.id} className="px-3 py-2 text-center">
+                                {row.cts.includes(ct.id) ? <span className="text-primary">●</span> : <span className="text-muted-foreground/30">○</span>}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {activeTab === "ai" && (
             <div className="space-y-4">
