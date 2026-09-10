@@ -36,9 +36,9 @@ aitaes:
   ai:
     ollama:
       # 默认使用本机 Ollama；仅监听 127.0.0.1，不会把模型服务暴露到公网。
-      base-url: ${AI_BASE_URL:http://127.0.0.1:11434/v1}
-      api-key: ${AI_API_KEY:ollama}
-      model: ${AI_MODEL:qwen2.5:7b}
+      base-url: ${AI_BASE_URL:https://api.deepseek.com/v1}
+      api-key: ${AI_API_KEY:sk-472270ade0f14244a25bfdc4dab69988}
+      model: ${AI_MODEL:deepseek-chat}
       connect-timeout: ${OLLAMA_CONNECT_TIMEOUT:10s}
       read-timeout: ${OLLAMA_READ_TIMEOUT:300s}
       max-attempts: ${OLLAMA_MAX_ATTEMPTS:3}

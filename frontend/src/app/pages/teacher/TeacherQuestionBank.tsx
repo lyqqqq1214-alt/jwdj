@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { CheckCircle, Plus, Upload, Brain, Target, FileText, Database, Search, BookMarked, X } from "lucide-react";
 import { getMyCourses, ClassVO } from "../../../services/dashboardService";
-import { getQuestionList, getQuestionById, updateQuestion, deleteQuestion, createQuestion, updateQuestionLabels, generateQuestionAnalysis, QuestionBank } from "../../../services/questionBankService";
+import { getQuestionList, getQuestionById, updateQuestion, deleteQuestion, createQuestion, generateQuestionAnalysis, QuestionBank } from "../../../services/questionBankService";
 import { Page } from "../../types";
 import { Tag } from "../../utils";
 
@@ -47,9 +47,6 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
     courseId: "", questionType: "SINGLE", difficulty: "MEDIUM", stem: "",
     optionA: "", optionB: "", optionC: "", optionD: "", answer: "", analysis: "", knowledgePoints: "",
   });
-  const [editingLabels, setEditingLabels] = useState<QuestionBank | null>(null);
-  const [labelDraft, setLabelDraft] = useState({ knowledgePoints: "", difficulty: "MEDIUM" });
-
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
 
   // 加载课程列表
@@ -303,24 +300,6 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
     }
   };
 
-  const openLabelEditor = (question: QuestionBank) => {
-    setEditingLabels(question);
-    setLabelDraft({ knowledgePoints: question.knowledgePoints || "", difficulty: question.difficulty || "MEDIUM" });
-  };
-
-  const saveLabels = async () => {
-    if (!editingLabels) return;
-    if (!labelDraft.knowledgePoints.trim()) { showToastMsg("请填写知识点"); return; }
-    try {
-      await updateQuestionLabels(editingLabels.id, labelDraft.knowledgePoints.trim(), labelDraft.difficulty);
-      setEditingLabels(null);
-      showToastMsg("知识点和难度标签已更新");
-      loadQuestions();
-    } catch (e) {
-      showToastMsg(e instanceof Error ? e.message : "更新标签失败");
-    }
-  };
-
   const handleUploadExam = () => {
     setUploadedFile("计算机网络考研真题.pdf");
     showToastMsg("文件上传成功");
@@ -551,7 +530,6 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
                       加入组卷
                     </button>
                     <button onClick={() => handleEditClick(q)} className="px-2.5 py-1.5 text-xs border border-border rounded-md hover:bg-accent whitespace-nowrap">编辑</button>
-                    <button onClick={() => openLabelEditor(q)} className="px-2.5 py-1.5 text-xs border border-border rounded-md hover:bg-accent whitespace-nowrap">编辑标签</button>
                     <button onClick={() => handleDelete(q.id)} className="px-2.5 py-1.5 text-xs text-[#DD7373] hover:bg-[#E88383]/20 rounded-md whitespace-nowrap">删除</button>
                   </div>
                 </div>
@@ -742,18 +720,6 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
               </div>
               <div className="flex justify-end gap-3"><button onClick={() => setShowManualQuestionModal(false)} className="px-4 py-2 border border-border rounded-md text-sm">取消</button><button onClick={saveManualQuestion} className="px-4 py-2 bg-primary text-white rounded-md text-sm">保存题目</button></div>
             </>}
-          </div>
-        </div>
-      )}
-
-      {editingLabels && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg border border-border w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between"><h3 className="font-semibold">编辑题目标签</h3><button onClick={() => setEditingLabels(null)}><X size={16} /></button></div>
-            <p className="text-sm text-muted-foreground line-clamp-2">{stemOf(editingLabels)}</p>
-            <label className="block text-sm">知识点（支持一级/二级，如：网络层/路由协议）<input value={labelDraft.knowledgePoints} onChange={e => setLabelDraft(p => ({ ...p, knowledgePoints: e.target.value }))} className="mt-1 w-full px-3 py-2 border border-border rounded-md" /></label>
-            <label className="block text-sm">难度<select value={labelDraft.difficulty} onChange={e => setLabelDraft(p => ({ ...p, difficulty: e.target.value }))} className="mt-1 w-full px-3 py-2 border border-border rounded-md">{difficulties.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}</select></label>
-            <div className="flex justify-end gap-3"><button onClick={() => setEditingLabels(null)} className="px-4 py-2 border border-border rounded-md text-sm">取消</button><button onClick={saveLabels} className="px-4 py-2 bg-primary text-white rounded-md text-sm">保存标签</button></div>
           </div>
         </div>
       )}
