@@ -38,7 +38,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2000); };
 
-  const refreshTAs = () => setTaList(getTAsByTeacher(teacherId));
+  const refreshTAs = async () => setTaList(await getTAsByTeacher(teacherId));
 
   // Fetch classes on mount
   useEffect(() => {
@@ -102,11 +102,11 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
     }
   };
 
-  const handleCreateTA = () => {
+  const handleCreateTA = async () => {
     if (!newTA.staffId || !newTA.name) return;
     try {
-      createTA({ staffId: newTA.staffId, name: newTA.name, teacherId });
-      refreshTAs();
+      await createTA({ staffId: newTA.staffId, name: newTA.name, teacherId });
+      await refreshTAs();
       setShowAddTAModal(false);
       setNewTA({ staffId: "", name: "" });
       showToast("助教创建成功");
@@ -115,17 +115,18 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
     }
   };
 
-  const handleDeleteTA = (staffId: string) => {
+  const handleDeleteTA = async (staffId: string) => {
     if (!confirm("确认删除该助教？相关权限配置将一并清除。")) return;
-    deleteTA(staffId);
-    refreshTAs();
+    const target = taList.find(t => t.staffId === staffId); if (!target) return;
+    await deleteTA(target.id);
+    await refreshTAs();
     showToast("助教已删除");
   };
 
-  const handleToggleTAStatus = (ta: TeachingAssistant) => {
+  const handleToggleTAStatus = async (ta: TeachingAssistant) => {
     const next = ta.status === "active" ? "disabled" : "active";
-    setTAStatus(ta.staffId, next);
-    refreshTAs();
+    await setTAStatus(ta.id, next);
+    await refreshTAs();
   };
 
   const openTAConfig = (taStaffId?: string) => {
@@ -140,28 +141,27 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
     setShowTAConfigModal(true);
   };
 
-  const handleTAConfig = () => {
+  const handleTAConfig = async () => {
     if (!selectedTA) return;
     if (selectedClassId) {
-      assignTAToClass(selectedTA, selectedClassId, taPerms);
+      const target = taList.find(t => t.staffId === selectedTA); if (!target) return;
+      await assignTAToClass(target.id, selectedClassId, taPerms);
     } else {
       // 无班级上下文时，仅更新全局权限（不改变已分配班级）
-      const current = getTAPermissions(selectedTA);
-      const updated: TAPermissions = { ...current, ...taPerms };
-      // 使用 assignTAToClass 传入当前已有的第一个班级以触发更新，或直接用 updateTAPermissions
-      import("../../../services/taService").then(m => m.updateTAPermissions(selectedTA, updated));
+      showToast("请先选择一个课程后再保存权限"); return;
     }
     setShowTAConfigModal(false);
     setSelectedTA("");
     setTaPerms({ canImport: false, canGrade: false, canViewProfile: false });
-    refreshTAs();
+    await refreshTAs();
     showToast("权限已保存");
   };
 
-  const handleRemoveTAFromClass = (taId: string) => {
+  const handleRemoveTAFromClass = async (taId: string) => {
     if (selectedClassId) {
-      removeTAFromClass(taId, selectedClassId);
-      refreshTAs();
+      const target = taList.find(t => t.staffId === taId); if (!target) return;
+      await removeTAFromClass(target.id, selectedClassId);
+      await refreshTAs();
       showToast("已移除该助教");
     }
   };
