@@ -119,8 +119,8 @@ export default function App() {
         {/* Admin pages */}
         {page === "admin-dashboard" && <AdminDashboard />}
         {page === "admin-teachers" && <AdminTeacherManagement />}
-        {page === "admin-courses" && <AdminCourses />}
         {page === "admin-users" && <AdminUsers />}
+        {page === "admin-courses" && <AdminCourses />}
         {page === "admin-ai-ops" && <AdminAIOpsCenter />}
         {page === "admin-audit" && <AdminAuditLogs />}
         {page === "admin-config" && <AdminConfig />}

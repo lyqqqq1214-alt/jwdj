@@ -9,6 +9,8 @@ import com.example.aitaes.entity.Course;
 import com.example.aitaes.entity.Student;
 import com.example.aitaes.entity.Teacher;
 import com.example.aitaes.entity.User;
+import com.example.aitaes.dto.AdminCourseCreateDTO;
+import jakarta.validation.Valid;
 import com.example.aitaes.mapper.CourseMapper;
 import com.example.aitaes.mapper.CourseStudentMapper;
 import com.example.aitaes.mapper.StudentMapper;
@@ -120,6 +122,28 @@ public class AdminController {
         courseMapper.deleteById(id);
         log.info("管理员删除课程: id={}", id);
         return Result.success("删除成功", null);
+    }
+
+    /** 管理员创建课程并指定授课教师。 */
+    @PostMapping("/courses")
+    public Result<Course> createCourse(@Valid @RequestBody AdminCourseCreateDTO request) {
+        if (teacherMapper.selectById(request.getTeacherId()) == null) {
+            throw new com.example.aitaes.common.BusinessException(400, "授课教师不存在");
+        }
+        if (courseMapper.selectCount(new LambdaQueryWrapper<Course>().eq(Course::getCourseNo, request.getCourseNo())) > 0) {
+            throw new com.example.aitaes.common.BusinessException(400, "课程编号已存在");
+        }
+        Course course = new Course();
+        course.setCourseNo(request.getCourseNo().trim());
+        course.setCourseName(request.getCourseName().trim());
+        course.setTeacherId(request.getTeacherId());
+        course.setSemester(request.getSemester().trim());
+        course.setClassName(request.getClassName());
+        course.setCredit(request.getCredit());
+        course.setCourseType(request.getCourseType());
+        course.setDescription(request.getDescription());
+        courseMapper.insert(course);
+        return Result.success("课程创建成功", course);
     }
 
     /**

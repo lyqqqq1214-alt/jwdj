@@ -47,6 +47,20 @@ export interface PageResult<T> {
   pages: number;
 }
 
+export interface AdminUser {
+  id: number;
+  username: string;
+  name: string;
+  role: "ADMIN" | "TEACHER" | "ASSISTANT" | "STUDENT";
+  status: "ACTIVE" | "DISABLED";
+  college?: string;
+  major?: string;
+  className?: string;
+  grade?: string;
+  createTime?: string;
+  lastLoginTime?: string;
+}
+
 // ===== 管理员端接口 =====
 
 /** 系统总览统计 */
@@ -70,6 +84,11 @@ export async function deleteAdminCourse(id: number) {
   await api.delete(`/admin/courses/${id}`);
 }
 
+export async function createAdminCourse(params: Partial<AdminCourse> & { courseNo: string; courseName: string; teacherId: number; semester: string }) {
+  const res = await api.post("/admin/courses", params);
+  return res.data as AdminCourse;
+}
+
 /** 全部学生列表 */
 export async function getAdminStudents(
   pageNum: number,
@@ -84,3 +103,17 @@ export async function getAdminStudents(
 export async function deleteAdminStudent(id: number) {
   await api.delete(`/admin/students/${id}`);
 }
+
+export async function getAdminUsers(pageNum = 1, pageSize = 200, keyword?: string, role?: string) {
+  const res = await api.get("/admin/users", { params: { pageNum, pageSize, keyword, role } });
+  return res.data as PageResult<AdminUser>;
+}
+export async function createAdminUser(params: Partial<AdminUser> & { username: string; password: string; role: string }) {
+  const res = await api.post("/admin/users", params); return res.data as AdminUser;
+}
+export async function updateAdminUser(id: number, params: Partial<AdminUser>) {
+  const res = await api.put(`/admin/users/${id}`, params); return res.data as AdminUser;
+}
+export async function updateAdminUserStatus(id: number, status: "ACTIVE" | "DISABLED") { await api.put(`/admin/users/${id}/status`, { status }); }
+export async function resetAdminUserPassword(id: number) { const res = await api.put(`/admin/users/${id}/reset-password`); return res.data as { newPassword: string }; }
+export async function deleteAdminUser(id: number) { await api.delete(`/admin/users/${id}`); }
