@@ -8,10 +8,12 @@ import com.example.aitaes.common.ResultCode;
 import com.example.aitaes.entity.KnowledgePoint;
 import com.example.aitaes.entity.QuestionBank;
 import com.example.aitaes.entity.Teacher;
+import com.example.aitaes.dto.AnalysisGenerateRequest;
 import com.example.aitaes.dto.QuestionLabelUpdateRequest;
 import com.example.aitaes.mapper.KnowledgePointMapper;
 import com.example.aitaes.mapper.QuestionBankMapper;
 import com.example.aitaes.mapper.TeacherMapper;
+import com.example.aitaes.service.OllamaService;
 import com.example.aitaes.service.QuestionBankService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     private final QuestionBankMapper questionBankMapper;
     private final KnowledgePointMapper knowledgePointMapper;
     private final TeacherMapper teacherMapper;
+    private final OllamaService ollamaService;
 
     @Override
     public IPage<QuestionBank> page(int pageNum, int pageSize, Long courseId,
@@ -130,5 +133,39 @@ public class QuestionBankServiceImpl implements QuestionBankService {
                 new LambdaQueryWrapper<KnowledgePoint>()
                         .eq(KnowledgePoint::getCourseId, courseId)
                         .orderByAsc(KnowledgePoint::getSortOrder));
+    }
+
+    @Override
+    public String generateAnalysis(AnalysisGenerateRequest request) {
+        if (request == null || !StringUtils.hasText(request.getStem())
+                || !StringUtils.hasText(request.getAnswer())) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "题干和答案不能为空");
+        }
+        String analysis = ollamaService.generate(buildAnalysisPrompt(request));
+        return analysis == null ? "" : analysis.trim();
+    }
+
+    private String buildAnalysisPrompt(AnalysisGenerateRequest request) {
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("你是一名资深教师，请为下面这道题目撰写简洁、准确的解析。\n\n");
+        prompt.append("【题型】").append(StringUtils.hasText(request.getQuestionType())
+                ? request.getQuestionType() : "未指定").append("\n");
+        prompt.append("【难度】").append(StringUtils.hasText(request.getDifficulty())
+                ? request.getDifficulty() : "未指定").append("\n");
+        prompt.append("【知识点】").append(StringUtils.hasText(request.getKnowledgePoints())
+                ? request.getKnowledgePoints() : "未指定").append("\n");
+        prompt.append("【题干】").append(request.getStem()).append("\n");
+        boolean hasOptions = request.getOptions() != null && !request.getOptions().isEmpty();
+        if (hasOptions) {
+            prompt.append("【选项】\n");
+            request.getOptions().forEach((k, v) -> prompt.append(k).append(". ").append(v).append("\n"));
+        }
+        prompt.append("【答案】").append(request.getAnswer()).append("\n\n");
+        prompt.append("请直接返回解析正文：说明解题思路、该答案为何正确");
+        if (hasOptions) {
+            prompt.append("、其他选项为何不正确");
+        }
+        prompt.append("。不要输出任何额外说明、标题或代码块标记。");
+        return prompt.toString();
     }
 }

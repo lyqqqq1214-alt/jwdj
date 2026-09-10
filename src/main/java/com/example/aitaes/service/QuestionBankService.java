@@ -3,6 +3,7 @@ package com.example.aitaes.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.aitaes.entity.KnowledgePoint;
 import com.example.aitaes.entity.QuestionBank;
+import com.example.aitaes.dto.AnalysisGenerateRequest;
 import com.example.aitaes.dto.QuestionLabelUpdateRequest;
 
 import java.util.List;
@@ -45,4 +46,12 @@ public interface QuestionBankService {
      * 知识点树形结构
      */
     List<KnowledgePoint> getKnowledgeTree(Long courseId);
+
+    /**
+     * 根据题目内容调用 AI 生成解析文本
+     *
+     * @param request 题目内容
+     * @return 解析文本
+     */
+    String generateAnalysis(AnalysisGenerateRequest request);
 }

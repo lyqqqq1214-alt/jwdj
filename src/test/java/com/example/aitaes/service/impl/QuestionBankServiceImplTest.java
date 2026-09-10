@@ -5,12 +5,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.aitaes.common.BusinessException;
 import com.example.aitaes.common.ResultCode;
+import com.example.aitaes.dto.AnalysisGenerateRequest;
 import com.example.aitaes.entity.QuestionBank;
 import com.example.aitaes.entity.KnowledgePoint;
 import com.example.aitaes.entity.Teacher;
 import com.example.aitaes.mapper.QuestionBankMapper;
 import com.example.aitaes.mapper.KnowledgePointMapper;
 import com.example.aitaes.mapper.TeacherMapper;
+import com.example.aitaes.service.OllamaService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -34,6 +37,8 @@ class QuestionBankServiceImplTest {
     @Mock private KnowledgePointMapper knowledgePointMapper;
     @Mock private TeacherMapper teacherMapper;
     @InjectMocks private QuestionBankServiceImpl questionBankService;
+
+    @Mock private OllamaService ollamaService;
 
     private QuestionBank question;
 
@@ -151,6 +156,53 @@ class QuestionBankServiceImplTest {
 
             assertEquals(1, result.size());
             assertEquals("数据结构", result.get(0).getKpName());
+        }
+    }
+
+    @Nested
+    @DisplayName("generateAnalysis — AI 生成解析")
+    class GenerateAnalysis {
+
+        private AnalysisGenerateRequest request;
+
+        @BeforeEach
+        void setUp() {
+            request = new AnalysisGenerateRequest();
+            request.setQuestionType("SINGLE");
+            request.setDifficulty("MEDIUM");
+            request.setKnowledgePoints("网络层/路由协议");
+            request.setStem("以下哪个协议工作在传输层？");
+            request.setOptions(Map.of("A", "IP", "B", "TCP", "C", "ARP", "D", "ICMP"));
+            request.setAnswer("B");
+        }
+
+        @Test
+        @DisplayName("QB-08: 应调用 AI 并返回去除首尾空白的解析文本")
+        void shouldGenerateAndTrim() {
+            when(ollamaService.generate(anyString())).thenReturn("  解析内容  \n");
+
+            String result = questionBankService.generateAnalysis(request);
+
+            assertEquals("解析内容", result);
+            verify(ollamaService).generate(anyString());
+        }
+
+        @Test
+        @DisplayName("QB-09: 题干为空应抛出异常且不调用 AI")
+        void shouldThrow_WhenStemBlank() {
+            request.setStem("  ");
+
+            assertThrows(BusinessException.class, () -> questionBankService.generateAnalysis(request));
+            verify(ollamaService, never()).generate(anyString());
+        }
+
+        @Test
+        @DisplayName("QB-10: 答案为空应抛出异常且不调用 AI")
+        void shouldThrow_WhenAnswerBlank() {
+            request.setAnswer(null);
+
+            assertThrows(BusinessException.class, () -> questionBankService.generateAnalysis(request));
+            verify(ollamaService, never()).generate(anyString());
         }
     }
 }
