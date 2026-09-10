@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { CheckCircle, Plus, Upload, Brain, Target, FileText, Database, Search, BookMarked, X } from "lucide-react";
 import { getMyCourses, ClassVO } from "../../../services/dashboardService";
-import { getQuestionList, getQuestionById, updateQuestion, deleteQuestion, createQuestion, updateQuestionLabels, QuestionBank } from "../../../services/questionBankService";
+import { getQuestionList, getQuestionById, updateQuestion, deleteQuestion, createQuestion, updateQuestionLabels, generateQuestionAnalysis, QuestionBank } from "../../../services/questionBankService";
 import { Page } from "../../types";
 import { Tag } from "../../utils";
 
@@ -31,6 +31,7 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
   const [editing, setEditing] = useState<QuestionBank | null>(null);
   const [highlightId, setHighlightId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [generatingAnalysis, setGeneratingAnalysis] = useState(false);
   const [form, setForm] = useState({
     questionType: "SINGLE",
     difficulty: "EASY",
@@ -150,6 +151,48 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
       showToastMsg("保存失败，请重试");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const generateAnalysisCore = async (payload: {
+    questionType?: string; difficulty?: string; knowledgePoints?: string;
+    stem: string; options: Record<string, string>; answer: string;
+  }) => {
+    setGeneratingAnalysis(true);
+    try {
+      return await generateQuestionAnalysis(payload);
+    } catch (e) {
+      showToastMsg(e instanceof Error && e.message ? e.message : "AI 生成解析失败，请重试");
+      return null;
+    } finally {
+      setGeneratingAnalysis(false);
+    }
+  };
+
+  const handleGenerateAnalysis = async () => {
+    if (editing) {
+      if (!form.stem.trim() || !form.answer.trim()) { showToastMsg("请先填写题干和答案"); return; }
+      const options: Record<string, string> = {};
+      form.options.forEach(o => { if (o.label.trim()) options[o.label.trim()] = o.text; });
+      const analysis = await generateAnalysisCore({
+        questionType: form.questionType, difficulty: form.difficulty,
+        knowledgePoints: form.knowledgePoints, stem: form.stem, options, answer: form.answer,
+      });
+      if (analysis != null) setForm(f => ({ ...f, analysis }));
+    } else if (showManualQuestionModal) {
+      if (!manualQuestion.stem.trim() || !manualQuestion.answer.trim()) { showToastMsg("请先填写题干和答案"); return; }
+      const options: Record<string, string> = {};
+      if (["SINGLE", "MULTI"].includes(manualQuestion.questionType)) {
+        (["A", "B", "C", "D"] as const).forEach(l => {
+          const v = manualQuestion[`option${l}`].trim();
+          if (v) options[l] = v;
+        });
+      }
+      const analysis = await generateAnalysisCore({
+        questionType: manualQuestion.questionType, difficulty: manualQuestion.difficulty,
+        knowledgePoints: manualQuestion.knowledgePoints, stem: manualQuestion.stem, options, answer: manualQuestion.answer,
+      });
+      if (analysis != null) setManualQuestion(p => ({ ...p, analysis }));
     }
   };
 
@@ -649,7 +692,14 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
               </div>
 
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">解析</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs text-muted-foreground">解析</label>
+                  <button onClick={handleGenerateAnalysis} disabled={generatingAnalysis}
+                    className="flex items-center gap-1 text-xs text-primary hover:text-[#7F84D6] disabled:opacity-50">
+                    {generatingAnalysis ? <div className="w-3 h-3 border-2 border-primary/40 border-t-primary rounded-full animate-spin" /> : <Brain size={13} />}
+                    {generatingAnalysis ? "生成中…" : "AI 生成"}
+                  </button>
+                </div>
                 <textarea value={form.analysis} onChange={e => setForm(f => ({ ...f, analysis: e.target.value }))}
                   rows={3} className="w-full px-3 py-2 border border-border rounded-md text-sm resize-y" />
               </div>
@@ -677,7 +727,17 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
               <textarea value={manualQuestion.stem} onChange={e => setManualQuestion(p => ({ ...p, stem: e.target.value }))} rows={3} placeholder="题干" className="w-full px-3 py-2 border border-border rounded-md text-sm resize-none" />
               {["SINGLE", "MULTI"].includes(manualQuestion.questionType) && <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{(["A", "B", "C", "D"] as const).map(label => <input key={label} value={manualQuestion[`option${label}`]} onChange={e => setManualQuestion(p => ({ ...p, [`option${label}`]: e.target.value }))} placeholder={`选项 ${label}`} className="px-3 py-2 border border-border rounded-md text-sm" />)}</div>}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><input value={manualQuestion.answer} onChange={e => setManualQuestion(p => ({ ...p, answer: e.target.value }))} placeholder={manualQuestion.questionType === "MULTI" ? "答案，如 A,B" : "参考答案"} className="px-3 py-2 border border-border rounded-md text-sm" /><input value={manualQuestion.knowledgePoints} onChange={e => setManualQuestion(p => ({ ...p, knowledgePoints: e.target.value }))} placeholder="知识点，如 网络层/路由协议" className="px-3 py-2 border border-border rounded-md text-sm" /></div>
-              <textarea value={manualQuestion.analysis} onChange={e => setManualQuestion(p => ({ ...p, analysis: e.target.value }))} rows={3} placeholder="答案解析（可选）" className="w-full px-3 py-2 border border-border rounded-md text-sm resize-none" />
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs text-muted-foreground">解析</label>
+                  <button onClick={handleGenerateAnalysis} disabled={generatingAnalysis}
+                    className="flex items-center gap-1 text-xs text-primary hover:text-[#7F84D6] disabled:opacity-50">
+                    {generatingAnalysis ? <div className="w-3 h-3 border-2 border-primary/40 border-t-primary rounded-full animate-spin" /> : <Brain size={13} />}
+                    {generatingAnalysis ? "生成中…" : "AI 生成"}
+                  </button>
+                </div>
+                <textarea value={manualQuestion.analysis} onChange={e => setManualQuestion(p => ({ ...p, analysis: e.target.value }))} rows={3} placeholder="答案解析（可选）" className="w-full px-3 py-2 border border-border rounded-md text-sm resize-none" />
+              </div>
               <div className="flex justify-end gap-3"><button onClick={() => setShowManualQuestionModal(false)} className="px-4 py-2 border border-border rounded-md text-sm">取消</button><button onClick={saveManualQuestion} className="px-4 py-2 bg-primary text-white rounded-md text-sm">保存题目</button></div>
             </>}
           </div>

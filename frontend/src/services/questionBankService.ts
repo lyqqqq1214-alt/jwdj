@@ -80,3 +80,17 @@ export async function updateQuestionLabels(id: number, knowledgePoints: string, 
   const res = await api.patch(`/question-bank/${id}/labels`, { knowledgePoints, difficulty });
   return res.data as QuestionBank;
 }
+
+export interface AnalysisGenerateRequest {
+  questionType?: string;
+  difficulty?: string;
+  knowledgePoints?: string;
+  stem?: string;
+  options?: Record<string, string>;
+  answer?: string;
+}
+
+export async function generateQuestionAnalysis(params: AnalysisGenerateRequest) {
+  const res = await api.post('/question-bank/analysis/generate', params);
+  return res.data as string;
+}
