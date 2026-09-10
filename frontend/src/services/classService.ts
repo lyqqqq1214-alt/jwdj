@@ -59,8 +59,8 @@ export async function deleteClass(id: number) {
   await api.delete(`/classes/${id}`);
 }
 
-export async function getClassStudents(classId: number, keyword?: string) {
-  const res = await api.get(`/classes/${classId}/students`, { params: { keyword } });
+export async function getClassStudents(classId: number, className?: string, keyword?: string) {
+  const res = await api.get(`/classes/${classId}/students`, { params: { className: className || undefined, keyword } });
   return res.data as StudentVO[];
 }
 

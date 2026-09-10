@@ -393,10 +393,19 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
         List<KnowledgePoint> courseKps = knowledgePointMapper.selectList(
                 new LambdaQueryWrapper<KnowledgePoint>().eq(KnowledgePoint::getCourseId, courseId));
         Set<String> covered = kpCount.keySet();
-        List<String> uncovered = courseKps.stream()
+        // 出题目标：优先只取 level=3 的具体知识点；课程无 level=3 时回退为全部
+        List<KnowledgePoint> quizTargets = courseKps.stream()
+                .filter(kp -> kp.getLevel() != null && kp.getLevel() == 3)
+                .toList();
+        if (quizTargets.isEmpty()) {
+            quizTargets = courseKps;
+        }
+        List<String> uncovered = quizTargets.stream()
                 .map(KnowledgePoint::getKpName)
                 .filter(Objects::nonNull)
-                .filter(name -> !covered.contains(name.trim()))
+                .map(String::trim)
+                .filter(name -> !name.isEmpty())
+                .filter(name -> !isKpCovered(name, covered))
                 .distinct()
                 .toList();
         Set<String> courseKpNames = courseKps.stream()
@@ -792,6 +801,20 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
             }
             int idx = t.lastIndexOf('/');
             if (idx >= 0 && courseKpNames.contains(t.substring(idx + 1).trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 判断单个知识点名是否已被题库标签覆盖（支持「分类/知识点」层级格式） */
+    private boolean isKpCovered(String kpName, Set<String> coveredTags) {
+        if (coveredTags.contains(kpName)) {
+            return true;
+        }
+        for (String tag : coveredTags) {
+            int idx = tag.lastIndexOf('/');
+            if (idx >= 0 && tag.substring(idx + 1).trim().equals(kpName)) {
                 return true;
             }
         }

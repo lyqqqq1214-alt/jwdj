@@ -14,8 +14,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 /**
@@ -47,15 +45,14 @@ public class DataInitializer implements CommandLineRunner {
     private Long teacher2Id;
     private Long student1Id;
     private Long student2Id;
-    private Long course1Id;
-    private Long course2Id;
+    private Long courseId;
 
     private final Random random = new Random(42);
 
     @Override
     public void run(String... args) {
         log.info("开始初始化种子数据...");
-        
+
         initAdminUser();
         initTeacherUsers();
         initStudentUsers();
@@ -69,7 +66,7 @@ public class DataInitializer implements CommandLineRunner {
         initKnowledgeMastery();
         initQuestionBank();
         initExamPapers();
-        
+
         log.info("种子数据初始化完成");
     }
 
@@ -79,7 +76,7 @@ public class DataInitializer implements CommandLineRunner {
     private void initAdminUser() {
         User admin = userMapper.selectOne(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, "admin"));
-        
+
         if (admin == null) {
             admin = new User();
             admin.setUsername("admin");
@@ -101,7 +98,7 @@ public class DataInitializer implements CommandLineRunner {
         // 教师1: T00001
         User teacher1User = userMapper.selectOne(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, "T00001"));
-        
+
         if (teacher1User == null) {
             teacher1User = new User();
             teacher1User.setUsername("T00001");
@@ -110,7 +107,7 @@ public class DataInitializer implements CommandLineRunner {
             teacher1User.setStatus("ACTIVE");
             teacher1User.setFirstLogin(0);
             userMapper.insert(teacher1User);
-            
+
             Teacher teacher1 = new Teacher();
             teacher1.setUserId(teacher1User.getId());
             teacher1.setTeacherNo("T00001");
@@ -121,7 +118,7 @@ public class DataInitializer implements CommandLineRunner {
             teacher1.setTitle("教授");
             teacher1.setEmail("zjg@university.edu.cn");
             teacherMapper.insert(teacher1);
-            
+
             log.info("初始化教师账号: T00001 / 123456 (张建国)");
             teacher1Id = teacher1.getId();
             log.info("教师1 ID: {}", teacher1Id);
@@ -134,7 +131,7 @@ public class DataInitializer implements CommandLineRunner {
         // 教师2: T00002
         User teacher2User = userMapper.selectOne(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, "T00002"));
-        
+
         if (teacher2User == null) {
             teacher2User = new User();
             teacher2User.setUsername("T00002");
@@ -143,7 +140,7 @@ public class DataInitializer implements CommandLineRunner {
             teacher2User.setStatus("ACTIVE");
             teacher2User.setFirstLogin(0);
             userMapper.insert(teacher2User);
-            
+
             Teacher teacher2 = new Teacher();
             teacher2.setUserId(teacher2User.getId());
             teacher2.setTeacherNo("T00002");
@@ -154,7 +151,7 @@ public class DataInitializer implements CommandLineRunner {
             teacher2.setTitle("副教授");
             teacher2.setEmail("lml@university.edu.cn");
             teacherMapper.insert(teacher2);
-            
+
             log.info("初始化教师账号: T00002 / 123456 (李美玲)");
             teacher2Id = teacher2.getId();
         } else {
@@ -171,7 +168,7 @@ public class DataInitializer implements CommandLineRunner {
         // 学生1: 202426010101
         User student1User = userMapper.selectOne(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, "202426010101"));
-        
+
         if (student1User == null) {
             student1User = new User();
             student1User.setUsername("202426010101");
@@ -180,7 +177,7 @@ public class DataInitializer implements CommandLineRunner {
             student1User.setStatus("ACTIVE");
             student1User.setFirstLogin(0);
             userMapper.insert(student1User);
-            
+
             Student student1 = new Student();
             student1.setUserId(student1User.getId());
             student1.setStudentNo("202426010101");
@@ -192,7 +189,7 @@ public class DataInitializer implements CommandLineRunner {
             student1.setGrade("2024");
             student1.setEmail("202426010101@student.edu.cn");
             studentMapper.insert(student1);
-            
+
             log.info("初始化学生账号: 202426010101 / 123456 (张伟)");
             student1Id = student1.getId();
         } else {
@@ -204,7 +201,7 @@ public class DataInitializer implements CommandLineRunner {
         // 学生2: 202407010101
         User student2User = userMapper.selectOne(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, "202407010101"));
-        
+
         if (student2User == null) {
             student2User = new User();
             student2User.setUsername("202407010101");
@@ -213,7 +210,7 @@ public class DataInitializer implements CommandLineRunner {
             student2User.setStatus("ACTIVE");
             student2User.setFirstLogin(0);
             userMapper.insert(student2User);
-            
+
             Student student2 = new Student();
             student2.setUserId(student2User.getId());
             student2.setStudentNo("202407010101");
@@ -225,7 +222,7 @@ public class DataInitializer implements CommandLineRunner {
             student2.setGrade("2024");
             student2.setEmail("202407010101@student.edu.cn");
             studentMapper.insert(student2);
-            
+
             log.info("初始化学生账号: 202407010101 / 123456 (李娜)");
             student2Id = student2.getId();
         } else {
@@ -236,51 +233,25 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     /**
-     * 初始化课程
+     * 初始化课程（本项目仅保留「计算机网络」一门课）
      */
     private void initCourses() {
-        Course cs101 = courseMapper.selectOne(new LambdaQueryWrapper<Course>()
-                .eq(Course::getCourseNo, "CS101"));
-        if (cs101 == null) {
-            Course course1 = new Course();
-            course1.setCourseNo("CS101");
-            course1.setCourseName("数据结构与算法");
-            course1.setTeacherId(teacher1Id);
-            course1.setCredit(new BigDecimal("4.0"));
-            course1.setCourseType("必修");
-            course1.setSemester("2025-2026-1");
-            course1.setDescription("计算机科学与技术专业核心课程");
-            courseMapper.insert(course1);
-            course1Id = course1.getId();
-            log.info("创建课程: {} (ID={})", course1.getCourseName(), course1Id);
+        Course course = courseMapper.selectOne(new LambdaQueryWrapper<Course>()
+                .eq(Course::getCourseNo, "CS05102"));
+        if (course == null) {
+            Course c = new Course();
+            c.setCourseNo("CS05102");
+            c.setCourseName("计算机网络");
+            c.setTeacherId(teacher1Id);
+            c.setCredit(new BigDecimal("3.0"));
+            c.setCourseType("必修");
+            c.setSemester("2025-2026-1");
+            c.setDescription("网络通信原理与实践");
+            courseMapper.insert(c);
+            courseId = c.getId();
+            log.info("创建课程: {} (ID={})", c.getCourseName(), courseId);
         } else {
-            course1Id = cs101.getId();
-        }
-
-        Course cs102 = courseMapper.selectOne(new LambdaQueryWrapper<Course>()
-                .eq(Course::getCourseNo, "CS-NW-102"));
-        if (cs102 == null) {
-            Course course2 = new Course();
-            course2.setCourseNo("CS-NW-102");
-            course2.setCourseName("计算机网络");
-            course2.setTeacherId(teacher1Id);
-            course2.setCredit(new BigDecimal("3.0"));
-            course2.setCourseType("必修");
-            course2.setSemester("2025-2026-1");
-            course2.setDescription("网络通信原理与实践");
-            courseMapper.insert(course2);
-            course2Id = course2.getId();
-            log.info("创建课程: {} (ID={})", course2.getCourseName(), course2Id);
-        } else {
-            course2Id = cs102.getId();
-        }
-        // 确保 CS301 也归属张老师（如果存在）
-        Course cs301 = courseMapper.selectOne(new LambdaQueryWrapper<Course>()
-                .eq(Course::getCourseNo, "CS301"));
-        if (cs301 != null && !teacher1Id.equals(cs301.getTeacherId())) {
-            cs301.setTeacherId(teacher1Id);
-            courseMapper.updateById(cs301);
-            log.info("已将课程 CS301 (计算机网络) 重新分配给张老师");
+            courseId = course.getId();
         }
     }
 
@@ -288,17 +259,11 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化选课关联
      */
     private void initCourseStudents() {
-        List<Long> courses = new ArrayList<>(List.of(course1Id, course2Id));
-        Course cs301 = courseMapper.selectOne(new LambdaQueryWrapper<Course>().eq(Course::getCourseNo, "CS301"));
-        if (cs301 != null) courses.add(cs301.getId());
-
-        for (Long courseId : courses) {
-            if (courseStudentMapper.selectCount(new LambdaQueryWrapper<CourseStudent>()
-                    .eq(CourseStudent::getCourseId, courseId)) == 0) {
-                courseStudentMapper.insert(buildCourseStudent(courseId, student1Id, "2024级1班"));
-                courseStudentMapper.insert(buildCourseStudent(courseId, student2Id, "2024级1班"));
-                log.info("为课程 ID={} 添加选课学生", courseId);
-            }
+        if (courseStudentMapper.selectCount(new LambdaQueryWrapper<CourseStudent>()
+                .eq(CourseStudent::getCourseId, courseId)) == 0) {
+            courseStudentMapper.insert(buildCourseStudent(courseId, student1Id, "2024级1班"));
+            courseStudentMapper.insert(buildCourseStudent(courseId, student2Id, "2024级1班"));
+            log.info("为课程 ID={} 添加选课学生", courseId);
         }
     }
 
@@ -315,9 +280,8 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化考核及成绩记录
      */
     private void initAssessments() {
-        List<Long> courses = new ArrayList<>(List.of(course1Id, course2Id));
-        Course cs301 = courseMapper.selectOne(new LambdaQueryWrapper<Course>().eq(Course::getCourseNo, "CS301"));
-        if (cs301 != null) courses.add(cs301.getId());
+        if (assessmentMapper.selectCount(new LambdaQueryWrapper<Assessment>()
+                .eq(Assessment::getCourseId, courseId)) > 0) return;
 
         String[][] assessmentsData = {
                 {"作业1", "HOMEWORK", "100", "5", "2025-09-15"},
@@ -325,70 +289,56 @@ public class DataInitializer implements CommandLineRunner {
                 {"期末考试", "EXAM", "100", "25", "2026-01-10"},
         };
 
-        for (Long courseId : courses) {
-            if (assessmentMapper.selectCount(new LambdaQueryWrapper<Assessment>()
-                    .eq(Assessment::getCourseId, courseId)) > 0) continue;
+        for (String[] a : assessmentsData) {
+            Assessment assessment = new Assessment();
+            assessment.setCourseId(courseId);
+            assessment.setAssessmentName(a[0]);
+            assessment.setAssessmentType(a[1]);
+            assessment.setTotalScore(new BigDecimal(a[2]));
+            assessment.setQuestionCount(Integer.parseInt(a[3]));
+            assessment.setAssessmentDate(LocalDate.parse(a[4]));
+            assessment.setSemester("2025-2026-1");
+            assessment.setStatus("PUBLISHED");
+            assessmentMapper.insert(assessment);
 
-            String coursePrefix = courseId.equals(course1Id) ? "DS_" : "NW_";
-            for (int i = 0; i < assessmentsData.length; i++) {
-                String[] a = assessmentsData[i];
-                Assessment assessment = new Assessment();
-                assessment.setCourseId(courseId);
-                assessment.setAssessmentName(coursePrefix + a[0]);
-                assessment.setAssessmentType(a[1]);
-                assessment.setTotalScore(new BigDecimal(a[2]));
-                assessment.setQuestionCount(Integer.parseInt(a[3]));
-                assessment.setAssessmentDate(LocalDate.parse(a[4]));
-                assessment.setSemester("2025-2026-1");
-                assessment.setStatus("PUBLISHED");
-                assessmentMapper.insert(assessment);
-
-                for (int s = 0; s < 2; s++) {
-                    AssessmentRecord record = new AssessmentRecord();
-                    record.setAssessmentId(assessment.getId());
-                    record.setStudentId(s == 0 ? student1Id : student2Id);
-                    int baseScore = 75 + random.nextInt(20);
-                    record.setTotalScore(new BigDecimal(baseScore));
-                    record.setSubmitStatus("ON_TIME");
-                    record.setSubmitTime(LocalDate.parse(a[4]).atTime(14, 0));
-                    assessmentRecordMapper.insert(record);
-                }
+            for (int s = 0; s < 2; s++) {
+                AssessmentRecord record = new AssessmentRecord();
+                record.setAssessmentId(assessment.getId());
+                record.setStudentId(s == 0 ? student1Id : student2Id);
+                int baseScore = 75 + random.nextInt(20);
+                record.setTotalScore(new BigDecimal(baseScore));
+                record.setSubmitStatus("ON_TIME");
+                record.setSubmitTime(LocalDate.parse(a[4]).atTime(14, 0));
+                assessmentRecordMapper.insert(record);
             }
-            log.info("为课程 ID={} 创建考核数据", courseId);
         }
+        log.info("为课程 ID={} 创建考核数据", courseId);
     }
 
     /**
      * 初始化考勤记录
      */
     private void initAttendance() {
-        List<Long> courses = new ArrayList<>(List.of(course1Id, course2Id));
-        Course cs301 = courseMapper.selectOne(new LambdaQueryWrapper<Course>().eq(Course::getCourseNo, "CS301"));
-        if (cs301 != null) courses.add(cs301.getId());
+        if (attendanceMapper.selectCount(new LambdaQueryWrapper<Attendance>()
+                .eq(Attendance::getCourseId, courseId)) > 0) return;
 
         LocalDate startDate = LocalDate.of(2025, 9, 1);
-        String[] statusOptions = {"出勤", "出勤", "出勤", "出勤", "出勤", "出勤", "出勤", "迟到", "请假", "缺勤"};
 
-        for (Long courseId : courses) {
-            if (attendanceMapper.selectCount(new LambdaQueryWrapper<Attendance>()
-                    .eq(Attendance::getCourseId, courseId)) > 0) continue;
-
-            for (int week = 0; week < 4; week++) { // 4周即可，减少初始化时间
-                LocalDate date = startDate.plusWeeks(week);
-                for (Long studentId : new Long[]{student1Id, student2Id}) {
-                    Attendance att = new Attendance();
-                    att.setCourseId(courseId);
-                    att.setStudentId(studentId);
-                    att.setAttendanceDate(date);
-                    // 故意让考勤率低一点
-                    att.setStatus(random.nextInt(10) < 7 ? "出勤" : "缺勤");
-                    att.setWeekNo(week + 1);
-                    att.setSemester("2025-2026-1");
-                    attendanceMapper.insert(att);
-                }
+        for (int week = 0; week < 4; week++) { // 4周即可，减少初始化时间
+            LocalDate date = startDate.plusWeeks(week);
+            for (Long studentId : new Long[]{student1Id, student2Id}) {
+                Attendance att = new Attendance();
+                att.setCourseId(courseId);
+                att.setStudentId(studentId);
+                att.setAttendanceDate(date);
+                // 故意让考勤率低一点
+                att.setStatus(random.nextInt(10) < 7 ? "出勤" : "缺勤");
+                att.setWeekNo(week + 1);
+                att.setSemester("2025-2026-1");
+                attendanceMapper.insert(att);
             }
-            log.info("为课程 ID={} 创建考勤记录", courseId);
         }
+        log.info("为课程 ID={} 创建考勤记录", courseId);
     }
 
     /**
@@ -396,15 +346,15 @@ public class DataInitializer implements CommandLineRunner {
      */
     private void initExperiments() {
         if (experimentMapper.selectCount(new LambdaQueryWrapper<Experiment>()
-                .eq(Experiment::getCourseId, course1Id)) > 0) {
+                .eq(Experiment::getCourseId, courseId)) > 0) {
             log.debug("实验数据已存在，跳过初始化");
             return;
         }
         String[][] experiments = {
-                {"实验1：线性表应用", "1", "92", "2025-09-28"},
-                {"实验2：树与图操作", "2", "88", "2025-10-26"},
-                {"实验3：排序算法对比", "3", "90", "2025-11-30"},
-                {"实验4：综合设计", "4", "85", "2025-12-20"},
+                {"实验1：网络协议分析", "1", "92", "2025-09-28"},
+                {"实验2：TCP连接与抓包", "2", "88", "2025-10-26"},
+                {"实验3：路由与子网划分", "3", "90", "2025-11-30"},
+                {"实验4：综合组网实验", "4", "85", "2025-12-20"},
         };
 
         int[][] expScores = {
@@ -416,7 +366,7 @@ public class DataInitializer implements CommandLineRunner {
             String[] e = experiments[i];
             for (int s = 0; s < 2; s++) {
                 Experiment exp = new Experiment();
-                exp.setCourseId(course1Id);
+                exp.setCourseId(courseId);
                 exp.setStudentId(s == 0 ? student1Id : student2Id);
                 exp.setExperimentName(e[0]);
                 exp.setExperimentNo(Integer.parseInt(e[1]));
@@ -433,106 +383,85 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化知识点掌握度
      */
     private void initKnowledgeMastery() {
-        List<Long> courses = new ArrayList<>(List.of(course1Id, course2Id));
-        Course cs301 = courseMapper.selectOne(new LambdaQueryWrapper<Course>().eq(Course::getCourseNo, "CS301"));
-        if (cs301 != null) courses.add(cs301.getId());
+        if (studentKpMasteryMapper.selectCount(new LambdaQueryWrapper<StudentKpMastery>()
+                .eq(StudentKpMastery::getCourseId, courseId)) > 0) return;
 
-        // 数据结构知识点
-        String[] dsKps = {"链表", "栈与队列", "二叉树", "图的遍历", "哈希表"};
         // 计算机网络知识点
         String[] nwKps = {"OSI七层模型", "TCP/IP协议", "HTTP/HTTPS", "路由算法", "拥塞控制"};
 
-        for (Long courseId : courses) {
-            if (studentKpMasteryMapper.selectCount(new LambdaQueryWrapper<StudentKpMastery>()
-                    .eq(StudentKpMastery::getCourseId, courseId)) > 0) continue;
-
-            String[] kps = (courseId.equals(course1Id)) ? dsKps : nwKps;
-            for (String kpName : kps) {
-                for (int s = 0; s < 2; s++) {
-                    StudentKpMastery kp = new StudentKpMastery();
-                    kp.setStudentId(s == 0 ? student1Id : student2Id);
-                    kp.setCourseId(courseId);
-                    kp.setKpName(kpName);
-                    kp.setMasteryRate(new BigDecimal(70 + random.nextInt(25)));
-                    kp.setClassAvgRate(new BigDecimal(75 + random.nextInt(10)));
-                    studentKpMasteryMapper.insert(kp);
-                }
+        for (String kpName : nwKps) {
+            for (int s = 0; s < 2; s++) {
+                StudentKpMastery kp = new StudentKpMastery();
+                kp.setStudentId(s == 0 ? student1Id : student2Id);
+                kp.setCourseId(courseId);
+                kp.setKpName(kpName);
+                kp.setMasteryRate(new BigDecimal(70 + random.nextInt(25)));
+                kp.setClassAvgRate(new BigDecimal(75 + random.nextInt(10)));
+                studentKpMasteryMapper.insert(kp);
             }
-            log.info("为课程 ID={} 创建知识点掌握度数据", courseId);
         }
+        log.info("为课程 ID={} 创建知识点掌握度数据", courseId);
     }
 
     /**
      * 初始化题库数据
      */
     private void initQuestionBank() {
-        List<Long> courses = new ArrayList<>(List.of(course1Id, course2Id));
-        
-        for (Long courseId : courses) {
-            if (questionBankMapper.selectCount(new LambdaQueryWrapper<QuestionBank>()
-                    .eq(QuestionBank::getCourseId, courseId)) > 0) continue;
+        if (questionBankMapper.selectCount(new LambdaQueryWrapper<QuestionBank>()
+                .eq(QuestionBank::getCourseId, courseId)) > 0) return;
 
-            // 为每个课程创建10道题目
-            String[] questionTypes = {"SINGLE", "MULTI", "FILL", "SHORT"};
-            String[] difficulties = {"EASY", "MEDIUM", "HARD"};
-            
-            for (int i = 0; i < 10; i++) {
-                QuestionBank question = new QuestionBank();
-                question.setCourseId(courseId);
-                question.setTeacherId(teacher1Id);
-                question.setQuestionType(questionTypes[i % questionTypes.length]);
-                question.setDifficulty(difficulties[i % difficulties.length]);
-                
-                // 根据课程创建不同的题目内容
-                String courseName = courseId.equals(course1Id) ? "数据结构" : "计算机网络";
-                String content = String.format("{\"stem\":\"%s课程第%d题\",\"options\":[\"选项A\",\"选项B\",\"选项C\",\"选项D\"],\"answer\":\"A\",\"analysis\":\"这是解析\"}", 
-                        courseName, i + 1);
-                question.setContent(content);
-                question.setKnowledgePoints("知识点" + (i + 1));
-                question.setAiGenerated(0);
-                question.setQualityClarity(4);
-                question.setQualityDifficulty(4);
-                question.setQualityAmbiguity(5);
-                question.setQualityKpCoverage(4);
-                question.setSocraticMode(0);
-                question.setUsageCount(0);
-                question.setStatus("PUBLISHED");
-                
-                questionBankMapper.insert(question);
-            }
-            log.info("为课程 ID={} 创建题库数据", courseId);
+        // 创建10道题目
+        String[] questionTypes = {"SINGLE", "MULTI", "FILL", "SHORT"};
+        String[] difficulties = {"EASY", "MEDIUM", "HARD"};
+
+        for (int i = 0; i < 10; i++) {
+            QuestionBank question = new QuestionBank();
+            question.setCourseId(courseId);
+            question.setTeacherId(teacher1Id);
+            question.setQuestionType(questionTypes[i % questionTypes.length]);
+            question.setDifficulty(difficulties[i % difficulties.length]);
+
+            String content = String.format("{\"stem\":\"计算机网络课程第%d题\",\"options\":[\"选项A\",\"选项B\",\"选项C\",\"选项D\"],\"answer\":\"A\",\"analysis\":\"这是解析\"}",
+                    i + 1);
+            question.setContent(content);
+            question.setKnowledgePoints("知识点" + (i + 1));
+            question.setAiGenerated(0);
+            question.setQualityClarity(4);
+            question.setQualityDifficulty(4);
+            question.setQualityAmbiguity(5);
+            question.setQualityKpCoverage(4);
+            question.setSocraticMode(0);
+            question.setUsageCount(0);
+            question.setStatus("PUBLISHED");
+
+            questionBankMapper.insert(question);
         }
+        log.info("为课程 ID={} 创建题库数据", courseId);
     }
 
     /**
      * 初始化试卷数据
      */
     private void initExamPapers() {
-        List<Long> courses = new ArrayList<>(List.of(course1Id, course2Id));
-        
-        for (Long courseId : courses) {
-            if (examPaperMapper.selectCount(new LambdaQueryWrapper<ExamPaper>()
-                    .eq(ExamPaper::getCourseId, courseId)) > 0) continue;
+        if (examPaperMapper.selectCount(new LambdaQueryWrapper<ExamPaper>()
+                .eq(ExamPaper::getCourseId, courseId)) > 0) return;
 
-            // 为每个课程创建2份试卷
-            for (int i = 0; i < 2; i++) {
-                ExamPaper paper = new ExamPaper();
-                paper.setCourseId(courseId);
-                paper.setTeacherId(teacher1Id);
-                
-                String courseName = courseId.equals(course1Id) ? "数据结构" : "计算机网络";
-                paper.setPaperName(String.format("%s课程测试%d", courseName, i + 1));
-                paper.setTotalScore(new BigDecimal(100));
-                paper.setDurationMinutes(90);
-                paper.setStartTime(LocalDateTime.now().plusDays(7 + i));
-                paper.setEndTime(LocalDateTime.now().plusDays(8 + i));
-                paper.setTargetClasses("1,2");
-                paper.setTargetStudents("1,2");
-                paper.setStatus("PUBLISHED");
-                
-                examPaperMapper.insert(paper);
-            }
-            log.info("为课程 ID={} 创建试卷数据", courseId);
+        // 创建2份试卷
+        for (int i = 0; i < 2; i++) {
+            ExamPaper paper = new ExamPaper();
+            paper.setCourseId(courseId);
+            paper.setTeacherId(teacher1Id);
+            paper.setPaperName(String.format("计算机网络课程测试%d", i + 1));
+            paper.setTotalScore(new BigDecimal(100));
+            paper.setDurationMinutes(90);
+            paper.setStartTime(LocalDateTime.now().plusDays(7 + i));
+            paper.setEndTime(LocalDateTime.now().plusDays(8 + i));
+            paper.setTargetClasses("1,2");
+            paper.setTargetStudents("1,2");
+            paper.setStatus("PUBLISHED");
+
+            examPaperMapper.insert(paper);
         }
+        log.info("为课程 ID={} 创建试卷数据", courseId);
     }
 }

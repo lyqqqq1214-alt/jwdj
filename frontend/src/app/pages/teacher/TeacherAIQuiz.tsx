@@ -1,11 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CheckCircle, FileText, Upload, Zap, GripVertical, Brain, Send, Database, X } from "lucide-react";
 import { generateQuestions } from "../../../services/aiQuizService";
+import { getKnowledgeTree, KnowledgePoint } from "../../../services/questionBankService";
+import { getMyCourses, ClassVO } from "../../../services/dashboardService";
 import { Page } from "../../types";
 import { Tag } from "../../utils";
-import { questionCategories, aiGeneratedQuestions } from "../../constants";
 
-function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
+function TeacherAIQuiz({ onNav, preset, onClearPreset }: {
+  onNav: (p: Page) => void;
+  preset?: { courseId: number; knowledgePoints: string[] } | null;
+  onClearPreset?: () => void;
+}) {
+  const [courses, setCourses] = useState<ClassVO[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [knowledgeTree, setKnowledgeTree] = useState<KnowledgePoint[]>([]);
   const [params, setParams] = useState({
     topics: [] as string[],
     types: [] as string[],
@@ -13,7 +21,7 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
     difficulty: "中等",
     socrates: false,
   });
-  const [generatedQuestions, setGeneratedQuestions] = useState<any[]>(aiGeneratedQuestions);
+  const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [viewMode, setViewMode] = useState<"preview" | "edit">("preview");
   const [uploadedReference, setUploadedReference] = useState<string | null>(null);
@@ -31,6 +39,57 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
   const [selectedQuestionsForExam, setSelectedQuestionsForExam] = useState<number[]>([]);
 
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
+
+  // 加载课程列表；带预设时直接选中预设课程
+  useEffect(() => {
+    getMyCourses().then(cs => {
+      setCourses(cs || []);
+      if (preset) {
+        setSelectedCourseId(preset.courseId);
+      } else if (cs.length > 0) {
+        setSelectedCourseId(cs[0].id);
+      }
+    }).catch(() => setCourses([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 选中课程 → 加载真实知识点
+  useEffect(() => {
+    if (selectedCourseId == null) { setKnowledgeTree([]); return; }
+    getKnowledgeTree(selectedCourseId)
+      .then(kps => setKnowledgeTree(kps || []))
+      .catch(() => setKnowledgeTree([]));
+  }, [selectedCourseId]);
+
+  // 接收「AI辅助覆盖」预设：预填知识点/数量/题型，手动生成
+  useEffect(() => {
+    if (!preset) return;
+    const kps = preset.knowledgePoints || [];
+    setParams(p => ({
+      ...p,
+      topics: kps,
+      types: ["单选"],
+      count: Math.min(kps.length, 20),
+    }));
+    onClearPreset?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preset]);
+
+  // 真实可选项：优先 level=3 具体知识点，无则回退全部；按 kpCategory 分组
+  const selectableKps = knowledgeTree.filter(kp => kp.level === 3);
+  const kpsToShow = selectableKps.length > 0 ? selectableKps : knowledgeTree;
+  const groupedKps = kpsToShow.reduce<Record<string, KnowledgePoint[]>>((acc, kp) => {
+    const cat = kp.kpCategory || "未分类";
+    (acc[cat] = acc[cat] || []).push(kp);
+    return acc;
+  }, {});
+
+  const toggleTopic = (name: string) => {
+    setParams(p => ({
+      ...p,
+      topics: p.topics.includes(name) ? p.topics.filter(t => t !== name) : [...p.topics, name],
+    }));
+  };
 
   const handleGenerate = async () => {
     if (params.topics.length === 0 || params.types.length === 0) {
@@ -150,15 +209,45 @@ function TeacherAIQuiz({ onNav }: { onNav: (p: Page) => void }) {
 
       <div className="lg:col-span-1 bg-card rounded-lg border border-border p-5 space-y-4">
         <h3 className="font-medium text-sm">题目生成参数</h3>
-        
+
         <div>
-          <label className="text-xs font-medium text-muted-foreground">知识点范围</label>
-          <select multiple value={params.topics} onChange={e => setParams({ ...params, topics: Array.from(e.currentTarget.selectedOptions, option => option.value) })}
-            className="mt-1 w-full px-3 py-2 border border-border rounded-md text-sm h-24">
-            {questionCategories.map(c => (
-              <option key={c.name} value={c.name}>{c.name}</option>
+          <label className="text-xs font-medium text-muted-foreground">课程</label>
+          <select
+            value={selectedCourseId ?? ""}
+            onChange={e => {
+              setSelectedCourseId(e.target.value ? Number(e.target.value) : null);
+              setParams(p => ({ ...p, topics: [] }));
+            }}
+            className="mt-1 w-full px-3 py-2 border border-border rounded-md text-sm bg-background"
+          >
+            <option value="">选择课程</option>
+            {courses.map(c => (
+              <option key={c.id} value={c.id}>{c.courseName || c.className}</option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">知识点范围</label>
+          {knowledgeTree.length === 0 ? (
+            <p className="mt-1 text-xs text-muted-foreground">暂无知识点，请先为课程导入知识点</p>
+          ) : (
+            <div className="mt-2 max-h-56 overflow-y-auto border border-border rounded-md p-2 space-y-2">
+              {Object.entries(groupedKps).map(([cat, kps]) => (
+                <div key={cat}>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">{cat}</p>
+                  <div className="space-y-1">
+                    {kps.map(kp => (
+                      <label key={kp.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" checked={params.topics.includes(kp.kpName)} onChange={() => toggleTopic(kp.kpName)} className="rounded" />
+                        {kp.kpName}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>

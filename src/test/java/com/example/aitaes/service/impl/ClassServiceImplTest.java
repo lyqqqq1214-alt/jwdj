@@ -18,6 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.mockito.ArgumentCaptor;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -98,6 +100,27 @@ class ClassServiceImplTest {
             when(teacherMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(teacher);
             when(courseMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of());
             assertTrue(classService.listMyClasses(1L).isEmpty());
+        }
+
+        @Test
+        @DisplayName("CS-02b: 应按班级名扁平展开并统计各班级人数")
+        void shouldFlattenClassesByClassName() {
+            when(teacherMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(teacher);
+            when(courseMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(course));
+
+            CourseStudent cs1 = new CourseStudent(); cs1.setCourseId(1L); cs1.setClassName("计科2001");
+            CourseStudent cs2 = new CourseStudent(); cs2.setCourseId(1L); cs2.setClassName("计科2001");
+            CourseStudent cs3 = new CourseStudent(); cs3.setCourseId(1L); cs3.setClassName("计科2002");
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(cs1, cs2, cs3));
+
+            List<ClassVO> result = classService.listMyClasses(1L);
+
+            assertEquals(2, result.size());
+            assertEquals("计科2001", result.get(0).getClassName());
+            assertEquals(2, result.get(0).getStudentCount());
+            assertEquals("计科2002", result.get(1).getClassName());
+            assertEquals(1, result.get(1).getStudentCount());
+            assertEquals("数据结构", result.get(0).getCourseName());
         }
     }
 
@@ -216,6 +239,43 @@ class ClassServiceImplTest {
 
             verify(courseStudentMapper).delete(any(LambdaQueryWrapper.class));
             verify(studentMapper, never()).deleteById(anyLong());
+        }
+    }
+
+    @Nested
+    @DisplayName("listStudents — 学生名单")
+    class ListStudents {
+
+        @Test
+        @DisplayName("CS-10: 应按班级名过滤选课记录")
+        void shouldFilterByClassName() {
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(courseStudent));
+            when(studentMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(student));
+
+            List<StudentVO> result = classService.listStudents(1L, "计科2001", null);
+
+            assertEquals(1, result.size());
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<LambdaQueryWrapper<CourseStudent>> captor = ArgumentCaptor.forClass(LambdaQueryWrapper.class);
+            verify(courseStudentMapper).selectList(captor.capture());
+            // 传入 className 时，查询条件应多于仅按 courseId 过滤（基础 3 个片段 + className 条件）
+            assertTrue(captor.getValue().getExpression().getNormal().size() > 3);
+        }
+
+        @Test
+        @DisplayName("CS-11: 未指定班级名时不过滤班级")
+        void shouldNotFilterByClassName_WhenNull() {
+            when(courseStudentMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(courseStudent));
+            when(studentMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(student));
+
+            List<StudentVO> result = classService.listStudents(1L, null, null);
+
+            assertEquals(1, result.size());
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<LambdaQueryWrapper<CourseStudent>> captor = ArgumentCaptor.forClass(LambdaQueryWrapper.class);
+            verify(courseStudentMapper).selectList(captor.capture());
+            // 仅 courseId 一个条件
+            assertEquals(3, captor.getValue().getExpression().getNormal().size());
         }
     }
 }

@@ -72,8 +72,9 @@ public class ClassController {
      */
     @GetMapping("/{id}/students")
     public Result<List<StudentVO>> listStudents(@PathVariable Long id,
+                                                 @RequestParam(required = false) String className,
                                                  @RequestParam(required = false) String keyword) {
-        return Result.success(classService.listStudents(id, keyword));
+        return Result.success(classService.listStudents(id, className, keyword));
     }
 
     /**

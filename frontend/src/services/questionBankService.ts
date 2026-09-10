@@ -33,9 +33,14 @@ export interface QuestionPage {
 
 export interface KnowledgePoint {
   id: number;
-  name: string;
+  courseId?: number;
+  kpName: string;
+  kpCategory?: string;
   parentId?: number;
-  children?: KnowledgePoint[];
+  level?: number;
+  difficulty?: string;
+  description?: string;
+  sortOrder?: number;
 }
 
 export async function getQuestionList(

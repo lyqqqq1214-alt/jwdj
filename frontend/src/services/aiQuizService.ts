@@ -1,20 +1,21 @@
 import api from './api';
 
 export interface AiQuestionGenerateRequest {
-  courseId?: number;
-  topic?: string;
-  questionType?: string;
-  difficulty?: string;
-  count?: number;
+  knowledgePoints: string[];
+  questionType: string;
+  count: number;
+  difficulty: string;
+  socraticMode: boolean;
 }
 
 export interface AiGeneratedQuestion {
-  questionContent?: string;
-  options?: string;
-  answer?: string;
-  questionType?: string;
-  difficulty?: string;
-  topic?: string;
+  questionType: string;
+  stem: string;
+  options: Record<string, string>;
+  answer: string;
+  explanation: string;
+  knowledgeTags: string[];
+  socraticQuestions: string[];
 }
 
 export async function generateQuestions(params: AiQuestionGenerateRequest) {

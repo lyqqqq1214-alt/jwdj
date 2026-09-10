@@ -16,13 +16,13 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
   const teacherId = getCurrentUser()?.userId || 1;
 
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
+  const [selectedClassName, setSelectedClassName] = useState<string>("");
   const [showAddClassModal, setShowAddClassModal] = useState(false);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [showTAConfigModal, setShowTAConfigModal] = useState(false);
   const [showAddTAModal, setShowAddTAModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"classes" | "assistants">("classes");
   const [searchQuery, setSearchQuery] = useState("");
-  const [classFilter, setClassFilter] = useState("");
   const [newClass, setNewClass] = useState({ name: "", course: "", semester: "" });
   const [newStudent, setNewStudent] = useState({ studentNo: "", name: "", password: "" });
   const [newTA, setNewTA] = useState({ staffId: "", name: "" });
@@ -57,19 +57,20 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
   useEffect(() => {
     if (!selectedClassId) return;
     setLoadingStudents(true);
-    getClassStudents(selectedClassId).then(data => {
+    getClassStudents(selectedClassId, selectedClassName || undefined).then(data => {
       setStudentList(data || []);
     }).catch(() => {
       setStudentList([]);
     }).finally(() => setLoadingStudents(false));
-  }, [selectedClassId]);
+  }, [selectedClassId, selectedClassName]);
 
   const students = studentList;
-  const classOptions = Array.from(new Set(studentList.map(s => s.className).filter((c): c is string => !!c)));
   const filteredStudents = studentList.filter(s =>
-    (s.studentNo?.includes(searchQuery) || s.name?.includes(searchQuery)) &&
-    (!classFilter || s.className === classFilter)
+    (s.studentNo?.includes(searchQuery) || s.name?.includes(searchQuery))
   );
+
+  // 当前选中的班级（课程 + 班级名）
+  const selectedClass = classList.find(c => c.id === selectedClassId && (c.className || "") === selectedClassName);
 
   // 当前班级已分配的助教
   const classTAs = taList.filter(ta => {
@@ -92,7 +93,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
   const handleAddStudent = async () => {
     if (!newStudent.studentNo || !newStudent.name || !selectedClassId) return;
     try {
-      const created = await addStudentToClass(selectedClassId, { studentNo: newStudent.studentNo, name: newStudent.name, password: newStudent.password });
+      const created = await addStudentToClass(selectedClassId, { studentNo: newStudent.studentNo, name: newStudent.name, password: newStudent.password, className: selectedClassName || undefined });
       setStudentList([...studentList, created]);
       setShowAddStudentModal(false);
       setNewStudent({ studentNo: "", name: "", password: "" });
@@ -215,12 +216,12 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {classList.map(c => (
-                <div key={c.id} onClick={() => setSelectedClassId(c.id)} className="bg-card rounded-lg border border-border p-5 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
+                <div key={`${c.id}-${c.className || ""}`} onClick={() => { setSelectedClassId(c.id); setSelectedClassName(c.className || ""); }} className="bg-card rounded-lg border border-border p-5 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="font-semibold">{c.className || c.courseName}</p>
+                      <p className="font-semibold">{c.className || "未分班"}</p>
                       <div className="flex flex-col gap-0.5 mt-0.5">
-                        {c.className !== c.courseName && c.courseName && (
+                        {c.courseName && (
                           <p className="text-xs text-muted-foreground">{c.courseName}</p>
                         )}
                         <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wider">{c.courseNo || c.semester || ""}</p>
@@ -249,17 +250,10 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
       ) : (
         <>
           <div className="flex items-center justify-between">
-            <button onClick={() => setSelectedClassId(null)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <button onClick={() => { setSelectedClassId(null); setSelectedClassName(""); }} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
               <ChevronRight size={14} />返回班级列表
             </button>
             <div className="flex items-center gap-3">
-              <select value={classFilter} onChange={e => setClassFilter(e.target.value)}
-                className="px-3 py-2 bg-card border border-border rounded-md text-sm">
-                <option value="">全部班级</option>
-                {classOptions.map(cls => (
-                  <option key={cls} value={cls}>{cls}</option>
-                ))}
-              </select>
               <div className="relative">
                 <Search size={14} className="absolute left-3 top-2.5 text-muted-foreground" />
                 <input type="text" placeholder="搜索学号或姓名..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
@@ -273,7 +267,7 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
 
           <div className="bg-card rounded-lg border border-border overflow-hidden">
             <div className="px-4 py-3 border-b border-border">
-              <h3 className="font-medium text-sm">{classList.find(c => c.id === selectedClassId)?.courseName || classList.find(c => c.id === selectedClassId)?.className}</h3>
+              <h3 className="font-medium text-sm">{selectedClass ? `${selectedClass.courseName} · ${selectedClass.className || "未分班"}` : ""}</h3>
               <p className="text-xs text-muted-foreground mt-0.5">共 {students.length} 名学生</p>
             </div>
             {loadingStudents ? (
@@ -532,9 +526,9 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
                   ))}
                 </select>
               </div>
-              {selectedClassId && (
+              {selectedClass && (
                 <p className="text-xs text-muted-foreground bg-muted rounded px-3 py-2">
-                  当前操作班级：{classList.find(c => c.id === selectedClassId)?.className || classList.find(c => c.id === selectedClassId)?.courseName}
+                  当前操作班级：{selectedClass.courseName} · {selectedClass.className || "未分班"}
                 </p>
               )}
               <div className="space-y-2">

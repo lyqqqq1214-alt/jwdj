@@ -20,4 +20,7 @@ public class StudentAddDTO {
     private String major;
     private String grade;
     private String email;
+
+    /** 班级名（可选，未传入时回退到课程自身班级名） */
+    private String className;
 }

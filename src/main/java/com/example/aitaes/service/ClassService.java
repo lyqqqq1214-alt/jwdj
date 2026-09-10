@@ -34,8 +34,12 @@ public interface ClassService {
 
     /**
      * 获取班级学生名单
+     *
+     * @param classId   课程ID（班级归属的课程）
+     * @param className 班级名（可选，按 t_course_student.class_name 过滤）
+     * @param keyword   学号/姓名搜索关键字
      */
-    List<StudentVO> listStudents(Long classId, String keyword);
+    List<StudentVO> listStudents(Long classId, String className, String keyword);
 
     /**
      * 手动添加学生

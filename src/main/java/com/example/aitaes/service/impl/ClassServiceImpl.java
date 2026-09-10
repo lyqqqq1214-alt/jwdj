@@ -87,17 +87,49 @@ public class ClassServiceImpl implements ClassService {
                         .eq(Course::getTeacherId, teacherId)
                         .orderByDesc(Course::getCreateTime));
 
-        // 批量查询学生人数，避免 N+1 问题
-        List<Long> courseIds = courses.stream().map(Course::getId).collect(Collectors.toList());
-        Map<Long, Long> countMap = courseIds.isEmpty() ? Collections.emptyMap()
-                : courseStudentMapper.selectList(
-                        new LambdaQueryWrapper<CourseStudent>().in(CourseStudent::getCourseId, courseIds))
-                        .stream().collect(Collectors.groupingBy(CourseStudent::getCourseId, Collectors.counting()));
+        if (courses.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-        return courses.stream().map(course -> {
-            long studentCount = countMap.getOrDefault(course.getId(), 0L);
-            return toClassVO(course, (int) studentCount);
-        }).collect(Collectors.toList());
+        // 批量查询选课记录，避免 N+1 问题；班级名取自 t_course_student.class_name
+        List<Long> courseIds = courses.stream().map(Course::getId).collect(Collectors.toList());
+        List<CourseStudent> enrollments = courseStudentMapper.selectList(
+                new LambdaQueryWrapper<CourseStudent>().in(CourseStudent::getCourseId, courseIds));
+        Map<Long, List<CourseStudent>> byCourse = enrollments.stream()
+                .collect(Collectors.groupingBy(CourseStudent::getCourseId));
+
+        // 按 (courseId, className) 扁平展开为「班级」列表
+        List<ClassVO> result = new ArrayList<>();
+        for (Course course : courses) {
+            List<CourseStudent> csList = byCourse.getOrDefault(course.getId(), Collections.emptyList());
+
+            // 统计每个非空班级名的人数，空班级名单独计数（归为「未分班」）
+            Map<String, Long> countByName = new HashMap<>();
+            long unassigned = 0L;
+            for (CourseStudent cs : csList) {
+                String cn = cs.getClassName();
+                if (cn != null && !cn.isBlank()) {
+                    countByName.merge(cn, 1L, Long::sum);
+                } else {
+                    unassigned++;
+                }
+            }
+
+            List<String> classNames = new ArrayList<>(countByName.keySet());
+            Collections.sort(classNames);
+            if (classNames.isEmpty()) {
+                // 无明确班级（空课程或全部未分班）：折叠为单个班级，className 回退到课程自身班级名
+                result.add(toClassVO(course, course.getClassName(), (int) unassigned));
+            } else {
+                for (String className : classNames) {
+                    result.add(toClassVO(course, className, countByName.get(className).intValue()));
+                }
+                if (unassigned > 0) {
+                    result.add(toClassVO(course, null, (int) unassigned));
+                }
+            }
+        }
+        return result;
     }
 
     @Override
@@ -154,10 +186,13 @@ public class ClassServiceImpl implements ClassService {
     // ===== 学生名单管理 =====
 
     @Override
-    public List<StudentVO> listStudents(Long classId, String keyword) {
-        List<CourseStudent> mappings = courseStudentMapper.selectList(
-                new LambdaQueryWrapper<CourseStudent>()
-                        .eq(CourseStudent::getCourseId, classId));
+    public List<StudentVO> listStudents(Long classId, String className, String keyword) {
+        LambdaQueryWrapper<CourseStudent> wrapper = new LambdaQueryWrapper<CourseStudent>()
+                .eq(CourseStudent::getCourseId, classId);
+        if (StringUtils.hasText(className)) {
+            wrapper.eq(CourseStudent::getClassName, className);
+        }
+        List<CourseStudent> mappings = courseStudentMapper.selectList(wrapper);
         if (mappings.isEmpty()) {
             return Collections.emptyList();
         }
@@ -210,7 +245,9 @@ public class ClassServiceImpl implements ClassService {
         CourseStudent cs = new CourseStudent();
         cs.setCourseId(classId);
         cs.setStudentId(student.getId());
-        cs.setClassName(course != null ? course.getCourseName() : null);
+        // 班级名优先取请求传入的 className，其次课程自身班级名，最后课程名
+        cs.setClassName(StringUtils.hasText(dto.getClassName()) ? dto.getClassName()
+                : (course != null && StringUtils.hasText(course.getClassName()) ? course.getClassName() : course.getCourseName()));
         cs.setSemester(course != null ? course.getSemester() : null);
         courseStudentMapper.insert(cs);
 
@@ -343,11 +380,17 @@ public class ClassServiceImpl implements ClassService {
     }
 
     private ClassVO toClassVO(Course course, int studentCount) {
+        return toClassVO(course,
+                course.getClassName() != null ? course.getClassName() : course.getCourseName(),
+                studentCount);
+    }
+
+    private ClassVO toClassVO(Course course, String className, int studentCount) {
         return ClassVO.builder()
                 .id(course.getId())
                 .courseNo(course.getCourseNo())
                 .courseName(course.getCourseName())
-                .className(course.getClassName() != null ? course.getClassName() : course.getCourseName())
+                .className(className)
                 .semester(course.getSemester())
                 .credit(course.getCredit())
                 .courseType(course.getCourseType())

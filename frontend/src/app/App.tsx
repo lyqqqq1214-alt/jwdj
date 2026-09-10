@@ -51,6 +51,7 @@ export default function App() {
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [focusQuestion, setFocusQuestion] = useState<{ id: number; courseId?: number | null } | null>(null);
+  const [aiQuizPreset, setAiQuizPreset] = useState<{ courseId: number; knowledgePoints: string[] } | null>(null);
   const [user, setUser] = useState<any>(null);
   const [taPermissions, setTaPermissions] = useState<TAPermissions | null>(null);
 
@@ -124,12 +125,12 @@ export default function App() {
         {page === "admin-audit" && <AdminAuditLogs />}
         {page === "admin-config" && <AdminConfig />}
         {/* Teacher pages */}
-        {page === "teacher-ai-analysis" && <TeacherAiAnalysis onOpenQuestion={(id, courseId) => { setFocusQuestion({ id, courseId }); setPage("teacher-bank"); }} />}
+        {page === "teacher-ai-analysis" && <TeacherAiAnalysis onOpenQuestion={(id, courseId) => { setFocusQuestion({ id, courseId }); setPage("teacher-bank"); }} onCoverKnowledgePoints={(courseId, kps) => { setAiQuizPreset({ courseId, knowledgePoints: kps }); setPage("teacher-ai-quiz"); }} />}
         {page === "teacher-dashboard" && <TeacherDashboard onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} />}
         {page === "teacher-class" && <TeacherClassManagement onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} />}
         {page === "teacher-import" && <TeacherDataImport />}
         {page === "teacher-profile" && <TeacherStudentProfile onNav={setPage} initialStudentId={selectedStudentId} initialCourseId={selectedCourseId} />}
-        {page === "teacher-ai-quiz" && <TeacherAIQuiz onNav={setPage} />}
+        {page === "teacher-ai-quiz" && <TeacherAIQuiz onNav={setPage} preset={aiQuizPreset} onClearPreset={() => setAiQuizPreset(null)} />}
         {page === "teacher-bank" && <TeacherQuestionBank onNav={setPage} setSelectedQuizQuestions={setSelectedQuizQuestions} filterSourceType={filterSourceType} setFilterSourceType={setFilterSourceType} focusQuestion={focusQuestion} onClearFocusQuestion={() => setFocusQuestion(null)} />}
         {page === "teacher-exam" && <TeacherExamManagement selectedQuizQuestions={selectedQuizQuestions} setSelectedQuizQuestions={setSelectedQuizQuestions} />}
         {page === "teacher-notification" && <NotificationCenter mode="teacher" />}

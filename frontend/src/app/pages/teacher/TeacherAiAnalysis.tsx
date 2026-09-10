@@ -11,8 +11,9 @@ import {
 } from "../../../services/aiAnalysisService";
 import { Tag, StatCard } from "../../utils";
 
-function TeacherAiAnalysis({ onOpenQuestion }: {
+function TeacherAiAnalysis({ onOpenQuestion, onCoverKnowledgePoints }: {
   onOpenQuestion: (id: number, courseId?: number | null) => void;
+  onCoverKnowledgePoints: (courseId: number, knowledgePoints: string[]) => void;
 }) {
   const [courses, setCourses] = useState<ClassVO[]>([]);
   const [courseId, setCourseId] = useState<number | null>(null);
@@ -391,6 +392,12 @@ function TeacherAiAnalysis({ onOpenQuestion }: {
                       <div className="flex flex-wrap gap-2">
                         {audit.uncoveredKps.map(k => <Tag key={k} color="red">{k}</Tag>)}
                       </div>
+                      <button
+                        onClick={() => courseId != null && onCoverKnowledgePoints(courseId, audit.uncoveredKps)}
+                        className="mt-2 flex items-center gap-1.5 px-3 py-1.5 text-xs bg-primary text-white rounded-md hover:bg-[#7F84D6]"
+                      >
+                        <Sparkles size={13} />AI辅助覆盖（生成 {audit.uncoveredKps.length} 题）
+                      </button>
                     </div>
                   )}
                 </div>
