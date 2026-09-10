@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Nginx Windows 服务（WinSW）：开机自启
+
+  安装：  d:\lyq\winsw\WinSW-x64.exe install nginx-service.xml
+  卸载：  d:\lyq\winsw\WinSW-x64.exe uninstall nginx-service.xml
+
+  备选方案：如果不想注册成服务，也可以：
+    - 直接双击 d:\lyq\nginx\nginx.exe 启动；
+    - 或用「任务计划程序」配置开机自启（触发器=系统启动，程序=nginx.exe）。
+-->
+<service>
+  <id>nginx</id>
+  <name>Nginx</name>
+  <description>Nginx web server</description>
+  <executable>d:\lyq\nginx\nginx.exe</executable>
+  <arguments>-p d:\lyq\nginx</arguments>
+  <stopexecutable>d:\lyq\nginx\nginx.exe</stopexecutable>
+  <stoparguments>-p d:\lyq\nginx -s stop</stoparguments>
+  <logmode>rotate</logmode>
+</service>

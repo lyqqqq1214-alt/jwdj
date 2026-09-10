@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AITAES 后端 Windows 服务（WinSW）：开机自启、崩溃自动重启
+
+  使用前请修改两处：
+    1) <executable> 里的 java.exe 绝对路径 —— 改成服务器实际安装的 JDK 21
+       （在服务器运行 `where java` 查看真实路径）
+    2) SPRING_DATASOURCE_PASSWORD —— 改成 deploy/setup-db.ps1 里设置的专用账号密码
+
+  安装：  d:\lyq\winsw\WinSW-x64.exe install aitaes-service.xml
+  卸载：  d:\lyq\winsw\WinSW-x64.exe uninstall aitaes-service.xml
+  重启：  d:\lyq\winsw\WinSW-x64.exe restart aitaes-service.xml
+-->
+<service>
+  <id>AITAES</id>
+  <name>AITAES Backend</name>
+  <description>AITAES Spring Boot backend (java -jar)</description>
+
+  <!-- TODO: 改成实际 JDK 21 的 java.exe 路径 -->
+  <executable>C:\Program Files\Eclipse Adoptium\jdk-21\bin\java.exe</executable>
+  <arguments>-jar d:\lyq\backend\AITAES-0.0.1-SNAPSHOT.jar</arguments>
+
+  <!-- 生产环境变量注入，覆盖 application.yml 里的默认值 -->
+  <env name="AI_BASE_URL" value="http://127.0.0.1:11434/v1"/>
+  <env name="AI_MODEL" value="qwen2.5:7b"/>
+  <env name="AI_API_KEY" value="ollama"/>
+  <env name="SPRING_DATASOURCE_USERNAME" value="aitaes"/>
+  <!-- TODO: 改成 setup-db.ps1 里设置的数据库密码 -->
+  <env name="SPRING_DATASOURCE_PASSWORD" value="CHANGE_ME"/>
+
+  <logmode>rotate</logmode>
+  <onfailure action="restart" delay="10 sec"/>
+</service>

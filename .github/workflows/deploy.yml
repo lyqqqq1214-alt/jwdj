@@ -1,0 +1,66 @@
+name: Deploy to Windows Server
+
+# 推送到 develop / main 触发自动部署；也可在 Actions 页面手动运行
+on:
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+env:
+  BACKEND_DIR: 'd:\lyq\backend'
+  FRONTEND_DIST: 'frontend\dist'
+  NGINX_HTML: 'd:\lyq\frontend\dist'
+  JAR_NAME: 'AITAES-0.0.1-SNAPSHOT.jar'
+
+jobs:
+  build-and-deploy:
+    # 目标服务器的自托管 Runner（自带 self-hosted + windows 标签）
+    runs-on: [self-hosted, windows]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build frontend
+        working-directory: frontend
+        shell: cmd
+        run: npm ci && npm run build
+
+      - name: Build backend
+        shell: cmd
+        run: mvnw.cmd clean package -DskipTests
+
+      - name: Deploy frontend + backend
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # ---- 前端：清空静态目录并复制新产物 ----
+          if (Test-Path $env:NGINX_HTML) { Remove-Item (Join-Path $env:NGINX_HTML '*') -Recurse -Force }
+          New-Item -ItemType Directory -Force -Path $env:NGINX_HTML | Out-Null
+          Copy-Item -Recurse -Force (Join-Path $env:FRONTEND_DIST '*') $env:NGINX_HTML
+          Write-Host "前端已部署到 $env:NGINX_HTML"
+
+          # ---- 后端：停服务 -> 复制 jar -> 起服务 ----
+          $svc = Get-Service -Name AITAES -ErrorAction SilentlyContinue
+          if ($svc) { Stop-Service -Name AITAES -Force }
+          New-Item -ItemType Directory -Force -Path $env:BACKEND_DIR | Out-Null
+          Copy-Item -Force (Join-Path 'target' $env:JAR_NAME) (Join-Path $env:BACKEND_DIR $env:JAR_NAME)
+          if ($svc) { Start-Service -Name AITAES }
+          else { Write-Warning '未找到 AITAES 服务，请先在服务器执行 WinSW install 注册服务' }
+          Write-Host "后端已部署到 $env:BACKEND_DIR\$env:JAR_NAME"
+
+          # ---- Nginx：重载配置 ----
+          if (Get-Command nginx -ErrorAction SilentlyContinue) { nginx -s reload }
+          else { Write-Warning '未找到 nginx 命令，请确认 Nginx 已加入 PATH' }
