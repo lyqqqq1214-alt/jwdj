@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Wifi, Database, Server, Activity, GraduationCap, Users, BookOpen,
   Layers, Upload, BookMarked, FileText, AlertTriangle, CheckCircle,
   XCircle, AlertCircle, ArrowUpRight, ArrowDownRight, WifiOff
 } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { getAdminStats, type AdminStats } from "../../../services/adminService";
 
 function AdminDashboard() {
   const [toast, setToast] = useState<string | null>(null);
+  const [stats, setStats] = useState<AdminStats | null>(null);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -18,6 +20,10 @@ function AdminDashboard() {
     showToast(`已查看「${label}」详情`);
   };
 
+  useEffect(() => {
+    getAdminStats().then(data => setStats(data)).catch(() => setStats(null));
+  }, []);
+
   const healthData = [
     { label: "大模型服务", status: "online", value: "正常运行", icon: Wifi, color: "bg-[#74C2A0]" },
     { label: "数据库连接", status: "online", value: "已连接", icon: Database, color: "bg-[#74C2A0]" },
@@ -26,11 +32,11 @@ function AdminDashboard() {
   ];
 
   const platformStats = [
-    { label: "教师总数", value: "45", change: "+3", icon: GraduationCap },
-    { label: "学生总数", value: "1,238", change: "+24", icon: Users },
-    { label: "课程总数", value: "86", change: "+5", icon: BookOpen },
-    { label: "活跃班级数", value: "32", change: "+2", icon: Layers },
-    { label: "今日活跃用户", value: "356", change: "+12%", icon: Activity },
+    { label: "教师总数", value: stats?.teacherCount ?? 0, change: "+3", icon: GraduationCap },
+    { label: "学生总数", value: stats?.studentCount ?? 0, change: "+24", icon: Users },
+    { label: "课程总数", value: stats?.courseCount ?? 0, change: "+5", icon: BookOpen },
+    { label: "助教总数", value: stats?.assistantCount ?? 0, change: "+1", icon: Layers },
+    { label: "近7天活跃用户", value: stats?.activeUserCount ?? 0, change: "+12%", icon: Activity },
   ];
 
   const teachingStats = [

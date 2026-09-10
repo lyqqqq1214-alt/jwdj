@@ -948,8 +948,20 @@ public class ExamServiceImpl implements ExamService {
         ExamPaper paper = getPaperById(paperId);
         Assessment assessment = assessmentMapper.selectOne(
                 new LambdaQueryWrapper<Assessment>().eq(Assessment::getPaperId, paperId));
+        // 兼容旧数据：若试卷尚无对应 Assessment 记录，自动创建并关联
         if (assessment == null) {
-            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "考试不存在");
+            assessment = new Assessment();
+            assessment.setPaperId(paperId);
+            assessment.setCourseId(paper.getCourseId());
+            assessment.setAssessmentName(paper.getPaperName());
+            assessment.setAssessmentType("EXAM");
+            assessment.setTotalScore(paper.getTotalScore());
+            assessment.setStartTime(paper.getStartTime());
+            assessment.setEndTime(paper.getEndTime());
+            assessment.setDurationMinutes(paper.getDurationMinutes());
+            assessment.setStatus(paper.getStatus());
+            assessmentMapper.insert(assessment);
+            log.info("批阅时自动补建 Assessment: paperId={}, assessmentId={}", paperId, assessment.getId());
         }
 
         List<AssessmentRecord> records = assessmentRecordMapper.selectList(

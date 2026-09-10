@@ -63,6 +63,12 @@
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>3.5.9</version>
         </dependency>
+        <!-- MyBatis Plus 分页拦截器（3.5.7+ 需单独引入 jsqlparser 模块） -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>3.5.9</version>
+        </dependency>
 
         <!-- Excel 解析 -->
         <dependency>

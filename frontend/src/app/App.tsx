@@ -15,6 +15,8 @@ import NotificationCenter from "./pages/shared/NotificationCenter";
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminTeacherManagement from "./pages/admin/AdminTeacherManagement";
+import AdminCourses from "./pages/admin/AdminCourses";
+import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAIOpsCenter from "./pages/admin/AdminAIOpsCenter";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminConfig from "./pages/admin/AdminConfig";
@@ -116,6 +118,8 @@ export default function App() {
         {/* Admin pages */}
         {page === "admin-dashboard" && <AdminDashboard />}
         {page === "admin-teachers" && <AdminTeacherManagement />}
+        {page === "admin-courses" && <AdminCourses />}
+        {page === "admin-users" && <AdminUsers />}
         {page === "admin-ai-ops" && <AdminAIOpsCenter />}
         {page === "admin-audit" && <AdminAuditLogs />}
         {page === "admin-config" && <AdminConfig />}
