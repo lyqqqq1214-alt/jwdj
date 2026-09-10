@@ -5,6 +5,7 @@ import com.example.aitaes.annotation.RequireRole;
 import com.example.aitaes.common.Result;
 import com.example.aitaes.entity.KnowledgePoint;
 import com.example.aitaes.entity.QuestionBank;
+import com.example.aitaes.dto.AnalysisGenerateRequest;
 import com.example.aitaes.dto.QuestionLabelUpdateRequest;
 import jakarta.validation.Valid;
 import com.example.aitaes.service.QuestionBankService;
@@ -89,5 +90,13 @@ public class QuestionBankController {
     @GetMapping("/knowledge-tree")
     public Result<List<KnowledgePoint>> knowledgeTree(@RequestParam Long courseId) {
         return Result.success(questionBankService.getKnowledgeTree(courseId));
+    }
+
+    /**
+     * AI 生成题目解析
+     */
+    @PostMapping("/analysis/generate")
+    public Result<String> generateAnalysis(@RequestBody AnalysisGenerateRequest request) {
+        return Result.success(questionBankService.generateAnalysis(request));
     }
 }
