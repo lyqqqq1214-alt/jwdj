@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Search, Plus, Trash2 } from "lucide-react";
-import { getAdminCourses, deleteAdminCourse, type AdminCourse } from "../../../services/adminService";
+import { createAdminCourse, getAdminCourses, deleteAdminCourse, type AdminCourse } from "../../../services/adminService";
+import { getTeacherList, type TeacherVO } from "../../../services/teacherService";
 
 function AdminCourses() {
   const [courses, setCourses] = useState<AdminCourse[]>([]);
@@ -10,6 +11,10 @@ function AdminCourses() {
   const [total, setTotal] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<AdminCourse | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [showDetail, setShowDetail] = useState<AdminCourse | null>(null);
+  const [teachers, setTeachers] = useState<TeacherVO[]>([]);
+  const [form, setForm] = useState({ courseNo: "", courseName: "", teacherId: "", semester: "", className: "", credit: "", courseType: "必修", description: "" });
 
   const showToastMsg = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2000); };
 
@@ -25,6 +30,7 @@ function AdminCourses() {
   };
 
   useEffect(() => { loadCourses(); }, [pageNum]);
+  useEffect(() => { getTeacherList(1, 500).then(d => setTeachers(d.records || [])).catch(() => setTeachers([])); }, []);
 
   const handleSearch = () => { setPageNum(1); loadCourses(); };
 
@@ -37,6 +43,15 @@ function AdminCourses() {
     } catch (e: any) {
       showToastMsg(e.message || "删除失败");
     }
+  };
+
+  const handleCreate = async () => {
+    if (!form.courseNo || !form.courseName || !form.teacherId || !form.semester) { showToastMsg("请填写课程编号、名称、教师和学期"); return; }
+    try {
+      await createAdminCourse({ ...form, teacherId: Number(form.teacherId), credit: form.credit ? Number(form.credit) : undefined });
+      setShowCreate(false); setForm({ courseNo: "", courseName: "", teacherId: "", semester: "", className: "", credit: "", courseType: "必修", description: "" });
+      showToastMsg("课程创建成功"); loadCourses();
+    } catch (e: any) { showToastMsg(e.message || "创建失败"); }
   };
 
   return (
@@ -58,7 +73,7 @@ function AdminCourses() {
         <select className="py-2 px-3 text-sm bg-card border border-border rounded-md">
           <option>全部状态</option><option>进行中</option><option>已结束</option>
         </select>
-        <button onClick={() => showToastMsg("新增课程功能开发中")} className="flex items-center gap-1.5 px-3 py-2 text-sm bg-primary text-white rounded-md hover:bg-[#7F84D6]">
+        <button onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm bg-primary text-white rounded-md hover:bg-[#7F84D6]">
           <Plus size={13} />新增课程
         </button>
       </div>
@@ -90,7 +105,7 @@ function AdminCourses() {
                   <td className="px-4 py-3 font-mono">{c.studentCount ?? 0}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => showToastMsg("课程详情功能开发中")} className="text-primary hover:underline text-xs">详情</button>
+                      <button onClick={() => setShowDetail(c)} className="text-primary hover:underline text-xs">详情</button>
                       <button onClick={() => setShowDeleteConfirm(c)} className="text-[#DD7373] hover:underline text-xs flex items-center gap-1">
                         <Trash2 size={12} />删除
                       </button>
@@ -128,6 +143,21 @@ function AdminCourses() {
           </div>
         </div>
       )}
+
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"><div className="bg-card rounded-lg border border-border w-full max-w-lg p-6 space-y-4">
+          <h3 className="font-semibold">新增课程</h3><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="text-sm">课程编号<input value={form.courseNo} onChange={e => setForm({ ...form, courseNo: e.target.value })} className="mt-1 w-full p-2 border border-border rounded" /></label>
+            <label className="text-sm">课程名称<input value={form.courseName} onChange={e => setForm({ ...form, courseName: e.target.value })} className="mt-1 w-full p-2 border border-border rounded" /></label>
+            <label className="text-sm">授课教师<select value={form.teacherId} onChange={e => setForm({ ...form, teacherId: e.target.value })} className="mt-1 w-full p-2 border border-border rounded"><option value="">请选择</option>{teachers.map(t => <option key={t.id} value={t.id}>{t.name}（{t.teacherNo}）</option>)}</select></label>
+            <label className="text-sm">学期<input placeholder="2025-2026-1" value={form.semester} onChange={e => setForm({ ...form, semester: e.target.value })} className="mt-1 w-full p-2 border border-border rounded" /></label>
+            <label className="text-sm">班级名称<input value={form.className} onChange={e => setForm({ ...form, className: e.target.value })} className="mt-1 w-full p-2 border border-border rounded" /></label>
+            <label className="text-sm">学分<input type="number" min="0" step="0.5" value={form.credit} onChange={e => setForm({ ...form, credit: e.target.value })} className="mt-1 w-full p-2 border border-border rounded" /></label>
+          </div><label className="text-sm block">课程说明<textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="mt-1 w-full p-2 border border-border rounded" rows={2} /></label>
+          <div className="flex justify-end gap-3"><button onClick={() => setShowCreate(false)} className="px-4 py-2 border border-border rounded text-sm">取消</button><button onClick={handleCreate} className="px-4 py-2 bg-primary text-white rounded text-sm">创建课程</button></div>
+        </div></div>
+      )}
+      {showDetail && <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"><div className="bg-card rounded-lg border border-border w-full max-w-md p-6 space-y-3"><h3 className="font-semibold">课程详情</h3><div className="text-sm space-y-2"><p><span className="text-muted-foreground">课程：</span>{showDetail.courseName}</p><p><span className="text-muted-foreground">编号：</span>{showDetail.courseNo || "—"}</p><p><span className="text-muted-foreground">教师：</span>{showDetail.teacherName || "—"}</p><p><span className="text-muted-foreground">学期：</span>{showDetail.semester || "—"}</p><p><span className="text-muted-foreground">班级：</span>{showDetail.className || "—"}</p><p><span className="text-muted-foreground">选课人数：</span>{showDetail.studentCount ?? 0}</p></div><div className="text-right"><button onClick={() => setShowDetail(null)} className="px-4 py-2 border border-border rounded text-sm">关闭</button></div></div></div>}
     </div>
   );
 }

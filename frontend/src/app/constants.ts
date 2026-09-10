@@ -11,9 +11,9 @@ export const PIE_COLORS = ["#969BE7", "#A9C3EF", "#8FD0B8", "#F5D5A8", "#B8B8CE"
 export const navItems: Record<Role, { icon: any; label: string; page?: Page; children?: { label: string; page: Page }[] }[]> = {
   admin: [
     { icon: LayoutDashboard, label: "系统总览", page: "admin-dashboard" },
+    { icon: Users, label: "用户管理", page: "admin-users" },
     { icon: GraduationCap, label: "教师账号管理", page: "admin-teachers" },
     { icon: BookOpen, label: "课程管理", page: "admin-courses" },
-    { icon: Users, label: "用户管理", page: "admin-users" },
     { icon: Brain, label: "AI运维中心", page: "admin-ai-ops" },
     { icon: FileSearch, label: "系统审计日志", page: "admin-audit" },
     { icon: Bell, label: "通知中心", page: "admin-notification" },
@@ -55,8 +55,8 @@ export const pageMeta: Record<Page, { breadcrumb: string[] }> = {
   login: { breadcrumb: [] },
   "admin-dashboard": { breadcrumb: ["管理员", "系统总览"] },
   "admin-teachers": { breadcrumb: ["管理员", "教师账号管理"] },
-  "admin-courses": { breadcrumb: ["管理员", "课程管理"] },
   "admin-users": { breadcrumb: ["管理员", "用户管理"] },
+  "admin-courses": { breadcrumb: ["管理员", "课程管理"] },
   "admin-ai-ops": { breadcrumb: ["管理员", "AI运维中心"] },
   "admin-audit": { breadcrumb: ["管理员", "系统审计日志"] },
   "admin-config": { breadcrumb: ["管理员", "系统配置"] },

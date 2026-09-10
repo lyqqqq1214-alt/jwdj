@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { getCurrentUser, clearUser, mapRole, logout } from "../services/authService";
 import type { Role, Page } from "./types";
 import { pageMeta } from "./constants";
-import { getTAPermissions, seedTAsIfEmpty, type TAPermissions } from "../services/taService";
+import { getMyTAPermissions, type TAPermissions } from "../services/taService";
 
 // Layout & shared components
 import AppShell from "./components/layout/AppShell";
@@ -63,7 +63,7 @@ export default function App() {
       setRole(frontendRole);
       setUser(savedUser);
       if (frontendRole === "teaching-assistant") {
-        setTaPermissions(getTAPermissions(savedUser.username));
+        getMyTAPermissions().then(setTaPermissions).catch(() => setTaPermissions(null));
       }
       setPage(frontendRole === "admin" ? "admin-dashboard" : frontendRole === "teacher" ? "teacher-dashboard" : frontendRole === "teaching-assistant" ? "ta-dashboard" : "student-dashboard");
     }
@@ -73,10 +73,9 @@ export default function App() {
     setRole(r);
     setUser(userData);
     if (r === "teaching-assistant") {
-      setTaPermissions(getTAPermissions(userData.username));
+      getMyTAPermissions().then(setTaPermissions).catch(() => setTaPermissions(null));
       setPage("ta-dashboard");
     } else if (r === "teacher") {
-      seedTAsIfEmpty(userData.userId);
       setTaPermissions(null);
       setPage("teacher-dashboard");
     } else if (r === "admin") {
@@ -119,8 +118,8 @@ export default function App() {
         {/* Admin pages */}
         {page === "admin-dashboard" && <AdminDashboard />}
         {page === "admin-teachers" && <AdminTeacherManagement />}
-        {page === "admin-courses" && <AdminCourses />}
         {page === "admin-users" && <AdminUsers />}
+        {page === "admin-courses" && <AdminCourses />}
         {page === "admin-ai-ops" && <AdminAIOpsCenter />}
         {page === "admin-audit" && <AdminAuditLogs />}
         {page === "admin-config" && <AdminConfig />}
