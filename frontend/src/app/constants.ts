@@ -34,7 +34,7 @@ export const navItems: Record<Role, { icon: any; label: string; page?: Page; chi
   ],
   "teaching-assistant": [
     { icon: LayoutDashboard, label: "教学驾驶舱", page: "ta-dashboard" },
-    { icon: Users, label: "班级管理", page: "teacher-class" },
+    { icon: Users, label: "班级管理", page: "ta-class" },
     { icon: Upload, label: "数据导入", page: "ta-import" },
     { icon: User, label: "学生画像", page: "ta-profile" },
     { icon: FileText, label: "考试批阅", page: "ta-grading" },
@@ -73,6 +73,7 @@ export const pageMeta: Record<Page, { breadcrumb: string[] }> = {
   "student-notification": { breadcrumb: ["学生端", "通知中心"] },
   "teacher-logs": { breadcrumb: ["教师端", "操作日志"] },
   "ta-dashboard": { breadcrumb: ["助教端", "教学驾驶舱"] },
+  "ta-class": { breadcrumb: ["助教端", "班级管理"] },
   "ta-import": { breadcrumb: ["助教端", "数据导入"] },
   "ta-profile": { breadcrumb: ["助教端", "学生画像"] },
   "ta-grading": { breadcrumb: ["助教端", "考试批阅"] },

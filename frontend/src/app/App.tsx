@@ -127,6 +127,7 @@ export default function App() {
         {page === "teacher-ai-analysis" && <TeacherAiAnalysis onOpenQuestion={(id, courseId) => { setFocusQuestion({ id, courseId }); setPage("teacher-bank"); }} onCoverKnowledgePoints={(courseId, kps) => { setAiQuizPreset({ courseId, knowledgePoints: kps }); setPage("teacher-ai-quiz"); }} />}
         {page === "teacher-dashboard" && <TeacherDashboard onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} />}
         {page === "teacher-class" && <TeacherClassManagement onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} />}
+        {page === "ta-class" && <TeacherClassManagement onNav={setPage} setSelectedStudentId={setSelectedStudentId} setSelectedCourseId={setSelectedCourseId} isTA={true} />}
         {page === "teacher-import" && <TeacherDataImport />}
         {page === "teacher-profile" && <TeacherStudentProfile onNav={setPage} initialStudentId={selectedStudentId} initialCourseId={selectedCourseId} />}
         {page === "teacher-ai-quiz" && <TeacherAIQuiz onNav={setPage} preset={aiQuizPreset} onClearPreset={() => setAiQuizPreset(null)} />}
