@@ -63,4 +63,17 @@ public interface ExamService {
     default String generateWrongAnswerAnalysis(Long questionId) { return null; }
     default List<QuestionBank> generateSimilarQuestions(Long questionId, int count) { return null; }
     default String suggestScore(String questionContent, String studentAnswer) { return null; }
+
+    // ===== AI 智能组卷 =====
+
+    /**
+     * 根据班级薄弱知识点情况自动生成个性化试卷
+     *
+     * @param userId       当前用户ID（教师）
+     * @param courseId     课程ID
+     * @param paperName    试卷名称
+     * @param questionCount 题目数量
+     * @return 创建好的试卷
+     */
+    ExamPaper aiGeneratePaper(Long userId, Long courseId, String paperName, Integer questionCount);
 }

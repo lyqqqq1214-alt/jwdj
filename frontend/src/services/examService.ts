@@ -213,6 +213,13 @@ export async function createExamPaper(params: ExamPaperCreateDTO) {
   return res.data as ExamPaper;
 }
 
+export async function aiGenerateExamPaper(courseId: number, paperName?: string, questionCount = 10) {
+  const res = await api.post('/exams/papers/ai-generate', null, {
+    params: { courseId, paperName, questionCount },
+  });
+  return res.data as ExamPaper;
+}
+
 export async function updateExamPaper(id: number, params: ExamPaperCreateDTO) {
   const res = await api.put(`/exams/papers/${id}`, params);
   return res.data as ExamPaper;

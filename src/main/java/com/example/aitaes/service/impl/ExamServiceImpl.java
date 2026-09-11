@@ -16,6 +16,8 @@ import com.example.aitaes.dto.StudentExamResultVO;
 import com.example.aitaes.dto.StudentExamVO;
 import com.example.aitaes.dto.StudentGradeRequestDTO;
 import com.example.aitaes.dto.SubmitExamResultDTO;
+import com.example.aitaes.dto.AiGeneratedQuestionDTO;
+import com.example.aitaes.dto.AiQuestionGenerateRequest;
 import com.example.aitaes.entity.*;
 import com.example.aitaes.mapper.*;
 import com.example.aitaes.service.ExamService;
@@ -23,6 +25,7 @@ import com.example.aitaes.service.NotificationService;
 import com.example.aitaes.service.OllamaService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -58,6 +61,8 @@ public class ExamServiceImpl implements ExamService {
     private final ObjectMapper objectMapper;
     private final NotificationService notificationService;
     private final OllamaService ollamaService;
+    private final StudentKpMasteryMapper studentKpMasteryMapper;
+    private final KnowledgePointMapper knowledgePointMapper;
 
     // ===== 私有方法 =====
 
@@ -1372,5 +1377,155 @@ public class ExamServiceImpl implements ExamService {
             return new String(arr);
         }
         return trimmed.replaceAll("\\s+", "").toUpperCase();
+    }
+
+    // ─── AI 智能组卷 ────────────────────────────────────────────────────────
+
+    @Override
+    public ExamPaper aiGeneratePaper(Long userId, Long courseId, String paperName, Integer questionCount) {
+        Course course = courseMapper.selectById(courseId);
+        if (course == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "课程不存在");
+        }
+        int count = (questionCount == null || questionCount <= 0) ? 10 : questionCount;
+
+        // 1. 找出班级薄弱知识点（掌握率 < 70%，按掌握率升序）
+        List<StudentKpMastery> masteryList = studentKpMasteryMapper.selectList(
+                new LambdaQueryWrapper<StudentKpMastery>()
+                        .eq(StudentKpMastery::getCourseId, courseId)
+                        .lt(StudentKpMastery::getClassAvgRate, new BigDecimal("70"))
+                        .orderByAsc(StudentKpMastery::getClassAvgRate));
+        List<String> weakKps = masteryList.stream()
+                .map(StudentKpMastery::getKpName)
+                .distinct()
+                .toList();
+
+        // 若无薄弱知识点数据，则取所有知识点
+        if (weakKps.isEmpty()) {
+            weakKps = knowledgePointMapper.selectList(
+                            new LambdaQueryWrapper<KnowledgePoint>()
+                                    .eq(KnowledgePoint::getCourseId, courseId)
+                                    .eq(KnowledgePoint::getDeleted, 0))
+                    .stream().map(KnowledgePoint::getKpName).distinct().toList();
+        }
+
+        // 2. 从题库中挑选关联薄弱知识点的题目
+        List<QuestionBank> selected = new ArrayList<>();
+        Set<Long> usedIds = new HashSet<>();
+        for (String kp : weakKps) {
+            if (selected.size() >= count) break;
+            List<QuestionBank> kpQuestions = questionBankMapper.selectList(
+                    new LambdaQueryWrapper<QuestionBank>()
+                            .eq(QuestionBank::getCourseId, courseId)
+                            .like(QuestionBank::getKnowledgePoints, kp)
+                            .orderByAsc(QuestionBank::getUsageCount)
+                            .last("LIMIT " + Math.max(1, count / Math.max(1, weakKps.size()) + 1)));
+            for (QuestionBank q : kpQuestions) {
+                if (!usedIds.contains(q.getId()) && selected.size() < count) {
+                    selected.add(q);
+                    usedIds.add(q.getId());
+                }
+            }
+        }
+
+        // 2.1 若无薄弱知识点匹配或不足，直接从课程题库随机选题补足
+        if (selected.size() < count) {
+            List<QuestionBank> allQuestions = questionBankMapper.selectList(
+                    new LambdaQueryWrapper<QuestionBank>()
+                            .eq(QuestionBank::getCourseId, courseId)
+                            .notIn(!usedIds.isEmpty(), QuestionBank::getId, usedIds)
+                            .orderByAsc(QuestionBank::getUsageCount)
+                            .last("LIMIT " + (count - selected.size())));
+            for (QuestionBank q : allQuestions) {
+                if (!usedIds.contains(q.getId()) && selected.size() < count) {
+                    selected.add(q);
+                    usedIds.add(q.getId());
+                }
+            }
+        }
+
+        // 3. 若题库不足，AI 生成补充题目
+        int need = count - selected.size();
+        if (need > 0) {
+            try {
+                List<String> genKps = weakKps.isEmpty()
+                        ? List.of(course.getCourseName())
+                        : weakKps;
+                AiQuestionGenerateRequest req = AiQuestionGenerateRequest.builder()
+                        .knowledgePoints(genKps)
+                        .questionType("SINGLE")
+                        .count(need)
+                        .difficulty("MEDIUM")
+                        .socraticMode(false)
+                        .build();
+                List<AiGeneratedQuestionDTO> generated = ollamaService.generateQuestions(req);
+                if (generated != null) {
+                    for (AiGeneratedQuestionDTO gq : generated) {
+                        if (selected.size() >= count) break;
+                        QuestionBank qb = saveAiQuestionToBank(courseId, resolveTeacherId(userId), gq);
+                        selected.add(qb);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("AI 补充出题失败，使用已有题目组卷: {}", e.getMessage());
+            }
+        }
+
+        if (selected.isEmpty()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(),
+                    "题库中无可用题目，请先录入题目或手动生成");
+        }
+
+        // 4. 构建试卷（每题分值均分，总分100）
+        BigDecimal perScore = BigDecimal.valueOf(100).divide(
+                BigDecimal.valueOf(selected.size()), 1, BigDecimal.ROUND_HALF_UP);
+        List<ExamPaperCreateDTO.QuestionItem> items = new ArrayList<>();
+        int no = 1;
+        for (QuestionBank q : selected) {
+            ExamPaperCreateDTO.QuestionItem item = new ExamPaperCreateDTO.QuestionItem();
+            item.setQuestionId(q.getId());
+            item.setQuestionNo(no++);
+            item.setScore(perScore);
+            items.add(item);
+        }
+
+        ExamPaperCreateDTO dto = new ExamPaperCreateDTO();
+        dto.setPaperName(paperName != null ? paperName : "AI智能组卷-" + course.getCourseName());
+        dto.setCourseId(courseId);
+        dto.setTotalScore(BigDecimal.valueOf(100));
+        dto.setDurationMinutes(60);
+        dto.setQuestions(items);
+
+        return createPaper(userId, dto);
+    }
+
+    private QuestionBank saveAiQuestionToBank(Long courseId, Long teacherId, AiGeneratedQuestionDTO gq) {
+        try {
+            ObjectNode content = objectMapper.createObjectNode();
+            content.put("stem", gq.getStem() != null ? gq.getStem() : "");
+            content.put("answer", gq.getAnswer() != null ? gq.getAnswer() : "");
+            content.put("analysis", gq.getExplanation() != null ? gq.getExplanation() : "");
+            if (gq.getOptions() != null && !gq.getOptions().isEmpty()) {
+                ObjectNode opts = objectMapper.createObjectNode();
+                gq.getOptions().forEach(opts::put);
+                content.set("options", opts);
+            }
+            String kpStr = gq.getKnowledgeTags() != null ? String.join(",", gq.getKnowledgeTags()) : "";
+
+            QuestionBank qb = new QuestionBank();
+            qb.setCourseId(courseId);
+            qb.setTeacherId(teacherId);
+            qb.setQuestionType(gq.getQuestionType() != null ? gq.getQuestionType() : "SINGLE");
+            qb.setDifficulty("MEDIUM");
+            qb.setContent(objectMapper.writeValueAsString(content));
+            qb.setKnowledgePoints(kpStr);
+            qb.setAiGenerated(1);
+            qb.setUsageCount(0);
+            qb.setStatus("APPROVED");
+            questionBankMapper.insert(qb);
+            return qb;
+        } catch (Exception e) {
+            throw new BusinessException(ResultCode.INTERNAL_ERROR.getCode(), "保存AI题目失败: " + e.getMessage());
+        }
     }
 }

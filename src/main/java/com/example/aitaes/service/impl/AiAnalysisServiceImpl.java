@@ -6,6 +6,7 @@ import com.example.aitaes.common.BusinessException;
 import com.example.aitaes.common.ResultCode;
 import com.example.aitaes.config.OllamaProperties;
 import com.example.aitaes.dto.AiAnalysisReportDTO;
+import com.example.aitaes.dto.AiAnalysisTrendDTO;
 import com.example.aitaes.dto.QuestionBankAuditDTO;
 import com.example.aitaes.entity.*;
 import com.example.aitaes.mapper.*;
@@ -850,5 +851,145 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
         } catch (Exception e) {
             log.warn("分析结果保存失败（不影响返回）: {}", e.getMessage());
         }
+    }
+
+    // ─── 数据变化对比 ────────────────────────────────────────────────────────
+
+    @Override
+    public AiAnalysisTrendDTO getTrend(Long courseId) {
+        Course course = courseMapper.selectById(courseId);
+        if (course == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "课程不存在");
+        }
+
+        // 取最近两次报告（按分析时间倒序）
+        List<AiAnalysisResult> records = aiAnalysisResultMapper.selectList(
+                new LambdaQueryWrapper<AiAnalysisResult>()
+                        .eq(AiAnalysisResult::getTargetType, "COURSE")
+                        .eq(AiAnalysisResult::getTargetId, courseId)
+                        .eq(AiAnalysisResult::getAnalysisType, "TEACHING_REPORT")
+                        .orderByDesc(AiAnalysisResult::getAnalysisTime)
+                        .last("LIMIT 2"));
+
+        AiAnalysisTrendDTO.AiAnalysisTrendDTOBuilder builder = AiAnalysisTrendDTO.builder()
+                .courseId(courseId)
+                .courseName(course.getCourseName());
+
+        if (records.isEmpty()) {
+            return builder.hasPrevious(false)
+                    .summary("暂无分析报告，请先生成一次课程分析报告。")
+                    .build();
+        }
+
+        AiAnalysisReportDTO current = parseReport(records.get(0));
+        builder.currentTime(current.getGeneratedAt());
+
+        if (records.size() < 2) {
+            return builder.hasPrevious(false)
+                    .summary("仅生成过一次报告，暂无对比基准。再次生成报告后即可查看数据变化。")
+                    .build();
+        }
+
+        AiAnalysisReportDTO previous = parseReport(records.get(1));
+        builder.previousTime(previous.getGeneratedAt()).hasPrevious(true);
+
+        // 到课率变化
+        BigDecimal curAtt = current.getAttendance() != null && current.getAttendance().getClassAvgRate() != null
+                ? current.getAttendance().getClassAvgRate() : BigDecimal.ZERO;
+        BigDecimal prevAtt = previous.getAttendance() != null && previous.getAttendance().getClassAvgRate() != null
+                ? previous.getAttendance().getClassAvgRate() : BigDecimal.ZERO;
+        builder.attendanceChange(buildMetricChange(curAtt, prevAtt));
+
+        // 平均分变化（取最近一次考核的得分率）
+        BigDecimal curScore = current.getScores() != null && !current.getScores().isEmpty()
+                ? current.getScores().get(current.getScores().size() - 1).getScoreRate() : BigDecimal.ZERO;
+        BigDecimal prevScore = previous.getScores() != null && !previous.getScores().isEmpty()
+                ? previous.getScores().get(previous.getScores().size() - 1).getScoreRate() : BigDecimal.ZERO;
+        builder.avgScoreChange(buildMetricChange(curScore, prevScore));
+
+        // 预警学生数变化
+        int curRisk = current.getAlerts() != null ? current.getAlerts().size() : 0;
+        int prevRisk = previous.getAlerts() != null ? previous.getAlerts().size() : 0;
+        builder.riskStudentCountChange(buildMetricChange(BigDecimal.valueOf(curRisk), BigDecimal.valueOf(prevRisk)));
+
+        // 需再讲知识点数变化
+        int curReteach = current.getKnowledge() != null
+                ? (int) current.getKnowledge().stream().filter(k -> "RETEACH".equals(k.getSuggestion())).count() : 0;
+        int prevReteach = previous.getKnowledge() != null
+                ? (int) previous.getKnowledge().stream().filter(k -> "RETEACH".equals(k.getSuggestion())).count() : 0;
+        builder.reteachKpCountChange(buildMetricChange(BigDecimal.valueOf(curReteach), BigDecimal.valueOf(prevReteach)));
+
+        // 知识点掌握率变化明细
+        Map<String, BigDecimal> prevKpMap = new HashMap<>();
+        if (previous.getKnowledge() != null) {
+            previous.getKnowledge().forEach(k -> prevKpMap.put(k.getKpName(), k.getClassAvgRate()));
+        }
+        List<AiAnalysisTrendDTO.KpMasteryChange> kpChanges = new ArrayList<>();
+        if (current.getKnowledge() != null) {
+            for (AiAnalysisReportDTO.KpAdvice kp : current.getKnowledge()) {
+                BigDecimal cur = kp.getClassAvgRate() != null ? kp.getClassAvgRate() : BigDecimal.ZERO;
+                BigDecimal prev = prevKpMap.getOrDefault(kp.getKpName(), cur);
+                kpChanges.add(AiAnalysisTrendDTO.KpMasteryChange.builder()
+                        .kpName(kp.getKpName())
+                        .currentRate(cur)
+                        .previousRate(prev)
+                        .delta(cur.subtract(prev))
+                        .trend(trendOf(cur, prev))
+                        .build());
+            }
+        }
+        builder.kpChanges(kpChanges);
+
+        // 新增/解除预警学生
+        Set<String> prevRiskNames = previous.getAlerts() != null
+                ? previous.getAlerts().stream().map(AiAnalysisReportDTO.StudentRisk::getName).collect(Collectors.toSet())
+                : Set.of();
+        Set<String> curRiskNames = current.getAlerts() != null
+                ? current.getAlerts().stream().map(AiAnalysisReportDTO.StudentRisk::getName).collect(Collectors.toSet())
+                : Set.of();
+        builder.newRiskStudents(curRiskNames.stream().filter(n -> !prevRiskNames.contains(n)).toList());
+        builder.recoveredStudents(prevRiskNames.stream().filter(n -> !curRiskNames.contains(n)).toList());
+
+        // 变化总结
+        builder.summary(buildTrendSummary(curAtt, prevAtt, curRisk, prevRisk, curReteach, prevReteach));
+
+        return builder.build();
+    }
+
+    private AiAnalysisReportDTO parseReport(AiAnalysisResult record) {
+        try {
+            return objectMapper.readValue(record.getResultData(), AiAnalysisReportDTO.class);
+        } catch (Exception e) {
+            log.warn("解析历史分析报告失败: {}", e.getMessage());
+            return AiAnalysisReportDTO.builder().build();
+        }
+    }
+
+    private AiAnalysisTrendDTO.MetricChange buildMetricChange(BigDecimal current, BigDecimal previous) {
+        BigDecimal delta = current.subtract(previous);
+        return AiAnalysisTrendDTO.MetricChange.builder()
+                .current(current)
+                .previous(previous)
+                .delta(delta)
+                .trend(trendOf(current, previous))
+                .build();
+    }
+
+    private String trendOf(BigDecimal current, BigDecimal previous) {
+        int cmp = current.compareTo(previous);
+        if (cmp > 0) return "UP";
+        if (cmp < 0) return "DOWN";
+        return "SAME";
+    }
+
+    private String buildTrendSummary(BigDecimal curAtt, BigDecimal prevAtt, int curRisk, int prevRisk, int curReteach, int prevReteach) {
+        StringBuilder sb = new StringBuilder("数据变化总结：");
+        sb.append("班级平均到课率").append(trendOf(curAtt, prevAtt).equals("UP") ? "上升" : trendOf(curAtt, prevAtt).equals("DOWN") ? "下降" : "持平")
+                .append(curAtt.subtract(prevAtt).abs()).append("%；");
+        sb.append("预警学生").append(curRisk > prevRisk ? "增加" : curRisk < prevRisk ? "减少" : "不变")
+                .append(Math.abs(curRisk - prevRisk)).append("人；");
+        sb.append("需重点再讲知识点").append(curReteach > prevReteach ? "增加" : curReteach < prevReteach ? "减少" : "不变")
+                .append(Math.abs(curReteach - prevReteach)).append("个。");
+        return sb.toString();
     }
 }

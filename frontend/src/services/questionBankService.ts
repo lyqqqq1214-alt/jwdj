@@ -94,3 +94,27 @@ export async function generateQuestionAnalysis(params: AnalysisGenerateRequest) 
   const res = await api.post('/question-bank/analysis/generate', params);
   return res.data as string;
 }
+
+export interface BatchAnalysisResult {
+  total: number;
+  success: number;
+  failed: number;
+  failedIds: number[];
+}
+
+export async function batchGenerateAnalysis(courseId: number) {
+  const res = await api.post('/question-bank/analysis/batch', null, { params: { courseId } });
+  return res.data as BatchAnalysisResult;
+}
+
+export interface AutoGenerateResult {
+  uncoveredKpCount: number;
+  generatedCount: number;
+  uncoveredKpNames: string[];
+  failedKpNames: string[];
+}
+
+export async function autoGenerateForUncoveredKps(courseId: number, countPerKp = 2) {
+  const res = await api.post('/question-bank/auto-generate', null, { params: { courseId, countPerKp } });
+  return res.data as AutoGenerateResult;
+}

@@ -46,6 +46,18 @@ public class ExamController {
         return Result.success("试卷创建成功", examService.createPaper(userId, dto));
     }
 
+    /**
+     * AI 智能组卷：根据班级薄弱知识点自动生成个性化试卷
+     */
+    @PostMapping("/papers/ai-generate")
+    @RequireRole({"TEACHER"})
+    public Result<ExamPaper> aiGeneratePaper(@RequestAttribute("userId") Long userId,
+                                              @RequestParam Long courseId,
+                                              @RequestParam(required = false) String paperName,
+                                              @RequestParam(defaultValue = "10") Integer questionCount) {
+        return Result.success("AI智能组卷成功", examService.aiGeneratePaper(userId, courseId, paperName, questionCount));
+    }
+
     @GetMapping("/papers")
     @RequireRole({"TEACHER", "ASSISTANT"})
     public Result<IPage<ExamPaper>> listPapers(

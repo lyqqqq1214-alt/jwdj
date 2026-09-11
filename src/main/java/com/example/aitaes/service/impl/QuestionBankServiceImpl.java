@@ -9,18 +9,27 @@ import com.example.aitaes.entity.KnowledgePoint;
 import com.example.aitaes.entity.QuestionBank;
 import com.example.aitaes.entity.Teacher;
 import com.example.aitaes.dto.AnalysisGenerateRequest;
+import com.example.aitaes.dto.AiGeneratedQuestionDTO;
+import com.example.aitaes.dto.AiQuestionGenerateRequest;
 import com.example.aitaes.dto.QuestionLabelUpdateRequest;
 import com.example.aitaes.mapper.KnowledgePointMapper;
 import com.example.aitaes.mapper.QuestionBankMapper;
 import com.example.aitaes.mapper.TeacherMapper;
 import com.example.aitaes.service.OllamaService;
 import com.example.aitaes.service.QuestionBankService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +44,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     private final KnowledgePointMapper knowledgePointMapper;
     private final TeacherMapper teacherMapper;
     private final OllamaService ollamaService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public IPage<QuestionBank> page(int pageNum, int pageSize, Long courseId,
@@ -167,5 +177,170 @@ public class QuestionBankServiceImpl implements QuestionBankService {
         }
         prompt.append("。不要输出任何额外说明、标题或代码块标记。");
         return prompt.toString();
+    }
+
+    // ─── 批量自动补全解析 ────────────────────────────────────────────────────
+
+    @Override
+    public BatchAnalysisResult batchGenerateAnalysis(Long courseId) {
+        List<QuestionBank> questions = questionBankMapper.selectList(
+                new LambdaQueryWrapper<QuestionBank>().eq(QuestionBank::getCourseId, courseId));
+
+        int total = 0, success = 0, failed = 0;
+        List<Long> failedIds = new ArrayList<>();
+
+        for (QuestionBank q : questions) {
+            try {
+                JsonNode content = objectMapper.readTree(q.getContent());
+                // 已有解析则跳过
+                if (hasText(content, "analysis") || hasText(content, "explanation")) {
+                    continue;
+                }
+                total++;
+
+                AnalysisGenerateRequest req = buildRequestFromQuestion(q, content);
+                String analysis = generateAnalysis(req);
+                if (analysis == null || analysis.isBlank()) {
+                    failed++;
+                    failedIds.add(q.getId());
+                    continue;
+                }
+
+                ((ObjectNode) content).put("analysis", analysis);
+                q.setContent(objectMapper.writeValueAsString(content));
+                questionBankMapper.updateById(q);
+                success++;
+            } catch (Exception e) {
+                failed++;
+                failedIds.add(q.getId());
+                log.warn("题目 {} 解析补全失败: {}", q.getId(), e.getMessage());
+            }
+        }
+
+        return BatchAnalysisResult.builder()
+                .total(total).success(success).failed(failed).failedIds(failedIds).build();
+    }
+
+    private boolean hasText(JsonNode node, String key) {
+        if (node == null || !node.isObject()) return false;
+        JsonNode v = node.get(key);
+        return v != null && v.isTextual() && !v.asText().isBlank();
+    }
+
+    private AnalysisGenerateRequest buildRequestFromQuestion(QuestionBank q, JsonNode content) {
+        AnalysisGenerateRequest req = new AnalysisGenerateRequest();
+        req.setQuestionType(q.getQuestionType());
+        req.setDifficulty(q.getDifficulty());
+        req.setKnowledgePoints(q.getKnowledgePoints());
+        req.setStem(content.path("stem").asText(""));
+        req.setAnswer(content.path("answer").asText(""));
+        JsonNode opts = content.get("options");
+        if (opts != null && opts.isObject()) {
+            Map<String, String> options = new java.util.HashMap<>();
+            opts.fields().forEachRemaining(e -> options.put(e.getKey(), e.getValue().asText()));
+            req.setOptions(options);
+        }
+        return req;
+    }
+
+    // ─── 根据未覆盖知识点自动补全题目 ────────────────────────────────────────
+
+    @Override
+    public AutoGenerateResult autoGenerateForUncoveredKps(Long courseId, Integer countPerKp, Long teacherId) {
+        int perKp = (countPerKp == null || countPerKp <= 0) ? 2 : countPerKp;
+
+        // 1. 课程所有知识点（取叶子节点 level=3，或全部）
+        List<KnowledgePoint> allKps = knowledgePointMapper.selectList(
+                new LambdaQueryWrapper<KnowledgePoint>()
+                        .eq(KnowledgePoint::getCourseId, courseId)
+                        .eq(KnowledgePoint::getDeleted, 0));
+
+        // 2. 题库中已覆盖的知识点集合
+        List<QuestionBank> questions = questionBankMapper.selectList(
+                new LambdaQueryWrapper<QuestionBank>().eq(QuestionBank::getCourseId, courseId));
+        Set<String> coveredKps = new HashSet<>();
+        for (QuestionBank q : questions) {
+            if (StringUtils.hasText(q.getKnowledgePoints())) {
+                for (String kp : q.getKnowledgePoints().split(",")) {
+                    coveredKps.add(kp.trim());
+                }
+            }
+        }
+
+        // 3. 未覆盖的知识点
+        List<String> uncovered = allKps.stream()
+                .map(KnowledgePoint::getKpName)
+                .filter(name -> name != null && !coveredKps.contains(name))
+                .distinct()
+                .toList();
+
+        if (uncovered.isEmpty()) {
+            return AutoGenerateResult.builder()
+                    .uncoveredKpCount(0).generatedCount(0)
+                    .uncoveredKpNames(List.of()).failedKpNames(List.of())
+                    .build();
+        }
+
+        // 4. 为每个未覆盖知识点生成题目
+        int generated = 0;
+        List<String> failed = new ArrayList<>();
+        for (String kpName : uncovered) {
+            try {
+                AiQuestionGenerateRequest req = AiQuestionGenerateRequest.builder()
+                        .knowledgePoints(List.of(kpName))
+                        .questionType("SINGLE")
+                        .count(perKp)
+                        .difficulty("MEDIUM")
+                        .socraticMode(false)
+                        .build();
+                List<AiGeneratedQuestionDTO> generatedQs = ollamaService.generateQuestions(req);
+                if (generatedQs == null || generatedQs.isEmpty()) {
+                    failed.add(kpName);
+                    continue;
+                }
+                for (AiGeneratedQuestionDTO gq : generatedQs) {
+                    saveGeneratedQuestion(courseId, teacherId, kpName, gq);
+                    generated++;
+                }
+            } catch (Exception e) {
+                failed.add(kpName);
+                log.warn("知识点 {} 自动出题失败: {}", kpName, e.getMessage());
+            }
+        }
+
+        return AutoGenerateResult.builder()
+                .uncoveredKpCount(uncovered.size())
+                .generatedCount(generated)
+                .uncoveredKpNames(uncovered)
+                .failedKpNames(failed)
+                .build();
+    }
+
+    private void saveGeneratedQuestion(Long courseId, Long teacherId, String kpName, AiGeneratedQuestionDTO gq) {
+        try {
+            ObjectNode content = objectMapper.createObjectNode();
+            content.put("stem", gq.getStem() != null ? gq.getStem() : "");
+            content.put("answer", gq.getAnswer() != null ? gq.getAnswer() : "");
+            content.put("analysis", gq.getExplanation() != null ? gq.getExplanation() : "");
+            if (gq.getOptions() != null && !gq.getOptions().isEmpty()) {
+                ObjectNode opts = objectMapper.createObjectNode();
+                gq.getOptions().forEach(opts::put);
+                content.set("options", opts);
+            }
+
+            QuestionBank qb = new QuestionBank();
+            qb.setCourseId(courseId);
+            qb.setTeacherId(teacherId);
+            qb.setQuestionType(gq.getQuestionType() != null ? gq.getQuestionType() : "SINGLE");
+            qb.setDifficulty("MEDIUM");
+            qb.setContent(objectMapper.writeValueAsString(content));
+            qb.setKnowledgePoints(kpName);
+            qb.setAiGenerated(1);
+            qb.setUsageCount(0);
+            qb.setStatus("APPROVED");
+            questionBankMapper.insert(qb);
+        } catch (Exception e) {
+            log.warn("保存AI生成题目失败: {}", e.getMessage());
+        }
     }
 }

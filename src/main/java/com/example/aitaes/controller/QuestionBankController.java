@@ -99,4 +99,23 @@ public class QuestionBankController {
     public Result<String> generateAnalysis(@RequestBody AnalysisGenerateRequest request) {
         return Result.success(questionBankService.generateAnalysis(request));
     }
+
+    /**
+     * 批量自动补全解析：为课程下所有缺少解析的题目生成 AI 解析
+     */
+    @PostMapping("/analysis/batch")
+    public Result<QuestionBankService.BatchAnalysisResult> batchGenerateAnalysis(@RequestParam Long courseId) {
+        return Result.success(questionBankService.batchGenerateAnalysis(courseId));
+    }
+
+    /**
+     * 根据未覆盖知识点自动补全题目
+     */
+    @PostMapping("/auto-generate")
+    public Result<QuestionBankService.AutoGenerateResult> autoGenerateQuestions(
+            @RequestParam Long courseId,
+            @RequestParam(defaultValue = "2") Integer countPerKp,
+            @RequestAttribute("userId") Long userId) {
+        return Result.success(questionBankService.autoGenerateForUncoveredKps(courseId, countPerKp, userId));
+    }
 }

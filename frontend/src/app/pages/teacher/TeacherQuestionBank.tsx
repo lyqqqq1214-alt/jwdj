@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { CheckCircle, Plus, Upload, Brain, Target, FileText, Database, Search, BookMarked, X } from "lucide-react";
 import { getMyCourses, ClassVO } from "../../../services/dashboardService";
-import { getQuestionList, getQuestionById, updateQuestion, deleteQuestion, createQuestion, generateQuestionAnalysis, QuestionBank } from "../../../services/questionBankService";
+import { getQuestionList, getQuestionById, updateQuestion, deleteQuestion, createQuestion, generateQuestionAnalysis, batchGenerateAnalysis, autoGenerateForUncoveredKps, QuestionBank } from "../../../services/questionBankService";
 import { Page } from "../../types";
 import { Tag } from "../../utils";
 
@@ -32,6 +32,8 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
   const [highlightId, setHighlightId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [generatingAnalysis, setGeneratingAnalysis] = useState(false);
+  const [batchingAnalysis, setBatchingAnalysis] = useState(false);
+  const [autoGenerating, setAutoGenerating] = useState(false);
   const [form, setForm] = useState({
     questionType: "SINGLE",
     difficulty: "EASY",
@@ -48,6 +50,40 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
     optionA: "", optionB: "", optionC: "", optionD: "", answer: "", analysis: "", knowledgePoints: "",
   });
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
+
+  const handleBatchAnalysis = async () => {
+    const cid = selectedCourseId ?? (courses[0]?.id);
+    if (!cid) { showToastMsg("请先选择课程"); return; }
+    setBatchingAnalysis(true);
+    try {
+      const r = await batchGenerateAnalysis(cid);
+      showToastMsg(`批量补全解析完成：共${r.total}题，成功${r.success}题${r.failed > 0 ? `，失败${r.failed}题` : ""}`);
+      loadQuestions();
+    } catch {
+      showToastMsg("批量补全解析失败，请稍后重试");
+    } finally {
+      setBatchingAnalysis(false);
+    }
+  };
+
+  const handleAutoGenerate = async () => {
+    const cid = selectedCourseId ?? (courses[0]?.id);
+    if (!cid) { showToastMsg("请先选择课程"); return; }
+    setAutoGenerating(true);
+    try {
+      const r = await autoGenerateForUncoveredKps(cid, 2);
+      if (r.uncoveredKpCount === 0) {
+        showToastMsg("所有知识点均已覆盖，无需补题");
+      } else {
+        showToastMsg(`自动补题完成：未覆盖${r.uncoveredKpCount}个知识点，生成${r.generatedCount}道题`);
+        loadQuestions();
+      }
+    } catch {
+      showToastMsg("自动补题失败，请稍后重试");
+    } finally {
+      setAutoGenerating(false);
+    }
+  };
 
   // 加载课程列表
   useEffect(() => {
@@ -391,6 +427,12 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
           </button>
           <button onClick={() => setShowUploadModal(true)} className="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
             <Upload size={14} />导入试卷
+          </button>
+          <button onClick={handleBatchAnalysis} disabled={batchingAnalysis} className="flex items-center gap-2 px-4 py-2 border border-amber-500 text-amber-600 rounded-md text-sm hover:bg-amber-50 disabled:opacity-50">
+            <Brain size={14} />{batchingAnalysis ? "补全中…" : "批量补全解析"}
+          </button>
+          <button onClick={handleAutoGenerate} disabled={autoGenerating} className="flex items-center gap-2 px-4 py-2 border border-emerald-500 text-emerald-600 rounded-md text-sm hover:bg-emerald-50 disabled:opacity-50">
+            <Target size={14} />{autoGenerating ? "补题中…" : "未覆盖知识点补题"}
           </button>
           {selectedQuestions.length > 0 && (
             <button onClick={handleAddToQuiz} className="flex items-center gap-2 px-4 py-2 bg-[#74C2A0] text-white rounded-md text-sm hover:bg-[#5FAF8E]">

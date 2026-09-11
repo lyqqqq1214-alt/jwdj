@@ -148,3 +148,40 @@ export async function getQuestionBankAudit(courseId: number) {
   const res = await api.get('/ai-analysis/question-bank-audit', { params: { courseId } });
   return res.data as QuestionBankAudit;
 }
+
+// ─── 数据变化对比（趋势） ─────────────────────────────────────────────────────
+export interface MetricChange {
+  current: number;
+  previous: number;
+  delta: number;
+  trend: 'UP' | 'DOWN' | 'SAME';
+}
+
+export interface KpMasteryChange {
+  kpName: string;
+  currentRate: number;
+  previousRate: number;
+  delta: number;
+  trend: 'UP' | 'DOWN' | 'SAME';
+}
+
+export interface AiAnalysisTrend {
+  courseId: number;
+  courseName?: string;
+  currentTime?: string;
+  previousTime?: string;
+  hasPrevious: boolean;
+  attendanceChange?: MetricChange;
+  avgScoreChange?: MetricChange;
+  riskStudentCountChange?: MetricChange;
+  reteachKpCountChange?: MetricChange;
+  kpChanges?: KpMasteryChange[];
+  newRiskStudents?: string[];
+  recoveredStudents?: string[];
+  summary?: string;
+}
+
+export async function getAiAnalysisTrend(courseId: number) {
+  const res = await api.get('/ai-analysis/trend', { params: { courseId } });
+  return res.data as AiAnalysisTrend;
+}

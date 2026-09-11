@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import {
   Edit2, Play, Trash2, Clock, FileSearch, Eye, CheckCircle,
   ChevronLeft, ChevronUp, ChevronDown, Plus, X,
-  Users, FileText, BarChart2, TrendingUp
+  Users, FileText, BarChart2, TrendingUp, Brain, Sparkles
 } from "lucide-react";
 import {
   getExamPapers, getExamPaperById, getPaperQuestions, createExamPaper,
   updateExamPaper, deleteExamPaper, publishExamPaper, closeExamPaper,
   getExamResults, getPaperGrading, submitStudentGrade, getAiGradeSuggestion,
+  aiGenerateExamPaper,
   ExamPaper, ExamResultDTO, PaperGradingVO, StudentGradeItem,
 } from "../../../services/examService";
 import { getMyCourses, ClassVO } from "../../../services/dashboardService";
@@ -282,6 +283,27 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
     setEditable([]);
     setShowCreateWizard(true);
     setCreateStep(1);
+  };
+
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const handleAiGenerate = async () => {
+    if (courses.length === 0) { showToastMsg("暂无课程，无法组卷"); return; }
+    setAiGenerating(true);
+    let lastErr: string = "";
+    // 遍历课程，找到第一道能成功组卷的课程（优先用有题目的课程）
+    for (const c of courses) {
+      try {
+        const paper = await aiGenerateExamPaper(c.id, undefined, 10);
+        showToastMsg(`AI智能组卷成功（${c.courseName || c.className}）`);
+        loadPapers();
+        setAiGenerating(false);
+        return;
+      } catch (e) {
+        lastErr = e instanceof Error ? e.message : String(e);
+      }
+    }
+    setAiGenerating(false);
+    showToastMsg(lastErr || "AI组卷失败，请确认课程题库有题目");
   };
 
   const resetWizard = () => {
@@ -843,9 +865,14 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">考试管理</h2>
-        <button onClick={openWizard} className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">
-          <Plus size={16} /> 手动组卷
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={handleAiGenerate} disabled={aiGenerating} className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50">
+            <Sparkles size={16} /> {aiGenerating ? "组卷中…" : "AI智能组卷"}
+          </button>
+          <button onClick={openWizard} className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">
+            <Plus size={16} /> 手动组卷
+          </button>
+        </div>
       </div>
 
       {showCreateWizard && (

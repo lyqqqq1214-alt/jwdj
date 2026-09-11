@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import {
   Sparkles, CheckCircle, ChevronDown, Calendar, Target, AlertTriangle,
-  BarChart3, FileText, BookMarked, RotateCcw, BookOpen, Clock, AlertCircle, ArrowRight
+  BarChart3, FileText, BookMarked, RotateCcw, BookOpen, Clock, AlertCircle, ArrowRight, TrendingUp, TrendingDown, Minus
 } from "lucide-react";
 import { getMyCourses, ClassVO } from "../../../services/dashboardService";
 import {
-  getAiAnalysisReport, getQuestionBankAudit, AiAnalysisReport,
-  QuestionBankAudit, assessmentTypeLabel, questionTypeLabel,
+  getAiAnalysisReport, getQuestionBankAudit, getAiAnalysisTrend, AiAnalysisReport,
+  QuestionBankAudit, AiAnalysisTrend, assessmentTypeLabel, questionTypeLabel,
   difficultyLabel, issueCategoryLabel,
 } from "../../../services/aiAnalysisService";
 import { Tag, StatCard } from "../../utils";
@@ -19,8 +19,10 @@ function TeacherAiAnalysis({ onOpenQuestion, onCoverKnowledgePoints }: {
   const [courseId, setCourseId] = useState<number | null>(null);
   const [report, setReport] = useState<AiAnalysisReport | null>(null);
   const [audit, setAudit] = useState<QuestionBankAudit | null>(null);
+  const [trend, setTrend] = useState<AiAnalysisTrend | null>(null);
   const [loading, setLoading] = useState(false);
   const [auditing, setAuditing] = useState(false);
+  const [trendLoading, setTrendLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -57,6 +59,25 @@ function TeacherAiAnalysis({ onOpenQuestion, onCoverKnowledgePoints }: {
       setAuditing(false);
     }
   };
+
+  const handleTrend = async () => {
+    if (!courseId || trendLoading) return;
+    setTrendLoading(true);
+    try {
+      setTrend(await getAiAnalysisTrend(courseId));
+      showToastMsg("数据变化对比已生成");
+    } catch {
+      showToastMsg("获取数据变化失败，请稍后重试");
+    } finally {
+      setTrendLoading(false);
+    }
+  };
+
+  const trendIcon = (t?: string) =>
+    t === "UP" ? <TrendingUp size={14} className="text-green-500" /> :
+    t === "DOWN" ? <TrendingDown size={14} className="text-red-500" /> :
+    <Minus size={14} className="text-muted-foreground" />;
+  const deltaText = (d?: number) => (d != null ? (d > 0 ? `+${Number(d).toFixed(1)}` : Number(d).toFixed(1)) : "—");
 
   const levelTag = (l: string) =>
     l === "预警" ? <Tag color="red">预警</Tag> : l === "关注" ? <Tag color="yellow">关注</Tag> : <Tag color="green">正常</Tag>;
@@ -108,6 +129,10 @@ function TeacherAiAnalysis({ onOpenQuestion, onCoverKnowledgePoints }: {
           <button onClick={handleGenerate} disabled={!courseId || loading}
             className="flex items-center gap-1.5 px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors">
             <Sparkles size={14} />{loading ? "分析中…" : report ? "重新生成报告" : "生成分析报告"}
+          </button>
+          <button onClick={handleTrend} disabled={!courseId || trendLoading}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+            <BarChart3 size={14} />{trendLoading ? "对比中…" : "数据变化"}
           </button>
         </div>
       </div>
@@ -314,6 +339,91 @@ function TeacherAiAnalysis({ onOpenQuestion, onCoverKnowledgePoints }: {
             </div>
           </div>
         </>
+      )}
+
+      {/* 数据变化对比 */}
+      {trend && (
+        <div className="bg-card rounded-xl border border-border p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <BarChart3 size={16} className="text-emerald-600" />
+            <h3 className="font-semibold">数据变化对比</h3>
+            {trend.currentTime && trend.previousTime && (
+              <span className="text-xs text-muted-foreground">
+                {trend.previousTime} → {trend.currentTime}
+              </span>
+            )}
+          </div>
+          {trend.summary && <p className="text-sm text-muted-foreground mb-4">{trend.summary}</p>}
+          {!trend.hasPrevious ? (
+            <p className="text-sm text-muted-foreground">{trend.summary || "暂无对比数据，请先生成至少两次分析报告。"}</p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              {[
+                { label: "到课率", m: trend.attendanceChange, suffix: "%" },
+                { label: "平均分", m: trend.avgScoreChange, suffix: "分" },
+                { label: "预警学生", m: trend.riskStudentCountChange, suffix: "人" },
+                { label: "需再讲知识点", m: trend.reteachKpCountChange, suffix: "个" },
+              ].map(item => (
+                <div key={item.label} className="rounded-lg border border-border p-3">
+                  <div className="text-xs text-muted-foreground">{item.label}</div>
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-lg font-semibold">{item.m?.current ?? "—"}</span>
+                    <span className="text-xs text-muted-foreground">{item.suffix}</span>
+                    {trendIcon(item.m?.trend)}
+                  </div>
+                  <div className="text-xs mt-0.5">
+                    <span className="text-muted-foreground">上次 {item.m?.previous ?? "—"}</span>
+                    <span className={item.m?.trend === "UP" ? "text-green-600 ml-1" : item.m?.trend === "DOWN" ? "text-red-500 ml-1" : "text-muted-foreground ml-1"}>
+                      {deltaText(item.m?.delta)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {trend.kpChanges && trend.kpChanges.length > 0 && (
+            <div className="rounded-lg border border-border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 text-muted-foreground">
+                  <tr>
+                    <th className="text-left px-3 py-2">知识点</th>
+                    <th className="text-right px-3 py-2">当前掌握率</th>
+                    <th className="text-right px-3 py-2">上次掌握率</th>
+                    <th className="text-right px-3 py-2">变化</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trend.kpChanges.map(kp => (
+                    <tr key={kp.kpName} className="border-t border-border">
+                      <td className="px-3 py-2">{kp.kpName}</td>
+                      <td className="text-right px-3 py-2">{Number(kp.currentRate).toFixed(1)}%</td>
+                      <td className="text-right px-3 py-2">{Number(kp.previousRate).toFixed(1)}%</td>
+                      <td className="text-right px-3 py-2 flex items-center justify-end gap-1">
+                        {trendIcon(kp.trend)}<span className={kp.trend === "UP" ? "text-green-600" : kp.trend === "DOWN" ? "text-red-500" : "text-muted-foreground"}>{deltaText(kp.delta)}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {(trend.newRiskStudents?.length || trend.recoveredStudents?.length) ? (
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              {trend.newRiskStudents && trend.newRiskStudents.length > 0 && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                  <div className="text-xs text-red-600 font-medium mb-1">新增预警学生</div>
+                  <div className="text-sm">{trend.newRiskStudents.join("、")}</div>
+                </div>
+              )}
+              {trend.recoveredStudents && trend.recoveredStudents.length > 0 && (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                  <div className="text-xs text-green-600 font-medium mb-1">解除预警学生</div>
+                  <div className="text-sm">{trend.recoveredStudents.join("、")}</div>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
       )}
 
       {/* 题库整理判断 */}
