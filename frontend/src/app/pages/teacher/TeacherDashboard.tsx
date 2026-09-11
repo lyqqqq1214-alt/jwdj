@@ -31,7 +31,6 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId, ta
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
   const [selectedClassName, setSelectedClassName] = useState<string>("");
   const [viewMode, setViewMode] = useState<"single" | "merged" | "compare">("single");
-  const [selectedCompareClasses, setSelectedCompareClasses] = useState<number[]>([]);
   const [compareData, setCompareData] = useState<{ className: string; overview: DashboardOverview | null }[]>([]);
   const [warningFilter, setWarningFilter] = useState<string | null>(null);
   const [selectedWarnings, setSelectedWarnings] = useState<number[]>([]);
@@ -96,12 +95,6 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId, ta
     if (!taPermissions) return dashboardCourses;
     return dashboardCourses.filter(c => taPermissions.allowedClasses.includes(c.id));
   }, [dashboardCourses, taPermissions]);
-
-  useEffect(() => {
-    if (selectedCompareClasses.length === 0 && visibleCourses.length >= 2) {
-      setSelectedCompareClasses([visibleCourses[0].id, visibleCourses[1].id]);
-    }
-  }, [visibleCourses, selectedCompareClasses.length]);
 
   // Fetch dashboard data when class is selected
   useEffect(() => {
@@ -171,14 +164,11 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId, ta
     LOW: "低",
   } as Record<string, string>)[s || ""] || s || "—";
 
-  // 班级对比：当前课程的全部班级各自请求概览数据
-  useEffect(() => {
-    if (viewMode !== "compare" || !selectedClass) return;
-    const classNames = classInfo?.classNames?.length ? classInfo.classNames : [""];
-    Promise.all(classNames.map(cn =>
-      getDashboardOverview(selectedClass, cn || undefined).then(ov => ({ className: cn || "未分班", overview: ov }))
-    )).then(setCompareData).catch(() => setCompareData([]));
-  }, [viewMode, selectedClass, classInfo?.classNames?.join("|")]);
+  /** 当前课程下的全部行政班；班级对比不再错误地跨课程取数。 */
+  const comparisonClassNames = useMemo(
+    () => (classInfo?.classNames || []).filter(Boolean),
+    [classInfo?.classNames?.join("|")]
+  );
 
   const handleSendNotification = async () => {
     if (!notificationContent.trim()) { alert("请输入通知内容"); return; }
@@ -197,50 +187,48 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId, ta
     setHiddenModules(prev => prev.includes(module) ? prev.filter(m => m !== module) : [...prev, module]);
   };
 
-  const toggleCompareClass = (classId: number) => {
-    setSelectedCompareClasses(prev => {
-      if (prev.includes(classId)) {
-        return prev.filter(c => c !== classId);
-      }
-      if (prev.length >= 3) {
-        return [...prev.slice(1), classId];
-      }
-      return [...prev, classId];
-    });
-  };
-
-  // 班级对比数据：从各选中班级的成绩趋势中合并
-  const [compareTrends, setCompareTrends] = useState<Record<number, ChartItem[]>>({});
-
+  // 班级对比：对同一课程的每个班级分别加载真实概览与考核趋势。
+  const [compareTrends, setCompareTrends] = useState<Record<string, ChartItem[]>>({});
   useEffect(() => {
-    if (viewMode !== "compare" || selectedCompareClasses.length === 0) return;
-    const trends: Record<number, ChartItem[]> = {};
-    selectedCompareClasses.forEach(classId => {
-      getDashboardFull(classId, undefined).then(data => {
-        trends[classId] = data.charts?.scoreTrend || [];
-        setCompareTrends({ ...trends });
-      }).catch(() => {});
+    if (viewMode !== "compare" || !selectedClass || comparisonClassNames.length === 0) {
+      setCompareData([]);
+      setCompareTrends({});
+      return;
+    }
+    Promise.all(comparisonClassNames.map(async className => {
+      const data = await getDashboardFull(selectedClass, className);
+      return { className, overview: data.overview, trend: data.charts?.scoreTrend || [] };
+    })).then(rows => {
+      setCompareData(rows.map(({ className, overview }) => ({ className, overview })));
+      setCompareTrends(Object.fromEntries(rows.map(({ className, trend }) => [className, trend])));
+    }).catch(() => {
+      setCompareData([]);
+      setCompareTrends({});
     });
-  }, [viewMode, selectedCompareClasses]);
+  }, [viewMode, selectedClass, comparisonClassNames.join("|")]);
 
-  // 合并对比数据为图表格式
-  const compareScoreData = (() => {
-    if (selectedCompareClasses.length === 0) return [];
-    // 收集所有考试名称
-    const allExamNames = new Set<string>();
-    selectedCompareClasses.forEach(classId => {
-      (compareTrends[classId] || []).forEach(item => allExamNames.add(item.name));
+  // 同一场考核为一个横坐标，全部班级各一条真实成绩曲线。
+  const compareScoreData = useMemo(() => {
+    const examNames = new Set<string>();
+    comparisonClassNames.forEach(className => {
+      (compareTrends[className] || []).forEach(item => examNames.add(item.name));
     });
-    const examNames = Array.from(allExamNames);
-    return examNames.map(examName => {
-      const row: any = { exam: examName };
-      selectedCompareClasses.forEach((classId, idx) => {
-        const trend = (compareTrends[classId] || []).find(t => t.name === examName);
-        row[`class${idx + 1}`] = trend?.value || 0;
+    return Array.from(examNames).map(exam => {
+      const row: Record<string, string | number | null> = { exam };
+      comparisonClassNames.forEach(className => {
+        row[className] = (compareTrends[className] || []).find(item => item.name === exam)?.value ?? null;
       });
       return row;
     });
-  })();
+  }, [comparisonClassNames, compareTrends]);
+
+  const compareMetricData = compareData.map(({ className, overview }) => ({
+    className,
+    averageScore: Number(overview?.averageScore || 0),
+    attendanceRate: Number(overview?.attendanceRate || 0),
+    homeworkRate: Number(overview?.homeworkRate || 0),
+  }));
+  const compareColors = ["#1A56DB", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4"];
 
   return (
     <div className="space-y-6">
@@ -370,20 +358,37 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId, ta
           </div>
 
           {viewMode === "compare" ? (
-            <div className="bg-card rounded-lg border border-border p-5">
-              <h3 className="font-medium text-sm mb-4">班级成绩对比</h3>
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={compareScoreData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="exam" tick={{ fontSize: 11 }} />
-                  <YAxis domain={[60, 100]} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="class1" stroke="#1A56DB" strokeWidth={2} dot={{ r: 4 }} name={visibleCourses.find(c => c.id === selectedCompareClasses[0])?.className || "班级1"} />
-                  {selectedCompareClasses.length > 1 && <Line type="monotone" dataKey="class2" stroke="#10B981" strokeWidth={2} dot={{ r: 4 }} name={visibleCourses.find(c => c.id === selectedCompareClasses[1])?.className || "班级2"} />}
-                  {selectedCompareClasses.length > 2 && <Line type="monotone" dataKey="class3" stroke="#F59E0B" strokeWidth={2} dot={{ r: 4 }} name={visibleCourses.find(c => c.id === selectedCompareClasses[2])?.className || "班级3"} />}
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="space-y-4">
+              <div className="bg-card rounded-lg border border-border p-5">
+                <h3 className="font-medium text-sm mb-1">班级成绩趋势对比</h3>
+                <p className="text-xs text-muted-foreground mb-4">当前课程全部 {comparisonClassNames.length} 个班级，按每次考核的平均成绩对比</p>
+                {compareScoreData.length > 0 ? <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={compareScoreData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="exam" tick={{ fontSize: 11 }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Legend />
+                    {comparisonClassNames.map((className, index) => <Line key={className} type="monotone" dataKey={className} stroke={compareColors[index % compareColors.length]} strokeWidth={2} dot={{ r: 4 }} name={className} connectNulls />)}
+                  </LineChart>
+                </ResponsiveContainer> : <p className="py-20 text-center text-sm text-muted-foreground">暂无可对比的考核成绩数据</p>}
+              </div>
+              <div className="bg-card rounded-lg border border-border p-5">
+                <h3 className="font-medium text-sm mb-1">班级学习指标对比</h3>
+                <p className="text-xs text-muted-foreground mb-4">平均成绩、出勤率和作业提交率均来自当前课程的各班真实记录</p>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={compareMetricData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="className" tick={{ fontSize: 11 }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="averageScore" fill="#1A56DB" name="平均成绩" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="attendanceRate" fill="#10B981" name="出勤率" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="homeworkRate" fill="#F59E0B" name="作业提交率" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           ) : (
             <>
