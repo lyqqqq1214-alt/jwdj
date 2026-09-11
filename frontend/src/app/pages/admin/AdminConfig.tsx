@@ -6,9 +6,11 @@ import {
 import { getAllConfigs, batchUpdateConfigs } from "../../../services/configService";
 
 function AdminConfig() {
-  const [modelApiUrl, setModelApiUrl] = useState("http://localhost:11434");
-  const [modelName, setModelName] = useState("qwen2.5:7b");
-  const [modelTimeout, setModelTimeout] = useState("60");
+  const [remoteAiEnabled, setRemoteAiEnabled] = useState(false);
+  const [remoteApiUrl, setRemoteApiUrl] = useState("");
+  const [remoteModel, setRemoteModel] = useState("");
+  const [remoteApiKey, setRemoteApiKey] = useState("");
+  const [remoteKeyConfigured, setRemoteKeyConfigured] = useState(false);
   const [defaultPassword, setDefaultPassword] = useState("123456");
   const [absenteeismThreshold, setAbsenteeismThreshold] = useState("3");
   const [gradeDropThreshold, setGradeDropThreshold] = useState("20");
@@ -19,13 +21,14 @@ function AdminConfig() {
     getAllConfigs().then(data => {
       const allConfigs = Object.values(data || {}).flat();
       for (const c of allConfigs) {
-        if (c.configKey === "model.api.url") setModelApiUrl(c.configValue || "");
-        if (c.configKey === "model.name") setModelName(c.configValue || "");
-        if (c.configKey === "model.timeout") setModelTimeout(c.configValue || "");
+        if (c.configKey === "ai.remote.enabled") setRemoteAiEnabled(c.configValue === "true");
+        if (c.configKey === "ai.remote.base_url") setRemoteApiUrl(c.configValue || "");
+        if (c.configKey === "ai.remote.model") setRemoteModel(c.configValue || "");
+        if (c.configKey === "ai.remote.api_key") setRemoteKeyConfigured(c.configValue === "已设置");
         if (c.configKey === "default.password") setDefaultPassword(c.configValue || "");
-        if (c.configKey === "absenteeism.threshold") setAbsenteeismThreshold(c.configValue || "");
-        if (c.configKey === "grade.drop.threshold") setGradeDropThreshold(c.configValue || "");
-        if (c.configKey === "homework.threshold") setHomeworkThreshold(c.configValue || "");
+        if (c.configKey === "warning.attendance_threshold") setAbsenteeismThreshold(c.configValue || "");
+        if (c.configKey === "warning.score_drop_threshold") setGradeDropThreshold(c.configValue || "");
+        if (c.configKey === "warning.homework_miss_times") setHomeworkThreshold(c.configValue || "");
       }
     }).catch(() => {});
   }, []);
@@ -39,17 +42,23 @@ function AdminConfig() {
 
   const save = async () => {
     try {
-      await batchUpdateConfigs({
-        "model.api.url": modelApiUrl,
-        "model.name": modelName,
-        "model.timeout": modelTimeout,
+      const configs: Record<string, string> = {
+        "ai.remote.enabled": String(remoteAiEnabled),
+        "ai.remote.base_url": remoteApiUrl.trim(),
+        "ai.remote.model": remoteModel.trim(),
         "default.password": defaultPassword,
-        "absenteeism.threshold": absenteeismThreshold,
-        "grade.drop.threshold": gradeDropThreshold,
-        "homework.threshold": homeworkThreshold,
-      });
-    } catch {}
-    setSaved(true); setTimeout(() => setSaved(false), 2000);
+        "warning.attendance_threshold": absenteeismThreshold,
+        "warning.score_drop_threshold": gradeDropThreshold,
+        "warning.homework_miss_times": homeworkThreshold,
+      };
+      if (remoteApiKey.trim()) configs["ai.remote.api_key"] = remoteApiKey.trim();
+      await batchUpdateConfigs(configs);
+      setRemoteApiKey("");
+      if (remoteApiKey.trim()) setRemoteKeyConfigured(true);
+      setSaved(true); setTimeout(() => setSaved(false), 2000);
+    } catch {
+      setSaved(false);
+    }
   };
 
   return (
@@ -63,25 +72,36 @@ function AdminConfig() {
         <div className="bg-card rounded-lg border border-border p-5">
           <div className="flex items-center gap-2 mb-4">
             <Brain size={16} className="text-[#969BE7]" />
-            <h3 className="font-medium text-sm">大模型配置</h3>
+            <h3 className="font-medium text-sm">AI 服务配置</h3>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-muted-foreground mb-1.5 block">大模型API地址</label>
-              <input type="text" value={modelApiUrl} onChange={e => setModelApiUrl(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="http://localhost:11434" />
+              <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/40 px-3 py-2.5">
+                <div>
+                  <p className="text-sm font-medium">使用远程 API</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">关闭或配置不完整时，自动使用本机 Ollama（qwen2.5:7b）</p>
+                </div>
+                <input type="checkbox" checked={remoteAiEnabled} onChange={e => setRemoteAiEnabled(e.target.checked)} className="h-4 w-4 accent-primary" />
+              </div>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1.5 block">大模型名称</label>
-              <input type="text" value={modelName} onChange={e => setModelName(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="qwen2.5:7b" />
+              <label className="text-xs text-muted-foreground mb-1.5 block">远程 OpenAI 兼容 API 地址</label>
+              <input type="url" value={remoteApiUrl} onChange={e => setRemoteApiUrl(e.target.value)} disabled={!remoteAiEnabled}
+                className="w-full px-3 py-2 text-sm bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                placeholder="https://api.example.com/v1" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1.5 block">模型超时时间（秒）</label>
-              <input type="number" value={modelTimeout} onChange={e => setModelTimeout(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              <label className="text-xs text-muted-foreground mb-1.5 block">远程模型名称</label>
+              <input type="text" value={remoteModel} onChange={e => setRemoteModel(e.target.value)} disabled={!remoteAiEnabled}
+                className="w-full px-3 py-2 text-sm bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                placeholder="例如 qwen-plus、deepseek-v3" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1.5 block">远程 API Key</label>
+              <input type="password" value={remoteApiKey} onChange={e => setRemoteApiKey(e.target.value)} disabled={!remoteAiEnabled}
+                className="w-full px-3 py-2 text-sm bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                placeholder={remoteKeyConfigured ? "已保存；留空则保持不变" : "请输入远程服务 API Key"} />
+              <p className="text-xs text-muted-foreground mt-1">密钥仅保存于后端数据库，页面不会回显。</p>
             </div>
           </div>
         </div>

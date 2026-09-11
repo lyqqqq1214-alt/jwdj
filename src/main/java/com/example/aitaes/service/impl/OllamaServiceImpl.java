@@ -5,6 +5,8 @@ import com.example.aitaes.dto.AiChatMessageDTO;
 import com.example.aitaes.config.OllamaProperties;
 import com.example.aitaes.dto.AiGeneratedQuestionDTO;
 import com.example.aitaes.dto.AiQuestionGenerateRequest;
+import com.example.aitaes.entity.SystemConfig;
+import com.example.aitaes.mapper.SystemConfigMapper;
 import com.example.aitaes.service.OllamaService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -27,6 +29,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,6 +41,7 @@ public class OllamaServiceImpl implements OllamaService {
     @Qualifier("ollamaRestTemplate")
     private final RestTemplate restTemplate;
     private final OllamaProperties properties;
+    private final SystemConfigMapper systemConfigMapper;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -113,8 +117,9 @@ public class OllamaServiceImpl implements OllamaService {
     }
 
     private String callDashScope(List<Map<String, String>> messages, Object responseFormat) {
+        AiConnection connection = resolveConnection();
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("model", properties.getModel());
+        body.put("model", connection.model());
         body.put("messages", messages);
         body.put("temperature", properties.getTemperature());
         if (responseFormat != null) {
@@ -127,35 +132,37 @@ public class OllamaServiceImpl implements OllamaService {
             try {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.setBearerAuth(properties.getApiKey());
+                if (StringUtils.hasText(connection.apiKey())) {
+                    headers.setBearerAuth(connection.apiKey());
+                }
                 HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
                 ResponseEntity<Map> response = restTemplate.postForEntity(
-                        "/chat/completions", request, Map.class);
+                        connection.baseUrl() + "/chat/completions", request, Map.class);
                 Map<?, ?> data = response.getBody();
                 if (data == null || !data.containsKey("choices")) {
-                    throw new BusinessException("DashScope返回格式异常");
+                    throw new BusinessException("AI服务返回格式异常");
                 }
                 List<?> choices = (List<?>) data.get("choices");
                 if (choices == null || choices.isEmpty()) {
-                    throw new BusinessException("DashScope返回内容为空");
+                    throw new BusinessException("AI服务返回内容为空");
                 }
                 Map<?, ?> choice = (Map<?, ?>) choices.get(0);
                 Map<?, ?> message = (Map<?, ?>) choice.get("message");
                 if (message == null || message.get("content") == null) {
-                    throw new BusinessException("DashScope返回内容为空");
+                    throw new BusinessException("AI服务返回内容为空");
                 }
                 return message.get("content").toString();
             } catch (HttpStatusCodeException ex) {
                 lastException = ex;
-                log.warn("DashScope调用失败(HTTP {}), 第{}/{}次尝试: {}",
-                        ex.getStatusCode(), attempt, attempts, ex.getResponseBodyAsString());
+                log.warn("AI调用失败(HTTP {}), provider={}, 第{}/{}次尝试: {}",
+                        ex.getStatusCode(), connection.provider(), attempt, attempts, ex.getResponseBodyAsString());
                 if (attempt < attempts) {
                     sleepBeforeRetry();
                 }
             } catch (ResourceAccessException ex) {
                 lastException = ex;
-                log.warn("DashScope网络异常，第{}/{}次尝试: {}", attempt, attempts, ex.getMessage());
+                log.warn("AI网络异常(provider={})，第{}/{}次尝试: {}", connection.provider(), attempt, attempts, ex.getMessage());
                 if (attempt < attempts) {
                     sleepBeforeRetry();
                 }
@@ -164,6 +171,32 @@ public class OllamaServiceImpl implements OllamaService {
         throw new BusinessException(503, "AI服务暂不可用: "
                 + (lastException == null ? "未知错误" : lastException.getMessage()));
     }
+
+    /** 远程配置不完整或未启用时，始终回退到本机 Ollama。 */
+    private AiConnection resolveConnection() {
+        Set<String> keys = Set.of("ai.remote.enabled", "ai.remote.base_url", "ai.remote.api_key", "ai.remote.model");
+        Map<String, String> configs = systemConfigMapper.selectList(
+                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SystemConfig>()
+                                .in(SystemConfig::getConfigKey, keys))
+                .stream().collect(java.util.stream.Collectors.toMap(SystemConfig::getConfigKey,
+                        c -> c.getConfigValue() == null ? "" : c.getConfigValue(), (a, b) -> a));
+        boolean remoteEnabled = Boolean.parseBoolean(configs.getOrDefault("ai.remote.enabled", "false"));
+        String remoteUrl = trimTrailingSlash(configs.get("ai.remote.base_url"));
+        String remoteKey = configs.getOrDefault("ai.remote.api_key", "").trim();
+        String remoteModel = configs.getOrDefault("ai.remote.model", "").trim();
+        if (remoteEnabled && StringUtils.hasText(remoteUrl) && StringUtils.hasText(remoteKey)) {
+            return new AiConnection("REMOTE", remoteUrl, remoteKey,
+                    StringUtils.hasText(remoteModel) ? remoteModel : properties.getModel());
+        }
+        return new AiConnection("OLLAMA", trimTrailingSlash(properties.getBaseUrl()),
+                properties.getApiKey(), properties.getModel());
+    }
+
+    private String trimTrailingSlash(String value) {
+        return value == null ? "" : value.trim().replaceAll("/+$", "");
+    }
+
+    private record AiConnection(String provider, String baseUrl, String apiKey, String model) { }
 
     String buildQuestionPrompt(AiQuestionGenerateRequest request) {
         return """
