@@ -275,29 +275,7 @@ function StudentProfile() {
           <h3 className="font-medium text-sm">课程资料</h3>
         </div>
         <div className="p-4">
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[
-                { type: "video", title: "第1章：计算机网络概述", size: "45分钟", icon: Play },
-                { type: "video", title: "第2章：物理层", size: "52分钟", icon: Play },
-                { type: "video", title: "第3章：数据链路层", size: "58分钟", icon: Play },
-                { type: "pdf", title: "课程讲义（完整版）", size: "3.2MB", icon: FileText },
-                { type: "pdf", title: "习题集及答案", size: "1.8MB", icon: FileText },
-                { type: "code", title: "实验代码示例", size: "56KB", icon: Code },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg hover:bg-accent transition-colors cursor-pointer">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.type === "video" ? "bg-[#E88383]/20 text-[#DD7373]" : item.type === "pdf" ? "bg-[#969BE7]/20 text-[#969BE7]" : "bg-[#74C2A0]/20 text-[#57AE8F]"}`}>
-                    <item.icon size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.size}</p>
-                  </div>
-                  <Download size={14} className="text-muted-foreground hover:text-primary" />
-                </div>
-              ))}
-            </div>
-          </div>
+          <p className="py-5 text-center text-sm text-muted-foreground">暂无教师发布的真实课程资料</p>
         </div>
       </div>
     </div>

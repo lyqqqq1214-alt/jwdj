@@ -27,6 +27,12 @@ public class ExportController {
         exportService.exportCourse(courseId, response);
     }
 
+    @GetMapping("/student/{studentId}/course/{courseId}")
+    public void exportStudentProfile(@PathVariable Long studentId, @PathVariable Long courseId,
+                                     HttpServletResponse response) throws IOException {
+        exportService.exportStudentProfile(studentId, courseId, response);
+    }
+
     @GetMapping("/teacher/{teacherId}")
     public void exportTeacher(@PathVariable Long teacherId,
                                HttpServletResponse response) throws IOException {

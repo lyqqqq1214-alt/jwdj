@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ChevronDown, Target, Activity, CheckCircle, Clock, User, TrendingUp, BookOpen, Brain, FileText } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { getCurrentUser } from "../../../services/authService";
-import { getStudentCourses, getStudentOverview, getStudentTrends, StudentCourse, StudentOverview } from "../../../services/studentService";
+import { getStudentCourses, getStudentOverview, getStudentTrends, getStudentWarnings, StudentCourse, StudentOverview, StudentWarning } from "../../../services/studentService";
 import { getPendingExams, ExamPaper } from "../../../services/examService";
 import { StatCard } from "../../utils";
 import { Page } from "../../types";
@@ -14,6 +14,7 @@ function StudentDashboard({ onNav, setSelectedCourseId: setGlobalCourseId }: { o
   const [studentOverview, setStudentOverview] = useState<StudentOverview | null>(null);
   const [scoreTrends, setScoreTrends] = useState<any[]>([]);
   const [pendingExamList, setPendingExamList] = useState<ExamPaper[]>([]);
+  const [warnings, setWarnings] = useState<StudentWarning[]>([]);
 
   useEffect(() => {
     getStudentCourses().then(courses => {
@@ -41,6 +42,7 @@ function StudentDashboard({ onNav, setSelectedCourseId: setGlobalCourseId }: { o
     }).catch(() => {
       setScoreTrends([]);
     });
+    getStudentWarnings(selectedCourseId).then(setWarnings).catch(() => setWarnings([]));
     getPendingExams().then(data => {
       setPendingExamList(data);
     }).catch(() => {
@@ -146,7 +148,12 @@ function StudentDashboard({ onNav, setSelectedCourseId: setGlobalCourseId }: { o
         <div className="bg-card rounded-lg border border-border p-5">
           <h3 className="font-medium text-sm mb-4">预警提示</h3>
           <div className="space-y-3">
-            <p className="text-center text-sm text-muted-foreground py-4">暂无预警提示</p>
+            {warnings.length > 0 ? warnings.map(warning => (
+              <div key={warning.id} className={`rounded-lg border p-3 ${warning.severity === "HIGH" ? "bg-red-50 border-red-200 text-red-800" : warning.severity === "MEDIUM" ? "bg-amber-50 border-amber-200 text-amber-800" : "bg-blue-50 border-blue-200 text-blue-800"}`}>
+                <p className="text-sm font-medium">{warning.warningType || "学习预警"} · {warning.severity === "HIGH" ? "高" : warning.severity === "MEDIUM" ? "中" : "低"}风险</p>
+                <p className="text-xs mt-1 leading-relaxed">{warning.warningMsg}</p>
+              </div>
+            )) : <p className="text-center text-sm text-muted-foreground py-4">暂无预警提示</p>}
           </div>
         </div>
       </div>

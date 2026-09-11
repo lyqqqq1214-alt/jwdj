@@ -40,6 +40,14 @@ export interface StudentWrongQuestion {
   createTime?: string;
 }
 
+export interface StudentWarning {
+  id: number;
+  warningType: string;
+  severity: 'HIGH' | 'MEDIUM' | 'LOW' | string;
+  warningMsg: string;
+  createTime?: string;
+}
+
 export interface ManualWrongQuestionRequest {
   courseId?: number | null;
   question: string;
@@ -79,6 +87,11 @@ export async function getStudentWrongQuestions(courseId?: number | null) {
 export async function getStudentWrongQuestionDetail(id: number) {
   const res = await api.get(`/student/wrong-questions/${id}`);
   return res.data as StudentWrongQuestion;
+}
+
+export async function getStudentWarnings(courseId: number) {
+  const res = await api.get('/student/warnings', { params: { courseId } });
+  return res.data as StudentWarning[];
 }
 
 export async function createStudentWrongQuestion(payload: ManualWrongQuestionRequest) {

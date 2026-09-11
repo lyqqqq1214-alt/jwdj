@@ -13,6 +13,9 @@ public interface ExportService {
      */
     void exportCourse(Long courseId, HttpServletResponse response) throws IOException;
 
+    /** 导出学生在指定课程下的个人画像报告。 */
+    void exportStudentProfile(Long studentId, Long courseId, HttpServletResponse response) throws IOException;
+
     /**
      * 导出教师评价 Excel
      */

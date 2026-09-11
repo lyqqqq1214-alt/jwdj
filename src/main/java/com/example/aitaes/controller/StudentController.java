@@ -13,6 +13,7 @@ import com.example.aitaes.entity.Course;
 import com.example.aitaes.entity.CourseStudent;
 import com.example.aitaes.entity.Teacher;
 import com.example.aitaes.entity.StudentWrongQuestion;
+import com.example.aitaes.entity.WarningRecord;
 import com.example.aitaes.mapper.*;
 import com.example.aitaes.service.PortraitService;
 import com.example.aitaes.service.WrongQuestionService;
@@ -49,6 +50,7 @@ public class StudentController {
     private final StudentMapper studentMapper;
     private final CourseMapper courseMapper;
     private final TeacherMapper teacherMapper;
+    private final WarningRecordMapper warningRecordMapper;
     private final PortraitService portraitService;
     private final WrongQuestionService wrongQuestionService;
     private final ObjectMapper objectMapper;
@@ -209,6 +211,26 @@ public class StudentController {
                     .build());
         }
         return Result.success(trends);
+    }
+
+    /** 学生只查看自己、当前课程内尚未解除的真实预警记录。 */
+    @GetMapping("/warnings")
+    public Result<List<WarningRecord>> warnings(@RequestAttribute("userId") Long userId,
+                                                @RequestParam Long courseId) {
+        Long studentId = getStudentId(userId);
+        Long enrolled = courseStudentMapper.selectCount(new LambdaQueryWrapper<CourseStudent>()
+                .eq(CourseStudent::getStudentId, studentId)
+                .eq(CourseStudent::getCourseId, courseId));
+        if (enrolled == 0) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "无权查看该课程预警");
+        }
+        List<WarningRecord> records = warningRecordMapper.selectList(
+                new LambdaQueryWrapper<WarningRecord>()
+                        .eq(WarningRecord::getStudentId, studentId)
+                        .eq(WarningRecord::getCourseId, courseId)
+                        .eq(WarningRecord::getIsResolved, 0)
+                        .orderByDesc(WarningRecord::getCreateTime));
+        return Result.success(records);
     }
 
     /**

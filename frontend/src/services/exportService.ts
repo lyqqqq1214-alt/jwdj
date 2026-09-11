@@ -55,3 +55,11 @@ function downloadBlob(response: any, fileName: string) {
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
 }
+
+/** 导出指定学生在某门课程下的真实画像报告。 */
+export async function exportStudentProfile(studentId: number, courseId: number, fileName?: string) {
+  const res = await api.get(`/export/student/${studentId}/course/${courseId}`, {
+    responseType: 'blob'
+  });
+  downloadBlob(res, fileName || `学生画像报告_${studentId}_${courseId}.xlsx`);
+}

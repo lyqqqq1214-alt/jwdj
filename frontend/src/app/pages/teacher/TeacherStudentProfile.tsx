@@ -11,7 +11,8 @@ import {
 } from "recharts";
 import { getMyClasses, getClassStudents, ClassVO as ClsVO, StudentVO } from "../../../services/classService";
 import { getStudentProfile, toggleFocusStudent, generateAiEvaluation, generateAiSuggestions, StudentProfile as StudentProfileData, LearningSuggestion } from "../../../services/portraitService";
-import { exportCourse } from "../../../services/exportService";
+import { exportCourse, exportStudentProfile } from "../../../services/exportService";
+import { sendNotification } from "../../../services/notificationService";
 import { Page } from "../../types";
 import { Tag, normalizeAttendanceStatus, getAttendanceTagColor } from "../../utils";
 import { calculateCTAchievements, getCTRadarData, COURSE_OBJECTIVES } from "../../ctObjectives";
@@ -27,6 +28,7 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
   const [loading, setLoading] = useState(false);
   const [generatingAi, setGeneratingAi] = useState(false);
   const [generatingSuggestions, setGeneratingSuggestions] = useState(false);
+  const [sendingNotification, setSendingNotification] = useState(false);
 
   // API data
   const [profile, setProfile] = useState<StudentProfileData | null>(null);
@@ -167,12 +169,43 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
   }, {} as Record<string, number>) || {};
 
   const handleExportReport = async () => {
-    if (!selectedCourseId) return showToastMsg("请先选择课程");
+    if (!selectedCourseId || !selectedStudentId) return showToastMsg("请先选择课程和学生");
     try {
-      await exportCourse(selectedCourseId, `课程学习报告_${selectedCourseId}.xlsx`);
-      showToastMsg("课程学习报告已导出为 Excel");
+      await exportStudentProfile(selectedStudentId, selectedCourseId, `学生画像报告_${selectedStudentId}.xlsx`);
+      showToastMsg("学生画像报告已导出为 Excel");
     } catch (e: any) {
       showToastMsg(e?.message || "报告导出失败");
+    }
+  };
+
+  const handleExportClassReport = async () => {
+    if (!selectedCourseId) return showToastMsg("请先选择课程");
+    try {
+      await exportCourse(selectedCourseId, `班级驾驶舱报告_${selectedCourseId}.xlsx`);
+      showToastMsg("班级驾驶舱报告已导出为 Excel");
+    } catch (e: any) {
+      showToastMsg(e?.message || "班级报告导出失败");
+    }
+  };
+
+  const handleSendAiEvaluation = async () => {
+    if (!selectedCourseId || !selectedStudentId || !profile?.aiEvaluation) {
+      return showToastMsg("请先生成 AI 综合评价");
+    }
+    setSendingNotification(true);
+    try {
+      await sendNotification({
+        title: "AI 综合学习评价",
+        content: `${profile.name}同学：\n${profile.aiEvaluation}${profile.aiSuggestions ? `\n\n学习建议：\n${profile.aiSuggestions}` : ""}`,
+        recipientScope: "COURSE",
+        courseId: selectedCourseId,
+        studentIds: [selectedStudentId],
+      });
+      showToastMsg("AI 综合评价已发送给学生");
+    } catch (e: any) {
+      showToastMsg(e?.message || "发送通知失败");
+    } finally {
+      setSendingNotification(false);
     }
   };
 
@@ -214,7 +247,10 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
             {isFocused ? "已重点关注" : "重点关注"}
           </button>
           <button onClick={handleExportReport} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">
-            <Download size={14} />导出报告
+            <Download size={14} />导出学生画像
+          </button>
+          <button onClick={handleExportClassReport} className="flex items-center gap-2 px-4 py-2 bg-muted rounded-md text-sm hover:bg-accent">
+            <Download size={14} />导出班级报告
           </button>
         </div>
       </div>
@@ -639,7 +675,10 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
                 )}
                 <div className="mt-4 flex gap-2">
                   <button onClick={handleExportReport} className="flex-1 py-2 border border-border rounded-md text-sm hover:bg-accent">导出评价</button>
-                  <button className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6]">发送通知</button>
+                  <button onClick={handleSendAiEvaluation} disabled={sendingNotification || !profileData.aiEvaluation}
+                    className="flex-1 py-2 bg-primary text-white rounded-md text-sm hover:bg-[#7F84D6] disabled:opacity-50 disabled:cursor-not-allowed">
+                    {sendingNotification ? "发送中..." : "发送通知"}
+                  </button>
                 </div>
               </div>
 
