@@ -14,6 +14,7 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
   onClearFocusQuestion?: () => void;
 }) {
   const [questions, setQuestions] = useState<QuestionBank[]>([]);
+  const [questionTotal, setQuestionTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [courses, setCourses] = useState<ClassVO[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
@@ -132,8 +133,8 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
   const loadQuestions = () => {
     setLoading(true);
     getQuestionList(1, 500, selectedCourseId ?? undefined)
-      .then(data => setQuestions(data.records || []))
-      .catch(() => setQuestions([]))
+      .then(data => { setQuestions(data.records || []); setQuestionTotal(data.total || 0); })
+      .catch(() => { setQuestions([]); setQuestionTotal(0); })
       .finally(() => setLoading(false));
   };
 
@@ -418,7 +419,7 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
   const difficultyLabel = (d?: string) => difficulties.find(dd => dd.value === d)?.label || d || "未知";
 
   const stats = {
-    total: questions.length,
+    total: questionTotal,
     choice: questions.filter(q => q.questionType === "SINGLE" || q.questionType === "MULTI").length,
     text: questions.filter(q => ["FILL", "SHORT", "COMPREHENSIVE"].includes(q.questionType || "")).length,
     ai: questions.filter(q => q.aiGenerated === 1).length,

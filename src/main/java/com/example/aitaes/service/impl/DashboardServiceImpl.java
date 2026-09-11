@@ -35,6 +35,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final StudentMapper studentMapper;
     private final TeacherMapper teacherMapper;
     private final TeachingAssistantMapper teachingAssistantMapper;
+    private final AssistantPermissionMapper assistantPermissionMapper;
     private final UserMapper userMapper;
     private final ExperimentMapper experimentMapper;
 
@@ -187,10 +188,24 @@ public class DashboardServiceImpl implements DashboardService {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "角色不支持");
         }
 
-        List<Course> courses = courseMapper.selectList(
-                new LambdaQueryWrapper<Course>()
-                        .eq(Course::getTeacherId, teacherId)
-                        .orderByDesc(Course::getCreateTime));
+        List<Long> allowedCourseIds = null;
+        if ("ASSISTANT".equals(user.getRole())) {
+            TeachingAssistant assistant = teachingAssistantMapper.selectOne(
+                    new LambdaQueryWrapper<TeachingAssistant>().eq(TeachingAssistant::getUserId, userId));
+            if (assistant == null) throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "助教不存在");
+            allowedCourseIds = assistantPermissionMapper.selectList(new LambdaQueryWrapper<AssistantPermission>()
+                            .eq(AssistantPermission::getAssistantId, assistant.getId())
+                            .and(w -> w.eq(AssistantPermission::getCanViewData, 1)
+                                    .or().eq(AssistantPermission::getCanImportData, 1)
+                                    .or().eq(AssistantPermission::getCanGrade, 1)
+                                    .or().eq(AssistantPermission::getCanViewPortrait, 1)))
+                    .stream().map(AssistantPermission::getCourseId).filter(Objects::nonNull).distinct().toList();
+            if (allowedCourseIds.isEmpty()) return Collections.emptyList();
+        }
+        LambdaQueryWrapper<Course> courseQuery = new LambdaQueryWrapper<Course>()
+                .eq(Course::getTeacherId, teacherId).orderByDesc(Course::getCreateTime);
+        if (allowedCourseIds != null) courseQuery.in(Course::getId, allowedCourseIds);
+        List<Course> courses = courseMapper.selectList(courseQuery);
         if (courses.isEmpty()) {
             return Collections.emptyList();
         }

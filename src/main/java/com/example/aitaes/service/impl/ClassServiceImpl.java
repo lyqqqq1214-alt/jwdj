@@ -34,6 +34,7 @@ public class ClassServiceImpl implements ClassService {
     private final UserMapper userMapper;
     private final TeacherMapper teacherMapper;
     private final TeachingAssistantMapper teachingAssistantMapper;
+    private final AssistantPermissionMapper assistantPermissionMapper;
     private final SystemConfigMapper systemConfigMapper;
 
     // ===== 班级管理 =====
@@ -81,11 +82,14 @@ public class ClassServiceImpl implements ClassService {
     @Override
     public List<ClassVO> listMyClasses(Long userId) {
         Long teacherId = resolveTeacherId(userId);
+        List<Long> allowedCourseIds = allowedCourseIds(userId);
+        if (allowedCourseIds != null && allowedCourseIds.isEmpty()) return Collections.emptyList();
 
-        List<Course> courses = courseMapper.selectList(
-                new LambdaQueryWrapper<Course>()
-                        .eq(Course::getTeacherId, teacherId)
-                        .orderByDesc(Course::getCreateTime));
+        LambdaQueryWrapper<Course> courseQuery = new LambdaQueryWrapper<Course>()
+                .eq(Course::getTeacherId, teacherId)
+                .orderByDesc(Course::getCreateTime);
+        if (allowedCourseIds != null) courseQuery.in(Course::getId, allowedCourseIds);
+        List<Course> courses = courseMapper.selectList(courseQuery);
 
         if (courses.isEmpty()) {
             return Collections.emptyList();
@@ -336,7 +340,27 @@ public class ClassServiceImpl implements ClassService {
         if (!teacherId.equals(course.getTeacherId())) {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "无权操作该班级");
         }
+        List<Long> allowedCourseIds = allowedCourseIds(userId);
+        if (allowedCourseIds != null && !allowedCourseIds.contains(classId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "助教未被授权管理该班级");
+        }
         return course;
+    }
+
+    /** 教师返回 null（不额外过滤）；助教仅返回拥有至少一项有效权限的课程。 */
+    private List<Long> allowedCourseIds(Long userId) {
+        User user = userMapper.selectById(userId);
+        if (user == null || !"ASSISTANT".equals(user.getRole())) return null;
+        TeachingAssistant assistant = teachingAssistantMapper.selectOne(
+                new LambdaQueryWrapper<TeachingAssistant>().eq(TeachingAssistant::getUserId, userId));
+        if (assistant == null) throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "助教不存在");
+        return assistantPermissionMapper.selectList(new LambdaQueryWrapper<AssistantPermission>()
+                        .eq(AssistantPermission::getAssistantId, assistant.getId())
+                        .and(w -> w.eq(AssistantPermission::getCanViewData, 1)
+                                .or().eq(AssistantPermission::getCanImportData, 1)
+                                .or().eq(AssistantPermission::getCanGrade, 1)
+                                .or().eq(AssistantPermission::getCanViewPortrait, 1)))
+                .stream().map(AssistantPermission::getCourseId).filter(Objects::nonNull).distinct().toList();
     }
 
     private Student createStudentAccount(StudentAddDTO dto) {

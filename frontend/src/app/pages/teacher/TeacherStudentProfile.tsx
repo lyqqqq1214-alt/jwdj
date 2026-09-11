@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { getMyClasses, getClassStudents, ClassVO as ClsVO, StudentVO } from "../../../services/classService";
 import { getStudentProfile, toggleFocusStudent, generateAiEvaluation, generateAiSuggestions, StudentProfile as StudentProfileData, LearningSuggestion } from "../../../services/portraitService";
+import { exportCourse } from "../../../services/exportService";
 import { Page } from "../../types";
 import { Tag, normalizeAttendanceStatus, getAttendanceTagColor } from "../../utils";
 import { calculateCTAchievements, getCTRadarData, COURSE_OBJECTIVES } from "../../ctObjectives";
@@ -165,8 +166,14 @@ function TeacherStudentProfile({ onNav, initialStudentId, initialCourseId }: { o
     return acc;
   }, {} as Record<string, number>) || {};
 
-  const handleExportReport = () => {
-    showToastMsg("学生报告已导出为PDF");
+  const handleExportReport = async () => {
+    if (!selectedCourseId) return showToastMsg("请先选择课程");
+    try {
+      await exportCourse(selectedCourseId, `课程学习报告_${selectedCourseId}.xlsx`);
+      showToastMsg("课程学习报告已导出为 Excel");
+    } catch (e: any) {
+      showToastMsg(e?.message || "报告导出失败");
+    }
   };
 
   return (
