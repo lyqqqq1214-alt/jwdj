@@ -18,4 +18,6 @@ public class AdminUserCreateDTO {
     private String major;
     private String className;
     private String grade;
+    /** 创建助教时必须指定其所属教师。 */
+    private Long teacherId;
 }

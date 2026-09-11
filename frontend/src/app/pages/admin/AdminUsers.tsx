@@ -1,37 +1,96 @@
 import { useEffect, useMemo, useState } from "react";
 import { Download, KeyRound, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { AdminUser, createAdminUser, deleteAdminUser, getAdminUsers, resetAdminUserPassword, updateAdminUser, updateAdminUserStatus } from "../../../services/adminService";
+import { getTeacherList, TeacherVO } from "../../../services/teacherService";
 import { Tag } from "../../utils";
 
 const roleName: Record<string, string> = { ADMIN: "管理员", TEACHER: "教师", ASSISTANT: "助教", STUDENT: "学生" };
-const emptyForm = { username: "", password: "123456", role: "STUDENT", name: "", college: "", major: "", className: "", grade: "" };
+const emptyForm = { username: "", password: "123456", role: "STUDENT", name: "", college: "", major: "", className: "", grade: "", teacherId: "" };
 
 export default function AdminUsers() {
-  const [users, setUsers] = useState<AdminUser[]>([]), [loading, setLoading] = useState(true), [search, setSearch] = useState(""), [role, setRole] = useState("");
-  const [editing, setEditing] = useState<AdminUser | null>(null), [creating, setCreating] = useState(false), [form, setForm] = useState<any>(emptyForm), [toast, setToast] = useState<string | null>(null);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [teachers, setTeachers] = useState<TeacherVO[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [role, setRole] = useState("");
+  const [editing, setEditing] = useState<AdminUser | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState<any>(emptyForm);
+  const [toast, setToast] = useState<string | null>(null);
+
   const notice = (text: string) => { setToast(text); setTimeout(() => setToast(null), 2500); };
-  const load = async () => { setLoading(true); try { const data = await getAdminUsers(1, 500); setUsers(data.records || []); } catch (e: any) { notice(e.message || "用户列表加载失败"); } finally { setLoading(false); } };
+  const load = async () => {
+    setLoading(true);
+    try { setUsers((await getAdminUsers(1, 500)).records || []); }
+    catch (e: any) { notice(e.message || "用户列表加载失败"); }
+    finally { setLoading(false); }
+  };
   useEffect(() => { load(); }, []);
-  const shown = useMemo(() => users.filter(u => (!role || u.role === role) && (!search || `${u.username}${u.name}${u.college || ""}`.toLowerCase().includes(search.toLowerCase()))), [users, search, role]);
+  useEffect(() => { getTeacherList(1, 500).then(r => setTeachers(r.records || [])).catch(() => setTeachers([])); }, []);
+
+  const shown = useMemo(() => users.filter(u =>
+    (!role || u.role === role) &&
+    (!search || `${u.username}${u.name}${u.college || ""}`.toLowerCase().includes(search.toLowerCase()))
+  ), [users, search, role]);
   const set = (key: string, value: string) => setForm((old: any) => ({ ...old, [key]: value }));
   const openCreate = () => { setForm(emptyForm); setCreating(true); setEditing(null); };
   const openEdit = (user: AdminUser) => { setEditing(user); setCreating(false); setForm({ ...emptyForm, ...user, password: "" }); };
   const save = async () => {
     try {
-      if (creating) { if (!form.username || !form.password || !form.role || (form.role !== "ADMIN" && !form.name)) return notice("请完整填写账号、密码、角色和姓名"); await createAdminUser(form); notice("用户创建成功"); }
-      else if (editing) { if (editing.role === "ADMIN") return notice("管理员账号无需编辑资料"); await updateAdminUser(editing.id, form); notice("用户资料已更新"); }
+      if (creating) {
+        if (!form.username || !form.password || !form.role || (form.role !== "ADMIN" && !form.name)) return notice("请完整填写账号、密码、角色和姓名");
+        if (form.role === "ASSISTANT" && !form.teacherId) return notice("请为助教选择所属教师");
+        await createAdminUser({ ...form, teacherId: form.teacherId ? Number(form.teacherId) : undefined });
+        notice("用户创建成功");
+      } else if (editing) {
+        if (editing.role === "ADMIN") return notice("管理员账号无需编辑资料");
+        await updateAdminUser(editing.id, form);
+        notice("用户资料已更新");
+      }
       setCreating(false); setEditing(null); await load();
     } catch (e: any) { notice(e.message || "保存失败"); }
   };
-  const changeStatus = async (user: AdminUser) => { try { await updateAdminUserStatus(user.id, user.status === "ACTIVE" ? "DISABLED" : "ACTIVE"); notice(user.status === "ACTIVE" ? "账号已禁用" : "账号已启用"); await load(); } catch (e: any) { notice(e.message || "操作失败"); } };
-  const reset = async (user: AdminUser) => { try { const data = await resetAdminUserPassword(user.id); notice(`密码已重置为：${data.newPassword}`); } catch (e: any) { notice(e.message || "重置失败"); } };
-  const remove = async (user: AdminUser) => { if (!confirm(`确定删除账号“${user.username}”吗？关联个人资料也会删除。`)) return; try { await deleteAdminUser(user.id); notice("用户已删除"); await load(); } catch (e: any) { notice(e.message || "删除失败"); } };
-  const exportCsv = () => { const rows = [["账号", "姓名", "角色", "学院", "班级", "状态"], ...shown.map(u => [u.username, u.name, roleName[u.role], u.college || "", u.className || "", u.status === "ACTIVE" ? "启用" : "禁用"])]; const blob = new Blob(["\uFEFF" + rows.map(r => r.map(v => `\"${String(v).replaceAll('"', '""')}\"`).join(",")).join("\n")], { type: "text/csv;charset=utf-8" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "系统用户.csv"; link.click(); URL.revokeObjectURL(link.href); };
+  const changeStatus = async (user: AdminUser) => {
+    try { await updateAdminUserStatus(user.id, user.status === "ACTIVE" ? "DISABLED" : "ACTIVE"); notice(user.status === "ACTIVE" ? "账号已禁用" : "账号已启用"); await load(); }
+    catch (e: any) { notice(e.message || "操作失败"); }
+  };
+  const reset = async (user: AdminUser) => {
+    try { const data = await resetAdminUserPassword(user.id); notice(`密码已重置为：${data.newPassword}`); }
+    catch (e: any) { notice(e.message || "重置失败"); }
+  };
+  const remove = async (user: AdminUser) => {
+    if (!confirm(`确定删除账号“${user.username}”吗？关联个人资料也会删除。`)) return;
+    try { await deleteAdminUser(user.id); notice("用户已删除"); await load(); }
+    catch (e: any) { notice(e.message || "删除失败"); }
+  };
+  const exportCsv = () => {
+    const rows = [["账号", "姓名", "角色", "学院", "班级", "状态"], ...shown.map(u => [u.username, u.name, roleName[u.role], u.college || "", u.className || "", u.status === "ACTIVE" ? "启用" : "禁用"])];
+    const blob = new Blob(["\uFEFF" + rows.map(r => r.map(v => `\"${String(v).replaceAll('"', '""')}\"`).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "系统用户.csv"; link.click(); URL.revokeObjectURL(link.href);
+  };
+
   return <div className="space-y-5">
     {toast && <div className="fixed top-20 right-6 z-50 px-4 py-3 bg-primary text-white text-sm rounded-lg shadow-lg">{toast}</div>}
     <div><h2 className="text-lg font-semibold">用户管理</h2><p className="text-sm text-muted-foreground mt-1">统一管理管理员、教师、助教和学生账号</p></div>
-    <div className="flex gap-3 flex-wrap"><div className="relative flex-1 min-w-[220px]"><Search size={14} className="absolute left-3 top-2.5 text-muted-foreground" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="按账号、姓名、学院搜索" className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded-md" /></div><select value={role} onChange={e => setRole(e.target.value)} className="px-3 py-2 text-sm border border-border rounded-md"><option value="">全部角色</option>{Object.entries(roleName).map(([k,v]) => <option key={k} value={k}>{v}</option>)}</select><button onClick={exportCsv} className="flex items-center gap-1 px-3 py-2 border border-border rounded-md text-sm"><Download size={14}/>导出</button><button onClick={openCreate} className="flex items-center gap-1 px-3 py-2 bg-primary text-white rounded-md text-sm"><Plus size={14}/>新增用户</button></div>
-    <div className="bg-card rounded-lg border border-border overflow-x-auto"><table className="w-full text-sm"><thead><tr className="bg-muted/50 border-b border-border">{["账号", "姓名", "角色", "学院/班级", "状态", "最近登录", "操作"].map(x => <th key={x} className="p-3 text-left text-xs text-muted-foreground">{x}</th>)}</tr></thead><tbody>{loading ? <tr><td colSpan={7} className="p-12 text-center text-muted-foreground">加载中…</td></tr> : shown.map(u => <tr key={u.id} className="border-b border-border last:border-0"><td className="p-3 font-mono text-xs">{u.username}</td><td className="p-3 font-medium">{u.name}</td><td className="p-3">{roleName[u.role]}</td><td className="p-3 text-xs text-muted-foreground">{[u.college, u.className].filter(Boolean).join(" / ") || "—"}</td><td className="p-3"><Tag color={u.status === "ACTIVE" ? "green" : "red"}>{u.status === "ACTIVE" ? "启用" : "禁用"}</Tag></td><td className="p-3 text-xs text-muted-foreground">{u.lastLoginTime?.replace("T", " ").slice(0,16) || "未登录"}</td><td className="p-3"><div className="flex gap-2 whitespace-nowrap"><button onClick={() => openEdit(u)} className="text-primary text-xs"><Pencil size={12} className="inline"/> 编辑</button><button onClick={() => changeStatus(u)} className="text-[#E8945C] text-xs">{u.status === "ACTIVE" ? "禁用" : "启用"}</button><button onClick={() => reset(u)} className="text-primary text-xs"><KeyRound size={12} className="inline"/> 重置密码</button><button onClick={() => remove(u)} className="text-[#DD7373] text-xs"><Trash2 size={12} className="inline"/> 删除</button></div></td></tr>)}{!loading && shown.length === 0 && <tr><td colSpan={7} className="p-12 text-center text-muted-foreground">暂无用户</td></tr>}</tbody></table></div>
-    {(creating || editing) && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"><div className="bg-card rounded-lg w-full max-w-lg p-6 space-y-4"><h3 className="font-semibold">{creating ? "新增用户" : "编辑用户资料"}</h3><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{creating && <><label className="text-sm">账号<input value={form.username} onChange={e => set("username",e.target.value)} className="mt-1 w-full p-2 border border-border rounded" /></label><label className="text-sm">初始密码<input type="password" value={form.password} onChange={e => set("password",e.target.value)} className="mt-1 w-full p-2 border border-border rounded" /></label><label className="text-sm">角色<select value={form.role} onChange={e => set("role",e.target.value)} className="mt-1 w-full p-2 border border-border rounded">{Object.entries(roleName).map(([k,v]) => <option key={k} value={k}>{v}</option>)}</select></label></>}<label className="text-sm">姓名<input disabled={editing?.role === "ADMIN"} value={form.name} onChange={e => set("name",e.target.value)} className="mt-1 w-full p-2 border border-border rounded disabled:opacity-50" /></label><label className="text-sm">学院<input value={form.college || ""} onChange={e => set("college",e.target.value)} className="mt-1 w-full p-2 border border-border rounded" /></label>{form.role === "STUDENT" && <><label className="text-sm">专业<input value={form.major || ""} onChange={e => set("major",e.target.value)} className="mt-1 w-full p-2 border border-border rounded" /></label><label className="text-sm">班级<input value={form.className || ""} onChange={e => set("className",e.target.value)} className="mt-1 w-full p-2 border border-border rounded" /></label><label className="text-sm">年级<input value={form.grade || ""} onChange={e => set("grade",e.target.value)} className="mt-1 w-full p-2 border border-border rounded" /></label></>}</div><div className="flex justify-end gap-3"><button onClick={() => {setCreating(false);setEditing(null);}} className="px-4 py-2 border border-border rounded text-sm">取消</button><button onClick={save} className="px-4 py-2 bg-primary text-white rounded text-sm">保存</button></div></div></div>}
+    <div className="flex gap-3 flex-wrap">
+      <div className="relative flex-1 min-w-[220px]"><Search size={14} className="absolute left-3 top-2.5 text-muted-foreground" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="按账号、姓名、学院搜索" className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded-md" /></div>
+      <select value={role} onChange={e => setRole(e.target.value)} className="px-3 py-2 text-sm border border-border rounded-md"><option value="">全部角色</option>{Object.entries(roleName).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+      <button onClick={exportCsv} className="flex items-center gap-1 px-3 py-2 border border-border rounded-md text-sm"><Download size={14} />导出</button>
+      <button onClick={openCreate} className="flex items-center gap-1 px-3 py-2 bg-primary text-white rounded-md text-sm"><Plus size={14} />新增用户</button>
+    </div>
+    <div className="bg-card rounded-lg border border-border overflow-x-auto">
+      <table className="w-full text-sm"><thead><tr className="bg-muted/50 border-b border-border">{["账号", "姓名", "角色", "学院/班级", "状态", "最近登录", "操作"].map(x => <th key={x} className="p-3 text-left text-xs text-muted-foreground">{x}</th>)}</tr></thead>
+        <tbody>{loading ? <tr><td colSpan={7} className="p-12 text-center text-muted-foreground">加载中…</td></tr> : shown.map(u => <tr key={u.id} className="border-b border-border last:border-0"><td className="p-3 font-mono text-xs">{u.username}</td><td className="p-3 font-medium">{u.name}</td><td className="p-3">{roleName[u.role]}</td><td className="p-3 text-xs text-muted-foreground">{[u.college, u.className].filter(Boolean).join(" / ") || "—"}</td><td className="p-3"><Tag color={u.status === "ACTIVE" ? "green" : "red"}>{u.status === "ACTIVE" ? "启用" : "禁用"}</Tag></td><td className="p-3 text-xs text-muted-foreground">{u.lastLoginTime?.replace("T", " ").slice(0, 16) || "未登录"}</td><td className="p-3"><div className="flex gap-2 whitespace-nowrap"><button onClick={() => openEdit(u)} className="text-primary text-xs"><Pencil size={12} className="inline" /> 编辑</button><button onClick={() => changeStatus(u)} className="text-[#E8945C] text-xs">{u.status === "ACTIVE" ? "禁用" : "启用"}</button><button onClick={() => reset(u)} className="text-primary text-xs"><KeyRound size={12} className="inline" /> 重置密码</button><button onClick={() => remove(u)} className="text-[#DD7373] text-xs"><Trash2 size={12} className="inline" /> 删除</button></div></td></tr>)}{!loading && shown.length === 0 && <tr><td colSpan={7} className="p-12 text-center text-muted-foreground">暂无用户</td></tr>}</tbody>
+      </table>
+    </div>
+    {(creating || editing) && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"><div className="bg-card rounded-lg w-full max-w-lg p-6 space-y-4"><h3 className="font-semibold">{creating ? "新增用户" : "编辑用户资料"}</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {creating && <><label className="text-sm">账号<input value={form.username} onChange={e => set("username", e.target.value)} className="mt-1 w-full p-2 border border-border rounded" /></label><label className="text-sm">初始密码<input type="password" value={form.password} onChange={e => set("password", e.target.value)} className="mt-1 w-full p-2 border border-border rounded" /></label><label className="text-sm">角色<select value={form.role} onChange={e => set("role", e.target.value)} className="mt-1 w-full p-2 border border-border rounded">{Object.entries(roleName).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label></>}
+        {creating && form.role === "ASSISTANT" && <label className="text-sm">所属教师<select value={form.teacherId || ""} onChange={e => set("teacherId", e.target.value)} className="mt-1 w-full p-2 border border-border rounded"><option value="">请选择教师</option>{teachers.map(t => <option key={t.id} value={t.id}>{t.name}（{t.teacherNo}）</option>)}</select></label>}
+        <label className="text-sm">姓名<input disabled={editing?.role === "ADMIN"} value={form.name} onChange={e => set("name", e.target.value)} className="mt-1 w-full p-2 border border-border rounded disabled:opacity-50" /></label><label className="text-sm">学院<input value={form.college || ""} onChange={e => set("college", e.target.value)} className="mt-1 w-full p-2 border border-border rounded" /></label>
+        {form.role === "STUDENT" && <><label className="text-sm">专业<input value={form.major || ""} onChange={e => set("major", e.target.value)} className="mt-1 w-full p-2 border border-border rounded" /></label><label className="text-sm">班级<input value={form.className || ""} onChange={e => set("className", e.target.value)} className="mt-1 w-full p-2 border border-border rounded" /></label><label className="text-sm">年级<input value={form.grade || ""} onChange={e => set("grade", e.target.value)} className="mt-1 w-full p-2 border border-border rounded" /></label></>}
+      </div>
+      <div className="flex justify-end gap-3"><button onClick={() => { setCreating(false); setEditing(null); }} className="px-4 py-2 border border-border rounded text-sm">取消</button><button onClick={save} className="px-4 py-2 bg-primary text-white rounded text-sm">保存</button></div>
+    </div></div>}
   </div>;
 }

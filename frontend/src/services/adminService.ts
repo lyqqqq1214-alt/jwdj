@@ -35,6 +35,7 @@ export interface AdminStudent {
   major?: string;
   className?: string;
   grade?: string;
+  teacherId?: number;
   createTime?: string;
   status?: string;
 }

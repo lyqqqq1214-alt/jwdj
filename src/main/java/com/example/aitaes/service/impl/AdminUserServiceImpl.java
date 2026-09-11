@@ -63,6 +63,9 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (!"ADMIN".equals(role) && !StringUtils.hasText(request.getName())) {
             throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "教师、学生和助教必须填写姓名");
         }
+        if ("ASSISTANT".equals(role) && request.getTeacherId() == null) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "创建助教时请选择所属教师");
+        }
         User user = new User();
         user.setUsername(request.getUsername().trim());
         user.setPassword(PasswordUtil.encode(request.getPassword()));
@@ -131,7 +134,11 @@ public class AdminUserServiceImpl implements AdminUserService {
     private void createProfile(User user, AdminUserCreateDTO request) {
         if ("TEACHER".equals(user.getRole())) { Teacher v = new Teacher(); v.setUserId(user.getId()); v.setTeacherNo(user.getUsername()); v.setName(request.getName().trim()); v.setCollege(request.getCollege()); teacherMapper.insert(v); }
         if ("STUDENT".equals(user.getRole())) { Student v = new Student(); v.setUserId(user.getId()); v.setStudentNo(user.getUsername()); v.setName(request.getName().trim()); v.setCollege(request.getCollege()); v.setMajor(request.getMajor()); v.setClassName(request.getClassName()); v.setGrade(request.getGrade()); studentMapper.insert(v); }
-        if ("ASSISTANT".equals(user.getRole())) { TeachingAssistant v = new TeachingAssistant(); v.setUserId(user.getId()); v.setName(request.getName().trim()); teachingAssistantMapper.insert(v); }
+        if ("ASSISTANT".equals(user.getRole())) {
+            Teacher teacher = teacherMapper.selectById(request.getTeacherId());
+            if (teacher == null) throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "所属教师不存在");
+            TeachingAssistant v = new TeachingAssistant(); v.setUserId(user.getId()); v.setTeacherId(teacher.getId()); v.setName(request.getName().trim()); teachingAssistantMapper.insert(v);
+        }
     }
     private User requireUser(Long id) { User user = userMapper.selectById(id); if (user == null) throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "用户不存在"); return user; }
     private void validateRole(String role) { if (!ROLES.contains(role)) throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "角色无效"); }
