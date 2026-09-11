@@ -45,7 +45,6 @@ import StudentExam from "./pages/student/StudentExam";
 export default function App() {
   const [page, setPage] = useState<Page>("login");
   const [role, setRole] = useState<Role>("student");
-  const [dark, setDark] = useState(false);
   const [selectedQuizQuestions, setSelectedQuizQuestions] = useState<number[]>([]);
   const [filterSourceType, setFilterSourceType] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
@@ -57,6 +56,8 @@ export default function App() {
 
   // 检查是否已登录
   useEffect(() => {
+    // 系统固定为浅色主题，清除旧会话遗留的 dark class。
+    document.documentElement.classList.remove("dark");
     const savedUser = getCurrentUser();
     if (savedUser) {
       const frontendRole = mapRole(savedUser.role);
@@ -98,13 +99,6 @@ export default function App() {
       setPage("login");
     }
   }, []);
-  const toggleDark = useCallback(() => {
-    setDark(d => {
-      document.documentElement.classList.toggle("dark", !d);
-      return !d;
-    });
-  }, []);
-
   if (page === "login") return <LoginPage onLogin={handleLogin} />;
 
   const { breadcrumb } = pageMeta[page];
@@ -112,7 +106,7 @@ export default function App() {
   return (
     <>
       <AppShell role={role} page={page} onNav={setPage} onLogout={handleLogout}
-        dark={dark} onToggleDark={toggleDark} breadcrumb={breadcrumb}
+        breadcrumb={breadcrumb}
         onToggleAiAssistant={() => {}}
         userData={user} taPermissions={taPermissions}>
         {/* Admin pages */}

@@ -1,11 +1,11 @@
-import { Brain, Menu, ChevronRight, Sun, Moon, LogOut } from "lucide-react";
+import { Brain, Menu, ChevronRight, LogOut } from "lucide-react";
 import type { Role, Page } from "../../types";
 import { navItems } from "../../constants";
 import type { TAPermissions } from "../../../services/taService";
 
-export default function Sidebar({ role, page, onNav, onLogout, dark, onToggleDark, collapsed, onToggleCollapse, onToggleAiAssistant, userData, taPermissions }: {
+export default function Sidebar({ role, page, onNav, onLogout, collapsed, onToggleCollapse, onToggleAiAssistant, userData, taPermissions }: {
   role: Role; page: Page; onNav: (p: Page) => void; onLogout: () => void;
-  dark: boolean; onToggleDark: () => void; collapsed: boolean; onToggleCollapse: () => void;
+  collapsed: boolean; onToggleCollapse: () => void;
   onToggleAiAssistant?: () => void;
   userData?: any;
   taPermissions?: TAPermissions | null;
@@ -118,10 +118,6 @@ export default function Sidebar({ role, page, onNav, onLogout, dark, onToggleDar
             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
           </button>
         )}
-        <button onClick={onToggleDark} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-sidebar-foreground hover:text-white rounded transition-colors">
-          {dark ? <Sun size={14} /> : <Moon size={14} />}
-          {!collapsed && <span>{dark ? "浅色模式" : "深色模式"}</span>}
-        </button>
         <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-sidebar-foreground hover:text-[#DD7373] rounded transition-colors">
           <LogOut size={14} />
           {!collapsed && <span>退出登录</span>}
