@@ -5,6 +5,9 @@ import com.example.aitaes.entity.KnowledgePoint;
 import com.example.aitaes.entity.QuestionBank;
 import com.example.aitaes.dto.AnalysisGenerateRequest;
 import com.example.aitaes.dto.QuestionLabelUpdateRequest;
+import com.example.aitaes.dto.AnalysisConfirmRequest;
+import com.example.aitaes.dto.AutoGenerateConfirmRequest;
+import com.example.aitaes.dto.AiGeneratedQuestionDTO;
 
 import java.util.List;
 
@@ -63,6 +66,8 @@ public interface QuestionBankService {
      */
     BatchAnalysisResult batchGenerateAnalysis(Long courseId, Long userId, Integer limit);
 
+    int confirmAnalyses(Long courseId, Long userId, AnalysisConfirmRequest request);
+
     /**
      * 根据未覆盖知识点自动补全题目
      * <p>
@@ -77,6 +82,8 @@ public interface QuestionBankService {
                                                     String questionType, String difficulty,
                                                     Integer maxKnowledgePoints, Long userId);
 
+    int confirmGeneratedQuestions(Long courseId, Long userId, AutoGenerateConfirmRequest request);
+
     /** 自动补全题目结果 */
     @lombok.Data
     @lombok.Builder
@@ -88,6 +95,8 @@ public interface QuestionBankService {
         private java.util.List<String> uncoveredKpNames;
         private java.util.List<String> failedKpNames;
         private java.util.List<String> skippedKpNames;
+        /** AI 已生成、等待教师审核的题目，不会在预览阶段入库。 */
+        private java.util.List<AiGeneratedQuestionDTO> previewQuestions;
     }
 
     /**
@@ -103,5 +112,18 @@ public interface QuestionBankService {
         private int failed;
         private java.util.List<Long> failedIds;
         private int remaining;
+        /** AI 已生成、等待教师审核的解析，不会在预览阶段写回题库。 */
+        private java.util.List<AnalysisPreviewItem> previewItems;
+    }
+
+    @lombok.Data
+    @lombok.Builder
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    class AnalysisPreviewItem {
+        private Long questionId;
+        private String stem;
+        private String answer;
+        private String analysis;
     }
 }

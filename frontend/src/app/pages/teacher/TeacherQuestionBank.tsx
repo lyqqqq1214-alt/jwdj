@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { CheckCircle, Plus, Upload, Brain, Target, FileText, Database, Search, BookMarked, X } from "lucide-react";
 import { getMyCourses, ClassVO } from "../../../services/dashboardService";
-import { getQuestionList, getQuestionById, updateQuestion, deleteQuestion, createQuestion, generateQuestionAnalysis, batchGenerateAnalysis, autoGenerateForUncoveredKps, QuestionBank } from "../../../services/questionBankService";
+import { getQuestionList, getQuestionById, updateQuestion, deleteQuestion, createQuestion, generateQuestionAnalysis, batchGenerateAnalysis, autoGenerateForUncoveredKps, confirmQuestionAnalyses, confirmGeneratedQuestions, AnalysisPreviewItem, AiGeneratedQuestion, QuestionBank } from "../../../services/questionBankService";
 import { Page } from "../../types";
 import { Tag } from "../../utils";
 
@@ -36,6 +36,13 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
   const [autoGenerating, setAutoGenerating] = useState(false);
   const [showCoverageModal, setShowCoverageModal] = useState(false);
   const [coverageForm, setCoverageForm] = useState({ countPerKp: 1, questionType: "SINGLE", difficulty: "MEDIUM", maxKnowledgePoints: 5 });
+  const [analysisPreview, setAnalysisPreview] = useState<AnalysisPreviewItem[]>([]);
+  const [questionPreview, setQuestionPreview] = useState<AiGeneratedQuestion[]>([]);
+  const [selectedAnalysisIds, setSelectedAnalysisIds] = useState<number[]>([]);
+  const [selectedPreviewIndexes, setSelectedPreviewIndexes] = useState<number[]>([]);
+  const [showAnalysisPreview, setShowAnalysisPreview] = useState(false);
+  const [showQuestionPreview, setShowQuestionPreview] = useState(false);
+  const [confirmingPreview, setConfirmingPreview] = useState(false);
   const [form, setForm] = useState({
     questionType: "SINGLE",
     difficulty: "EASY",
@@ -59,8 +66,9 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
     setBatchingAnalysis(true);
     try {
       const r = await batchGenerateAnalysis(cid, 10);
-      showToastMsg(`本次补全${r.total}题，成功${r.success}题${r.failed > 0 ? `，失败${r.failed}题` : ""}${r.remaining > 0 ? `；还有${r.remaining}题待补全` : ""}`);
-      loadQuestions();
+      setAnalysisPreview(r.previewItems || []); setSelectedAnalysisIds((r.previewItems || []).map(x => x.questionId));
+      if ((r.previewItems || []).length > 0) setShowAnalysisPreview(true);
+      else showToastMsg(`没有可预览的解析${r.failed > 0 ? `，失败${r.failed}题` : ""}`);
     } catch {
       showToastMsg("批量补全解析失败，请稍后重试");
     } finally {
@@ -77,8 +85,9 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
       if (r.uncoveredKpCount === 0) {
         showToastMsg("所有知识点均已覆盖，无需补题");
       } else {
-        showToastMsg(`自动补题完成：发现${r.uncoveredKpCount}个空缺，生成${r.generatedCount}道题${r.failedKpNames?.length ? `，${r.failedKpNames.length}个失败` : ""}${r.skippedKpNames?.length ? `，其余${r.skippedKpNames.length}个待下次处理` : ""}`);
-        loadQuestions();
+        setQuestionPreview(r.previewQuestions || []); setSelectedPreviewIndexes((r.previewQuestions || []).map((_: AiGeneratedQuestion, i: number) => i));
+        setShowQuestionPreview((r.previewQuestions || []).length > 0);
+        showToastMsg(`发现${r.uncoveredKpCount}个空缺，已生成${r.generatedCount}道待审核题目${r.skippedKpNames?.length ? `；其余${r.skippedKpNames.length}个待下次处理` : ""}`);
       }
       setShowCoverageModal(false);
     } catch {
@@ -86,6 +95,32 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
     } finally {
       setAutoGenerating(false);
     }
+  };
+
+  const confirmAnalyses = async () => {
+    const cid = selectedCourseId ?? courses[0]?.id;
+    const selected = analysisPreview.filter(item => selectedAnalysisIds.includes(item.questionId));
+    if (!cid || selected.length === 0) return showToastMsg("请至少勾选一条解析");
+    setConfirmingPreview(true);
+    try {
+      const saved = await confirmQuestionAnalyses(cid, selected);
+      showToastMsg(`已确认写入 ${saved} 道题目的解析`);
+      setShowAnalysisPreview(false); setAnalysisPreview([]); loadQuestions();
+    } catch (e: any) { showToastMsg(e?.message || "解析写入失败"); }
+    finally { setConfirmingPreview(false); }
+  };
+
+  const confirmQuestions = async () => {
+    const cid = selectedCourseId ?? courses[0]?.id;
+    const selected = questionPreview.filter((_, index) => selectedPreviewIndexes.includes(index));
+    if (!cid || selected.length === 0) return showToastMsg("请至少勾选一道题目");
+    setConfirmingPreview(true);
+    try {
+      const saved = await confirmGeneratedQuestions(cid, coverageForm.difficulty, selected);
+      showToastMsg(`已确认 ${saved} 道 AI 题目入库`);
+      setShowQuestionPreview(false); setQuestionPreview([]); loadQuestions();
+    } catch (e: any) { showToastMsg(e?.message || "题目入库失败"); }
+    finally { setConfirmingPreview(false); }
   };
 
   // 加载课程列表
@@ -591,6 +626,8 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
         </div>
       </div>
 
+      {showAnalysisPreview && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"><div className="flex max-h-[85vh] w-full max-w-3xl flex-col rounded-lg bg-card p-6 shadow-xl"><div><h3 className="font-semibold">AI 解析补全预览</h3><p className="mt-1 text-xs text-muted-foreground">请检查 AI 解析是否正确；仅勾选并确认的解析会写入题库。</p></div><div className="mt-4 flex-1 space-y-3 overflow-y-auto">{analysisPreview.map(item => <label key={item.questionId} className="block rounded border border-border p-3"><div className="flex gap-3"><input type="checkbox" checked={selectedAnalysisIds.includes(item.questionId)} onChange={e => setSelectedAnalysisIds(v => e.target.checked ? [...v, item.questionId] : v.filter(id => id !== item.questionId))} /><div className="min-w-0 flex-1"><p className="text-sm font-medium">题目 #{item.questionId}：{item.stem}</p><p className="mt-1 text-xs text-muted-foreground">参考答案：{item.answer || "—"}</p><textarea value={item.analysis} onChange={e => setAnalysisPreview(v => v.map(x => x.questionId === item.questionId ? { ...x, analysis: e.target.value } : x))} rows={5} className="mt-2 w-full rounded border border-border p-2 text-sm" /></div></div></label>)}</div><div className="mt-4 flex justify-end gap-3"><button onClick={() => setShowAnalysisPreview(false)} className="rounded border border-border px-4 py-2 text-sm">暂不写入</button><button onClick={confirmAnalyses} disabled={confirmingPreview} className="rounded bg-primary px-4 py-2 text-sm text-white disabled:opacity-50">{confirmingPreview ? "写入中…" : `确认写入（${selectedAnalysisIds.length}）`}</button></div></div></div>}
+      {showQuestionPreview && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"><div className="flex max-h-[85vh] w-full max-w-3xl flex-col rounded-lg bg-card p-6 shadow-xl"><div><h3 className="font-semibold">AI 补题审核</h3><p className="mt-1 text-xs text-muted-foreground">题目尚未进入题库。你可以取消勾选、修改题干/答案/解析后，再确认入库。</p></div><div className="mt-4 flex-1 space-y-3 overflow-y-auto">{questionPreview.map((item, index) => <div key={index} className="rounded border border-border p-3"><div className="flex gap-3"><input type="checkbox" checked={selectedPreviewIndexes.includes(index)} onChange={e => setSelectedPreviewIndexes(v => e.target.checked ? [...v, index] : v.filter(i => i !== index))} /><div className="min-w-0 flex-1"><p className="text-xs text-muted-foreground">{item.questionType} · {(item.knowledgeTags || []).join("、")}</p><textarea value={item.stem} onChange={e => setQuestionPreview(v => v.map((x, i) => i === index ? { ...x, stem: e.target.value } : x))} rows={3} className="mt-1 w-full rounded border border-border p-2 text-sm" />{Object.keys(item.options || {}).length > 0 && <div className="mt-2 space-y-1 text-sm">{Object.entries(item.options).map(([key, value]) => <p key={key}>{key}. {value}</p>)}</div>}<label className="mt-2 block text-xs text-muted-foreground">答案<textarea value={item.answer} onChange={e => setQuestionPreview(v => v.map((x, i) => i === index ? { ...x, answer: e.target.value } : x))} rows={2} className="mt-1 w-full rounded border border-border p-2 text-sm" /></label><label className="mt-2 block text-xs text-muted-foreground">解析<textarea value={item.explanation} onChange={e => setQuestionPreview(v => v.map((x, i) => i === index ? { ...x, explanation: e.target.value } : x))} rows={3} className="mt-1 w-full rounded border border-border p-2 text-sm" /></label></div></div></div>)}</div><div className="mt-4 flex justify-end gap-3"><button onClick={() => setShowQuestionPreview(false)} className="rounded border border-border px-4 py-2 text-sm">全部丢弃</button><button onClick={confirmQuestions} disabled={confirmingPreview} className="rounded bg-emerald-600 px-4 py-2 text-sm text-white disabled:opacity-50">{confirmingPreview ? "入库中…" : `确认入库（${selectedPreviewIndexes.length}）`}</button></div></div></div>}
       {showCoverageModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-xl space-y-4">

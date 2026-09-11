@@ -15,6 +15,8 @@ import com.example.aitaes.dto.AnalysisGenerateRequest;
 import com.example.aitaes.dto.AiGeneratedQuestionDTO;
 import com.example.aitaes.dto.AiQuestionGenerateRequest;
 import com.example.aitaes.dto.QuestionLabelUpdateRequest;
+import com.example.aitaes.dto.AnalysisConfirmRequest;
+import com.example.aitaes.dto.AutoGenerateConfirmRequest;
 import com.example.aitaes.mapper.KnowledgePointMapper;
 import com.example.aitaes.mapper.QuestionBankMapper;
 import com.example.aitaes.mapper.TeacherMapper;
@@ -199,6 +201,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
 
         int total = 0, success = 0, failed = 0;
         List<Long> failedIds = new ArrayList<>();
+        List<QuestionBankService.AnalysisPreviewItem> previews = new ArrayList<>();
 
         for (QuestionBank q : questions) {
             if (total >= batchSize) break;
@@ -218,9 +221,10 @@ public class QuestionBankServiceImpl implements QuestionBankService {
                     continue;
                 }
 
-                ((ObjectNode) content).put("analysis", analysis);
-                q.setContent(objectMapper.writeValueAsString(content));
-                questionBankMapper.updateById(q);
+                previews.add(QuestionBankService.AnalysisPreviewItem.builder()
+                        .questionId(q.getId()).stem(firstText(content, "stem", "question", "title", "questionStem"))
+                        .answer(firstText(content, "answer", "correctAnswer", "referenceAnswer"))
+                        .analysis(analysis).build());
                 success++;
             } catch (Exception e) {
                 failed++;
@@ -240,7 +244,30 @@ public class QuestionBankServiceImpl implements QuestionBankService {
 
         return BatchAnalysisResult.builder()
                 .total(total).success(success).failed(failed).failedIds(failedIds)
-                .remaining(Math.max(0, remaining)).build();
+                .remaining(Math.max(0, remaining)).previewItems(previews).build();
+    }
+
+    @Override
+    public int confirmAnalyses(Long courseId, Long userId, AnalysisConfirmRequest request) {
+        ensureCourseAccess(courseId, userId);
+        int saved = 0;
+        for (AnalysisConfirmRequest.Item item : request.getItems()) {
+            if (item == null || item.getQuestionId() == null || !StringUtils.hasText(item.getAnalysis())) continue;
+            QuestionBank question = questionBankMapper.selectById(item.getQuestionId());
+            if (question == null || !courseId.equals(question.getCourseId())) continue;
+            try {
+                JsonNode parsed = objectMapper.readTree(question.getContent());
+                if (!(parsed instanceof ObjectNode content)) continue;
+                content.put("analysis", item.getAnalysis().trim());
+                question.setContent(objectMapper.writeValueAsString(content));
+                questionBankMapper.updateById(question);
+                saved++;
+            } catch (Exception ex) {
+                log.warn("确认解析写入失败, questionId={}: {}", item.getQuestionId(), ex.getMessage());
+            }
+        }
+        if (saved == 0) throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "没有可写入的解析");
+        return saved;
     }
 
     private boolean hasText(JsonNode node, String key) {
@@ -334,6 +361,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
         // 4. 分批补齐，单次最多处理 maxKps 个，防止本地模型长时间串行阻塞。
         int generated = 0;
         List<String> failed = new ArrayList<>();
+        List<AiGeneratedQuestionDTO> previews = new ArrayList<>();
         List<String> toGenerate = uncovered.stream().limit(maxKps).toList();
         List<String> skipped = uncovered.stream().skip(maxKps).toList();
         for (String kpName : toGenerate) {
@@ -351,7 +379,10 @@ public class QuestionBankServiceImpl implements QuestionBankService {
                     continue;
                 }
                 for (AiGeneratedQuestionDTO gq : generatedQs) {
-                    saveGeneratedQuestion(courseId, teacherId, kpName, requestedDifficulty, gq);
+                    if (gq.getKnowledgeTags() == null || gq.getKnowledgeTags().isEmpty()) {
+                        gq.setKnowledgeTags(List.of(kpName));
+                    }
+                    previews.add(gq);
                     generated++;
                 }
             } catch (Exception e) {
@@ -365,7 +396,24 @@ public class QuestionBankServiceImpl implements QuestionBankService {
                 .generatedCount(generated)
                 .uncoveredKpNames(uncovered)
                 .failedKpNames(failed).skippedKpNames(skipped)
+                .previewQuestions(previews)
                 .build();
+    }
+
+    @Override
+    public int confirmGeneratedQuestions(Long courseId, Long userId, AutoGenerateConfirmRequest request) {
+        Long teacherId = ensureCourseAccess(courseId, userId);
+        String difficulty = normalizeDifficulty(request.getDifficulty());
+        int saved = 0;
+        for (AiGeneratedQuestionDTO question : request.getQuestions()) {
+            if (question == null || !StringUtils.hasText(question.getStem()) || !StringUtils.hasText(question.getAnswer())) continue;
+            String knowledgePoint = question.getKnowledgeTags() == null || question.getKnowledgeTags().isEmpty()
+                    ? "AI补题" : String.join(",", question.getKnowledgeTags());
+            saveGeneratedQuestion(courseId, teacherId, knowledgePoint, difficulty, question);
+            saved++;
+        }
+        if (saved == 0) throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "没有可入库的题目");
+        return saved;
     }
 
     private void saveGeneratedQuestion(Long courseId, Long teacherId, String kpName,

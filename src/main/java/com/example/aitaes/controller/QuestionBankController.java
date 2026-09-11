@@ -6,6 +6,8 @@ import com.example.aitaes.common.Result;
 import com.example.aitaes.entity.KnowledgePoint;
 import com.example.aitaes.entity.QuestionBank;
 import com.example.aitaes.dto.AnalysisGenerateRequest;
+import com.example.aitaes.dto.AnalysisConfirmRequest;
+import com.example.aitaes.dto.AutoGenerateConfirmRequest;
 import com.example.aitaes.dto.QuestionLabelUpdateRequest;
 import jakarta.validation.Valid;
 import com.example.aitaes.service.QuestionBankService;
@@ -111,6 +113,14 @@ public class QuestionBankController {
         return Result.success(questionBankService.batchGenerateAnalysis(courseId, userId, limit));
     }
 
+    /** 教师审核后确认写入 AI 生成的解析。 */
+    @PostMapping("/analysis/confirm")
+    public Result<Integer> confirmAnalyses(@RequestParam Long courseId,
+                                           @RequestAttribute("userId") Long userId,
+                                           @Valid @RequestBody AnalysisConfirmRequest request) {
+        return Result.success("解析已写入题库", questionBankService.confirmAnalyses(courseId, userId, request));
+    }
+
     /**
      * 根据未覆盖知识点自动补全题目
      */
@@ -124,5 +134,13 @@ public class QuestionBankController {
             @RequestAttribute("userId") Long userId) {
         return Result.success(questionBankService.autoGenerateForUncoveredKps(
                 courseId, countPerKp, questionType, difficulty, maxKnowledgePoints, userId));
+    }
+
+    /** 教师从 AI 补题预览中选择题目后确认入库。 */
+    @PostMapping("/auto-generate/confirm")
+    public Result<Integer> confirmGeneratedQuestions(@RequestParam Long courseId,
+                                                       @RequestAttribute("userId") Long userId,
+                                                       @Valid @RequestBody AutoGenerateConfirmRequest request) {
+        return Result.success("题目已加入题库", questionBankService.confirmGeneratedQuestions(courseId, userId, request));
     }
 }
