@@ -78,6 +78,9 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
     return perms.allowedClasses.includes(selectedClassId || 0);
   });
 
+  // 权限表按 course_id 保存；班级列表会展开同一课程的多个行政班，这里去重后供助教授权选择。
+  const permissionCourses = Array.from(new Map(classList.map(item => [item.id, item])).values());
+
   const handleAddClass = async () => {
     if (!newClass.name) return;
     try {
@@ -143,18 +146,22 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
 
   const handleTAConfig = async () => {
     if (!selectedTA) return;
-    if (selectedClassId) {
-      const target = taList.find(t => t.staffId === selectedTA); if (!target) return;
-      await assignTAToClass(target.id, selectedClassId, taPerms);
-    } else {
-      // 无班级上下文时，仅更新全局权限（不改变已分配班级）
-      showToast("请先选择一个课程后再保存权限"); return;
+    if (!selectedClassId) {
+      showToast("请先选择一个课程后再保存权限");
+      return;
     }
-    setShowTAConfigModal(false);
-    setSelectedTA("");
-    setTaPerms({ canImport: false, canGrade: false, canViewProfile: false });
-    await refreshTAs();
-    showToast("权限已保存");
+    try {
+      const target = taList.find(t => t.staffId === selectedTA);
+      if (!target) return;
+      await assignTAToClass(target.id, selectedClassId, taPerms);
+      setShowTAConfigModal(false);
+      setSelectedTA("");
+      setTaPerms({ canImport: false, canGrade: false, canViewProfile: false });
+      await refreshTAs();
+      showToast("助教已加入课程，权限已保存");
+    } catch (err: any) {
+      showToast(err?.message || "保存权限失败");
+    }
   };
 
   const handleRemoveTAFromClass = async (taId: string) => {
@@ -520,6 +527,21 @@ function TeacherClassManagement({ onNav, setSelectedStudentId, setSelectedCourse
           <div className="bg-card rounded-lg border border-border w-full max-w-md p-6 space-y-4">
             <h3 className="font-semibold">{selectedTA ? "编辑助教权限" : "分配助教权限"}</h3>
             <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">选择课程</label>
+                <select value={selectedClassId || ""} onChange={e => {
+                  const courseId = Number(e.target.value);
+                  const course = permissionCourses.find(item => item.id === courseId);
+                  setSelectedClassId(courseId || null);
+                  setSelectedClassName(course?.className || "");
+                }} className="mt-1 w-full px-4 py-2 border border-border rounded-md text-sm">
+                  <option value="">请选择课程</option>
+                  {permissionCourses.map(course => (
+                    <option key={course.id} value={course.id}>{course.courseName || "未命名课程"} · {course.courseNo || course.semester || ""}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">助教权限按课程生效，覆盖该课程下的全部行政班。</p>
+              </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground">选择助教</label>
                 <select value={selectedTA} onChange={e => { setSelectedTA(e.target.value); if (e.target.value) { const p = getTAPermissions(e.target.value); setTaPerms({ canImport: p.canImport, canGrade: p.canGrade, canViewProfile: p.canViewProfile }); } }}
