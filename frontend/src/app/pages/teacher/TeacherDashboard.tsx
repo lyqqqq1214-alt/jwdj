@@ -469,6 +469,65 @@ function TeacherDashboard({ onNav, setSelectedStudentId, setSelectedCourseId, ta
                 </>
               )}
 
+              {/* 重点关注学生（预警学生突出展示） */}
+              {warningCount > 0 && (
+                <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border border-red-200/60 p-5 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
+                        <AlertTriangle size={16} className="text-red-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-red-900">重点关注学生</h3>
+                        <p className="text-xs text-red-600/80">共 {warningCount} 名学生需要关注</p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-red-600 font-medium px-2 py-1 bg-red-100 rounded-full">
+                      {warningCount} 人
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {filteredWarnings.slice(0, 6).map(w => (
+                      <div key={w.studentId}
+                        onClick={() => { setSelectedStudentId(w.studentId); setSelectedCourseId(selectedClass); onNav("teacher-profile"); }}
+                        className={`bg-white/80 backdrop-blur rounded-lg border p-3 cursor-pointer hover:shadow-md hover:border-red-300 transition-all ${
+                          w.severity === "HIGH" ? "border-red-300" : w.severity === "MEDIUM" ? "border-orange-200" : "border-yellow-200"
+                        }`}>
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
+                              w.severity === "HIGH" ? "bg-red-500" : w.severity === "MEDIUM" ? "bg-orange-400" : "bg-yellow-400"
+                            }`}>
+                              {w.name?.charAt(0) || "?"}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{w.name || "未知"}</p>
+                              <p className="text-[11px] text-muted-foreground font-mono">{w.studentNo || "—"}</p>
+                            </div>
+                          </div>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                            w.severity === "HIGH" ? "bg-red-100 text-red-700" : w.severity === "MEDIUM" ? "bg-orange-100 text-orange-700" : "bg-yellow-100 text-yellow-700"
+                          }`}>
+                            {severityLabel(w.severity)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Tag color={w.warningType === "ATTENDANCE" ? "orange" : w.warningType === "KP_WEAK" ? "yellow" : w.warningType === "SCORE_DROP" ? "red" : "gray"}>
+                            {warningTypeLabel(w.warningType)}
+                          </Tag>
+                          {w.warningMsg && (
+                            <span className="text-[11px] text-muted-foreground truncate max-w-[140px]">{w.warningMsg}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {filteredWarnings.length > 6 && (
+                    <p className="text-xs text-muted-foreground text-center mt-3">还有 {filteredWarnings.length - 6} 名学生，请查看下方预警学生列表</p>
+                  )}
+                </div>
+              )}
+
               {/* AI引擎融合区域 - 4大功能 */}
               {!assessmentType && (
                 <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-xl border border-blue-200/50 p-5 mb-4">
