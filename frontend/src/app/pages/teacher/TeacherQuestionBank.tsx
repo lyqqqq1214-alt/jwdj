@@ -34,6 +34,8 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
   const [generatingAnalysis, setGeneratingAnalysis] = useState(false);
   const [batchingAnalysis, setBatchingAnalysis] = useState(false);
   const [autoGenerating, setAutoGenerating] = useState(false);
+  const [showCoverageModal, setShowCoverageModal] = useState(false);
+  const [coverageForm, setCoverageForm] = useState({ countPerKp: 1, questionType: "SINGLE", difficulty: "MEDIUM", maxKnowledgePoints: 5 });
   const [form, setForm] = useState({
     questionType: "SINGLE",
     difficulty: "EASY",
@@ -56,8 +58,8 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
     if (!cid) { showToastMsg("请先选择课程"); return; }
     setBatchingAnalysis(true);
     try {
-      const r = await batchGenerateAnalysis(cid);
-      showToastMsg(`批量补全解析完成：共${r.total}题，成功${r.success}题${r.failed > 0 ? `，失败${r.failed}题` : ""}`);
+      const r = await batchGenerateAnalysis(cid, 10);
+      showToastMsg(`本次补全${r.total}题，成功${r.success}题${r.failed > 0 ? `，失败${r.failed}题` : ""}${r.remaining > 0 ? `；还有${r.remaining}题待补全` : ""}`);
       loadQuestions();
     } catch {
       showToastMsg("批量补全解析失败，请稍后重试");
@@ -71,13 +73,14 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
     if (!cid) { showToastMsg("请先选择课程"); return; }
     setAutoGenerating(true);
     try {
-      const r = await autoGenerateForUncoveredKps(cid, 2);
+      const r = await autoGenerateForUncoveredKps(cid, coverageForm.countPerKp, coverageForm.questionType, coverageForm.difficulty, coverageForm.maxKnowledgePoints);
       if (r.uncoveredKpCount === 0) {
         showToastMsg("所有知识点均已覆盖，无需补题");
       } else {
-        showToastMsg(`自动补题完成：未覆盖${r.uncoveredKpCount}个知识点，生成${r.generatedCount}道题`);
+        showToastMsg(`自动补题完成：发现${r.uncoveredKpCount}个空缺，生成${r.generatedCount}道题${r.failedKpNames?.length ? `，${r.failedKpNames.length}个失败` : ""}${r.skippedKpNames?.length ? `，其余${r.skippedKpNames.length}个待下次处理` : ""}`);
         loadQuestions();
       }
+      setShowCoverageModal(false);
     } catch {
       showToastMsg("自动补题失败，请稍后重试");
     } finally {
@@ -431,7 +434,7 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
           <button onClick={handleBatchAnalysis} disabled={batchingAnalysis} className="flex items-center gap-2 px-4 py-2 border border-amber-500 text-amber-600 rounded-md text-sm hover:bg-amber-50 disabled:opacity-50">
             <Brain size={14} />{batchingAnalysis ? "补全中…" : "批量补全解析"}
           </button>
-          <button onClick={handleAutoGenerate} disabled={autoGenerating} className="flex items-center gap-2 px-4 py-2 border border-emerald-500 text-emerald-600 rounded-md text-sm hover:bg-emerald-50 disabled:opacity-50">
+          <button onClick={() => setShowCoverageModal(true)} disabled={autoGenerating} className="flex items-center gap-2 px-4 py-2 border border-emerald-500 text-emerald-600 rounded-md text-sm hover:bg-emerald-50 disabled:opacity-50">
             <Target size={14} />{autoGenerating ? "补题中…" : "未覆盖知识点补题"}
           </button>
           {selectedQuestions.length > 0 && (
@@ -588,6 +591,21 @@ function TeacherQuestionBank({ onNav, setSelectedQuizQuestions, filterSourceType
         </div>
       </div>
 
+      {showCoverageModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-xl space-y-4">
+            <div><h3 className="font-semibold">未覆盖知识点补题</h3><p className="mt-1 text-xs text-muted-foreground">系统只处理叶子知识点；本次最多处理指定数量，避免本地 AI 长时间卡住。</p></div>
+            <label className="block text-sm">课程<select value={selectedCourseId ?? ""} onChange={e => setSelectedCourseId(e.target.value ? Number(e.target.value) : null)} className="mt-1 w-full rounded border border-border p-2"><option value="">请选择课程</option>{courses.map(c => <option key={c.id} value={c.id}>{c.courseName || c.className}</option>)}</select></label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="text-sm">题型<select value={coverageForm.questionType} onChange={e => setCoverageForm(v => ({ ...v, questionType: e.target.value }))} className="mt-1 w-full rounded border border-border p-2"><option value="SINGLE">单选题</option><option value="MULTI">多选题</option><option value="FILL">填空题</option><option value="SHORT">简答题</option></select></label>
+              <label className="text-sm">难度<select value={coverageForm.difficulty} onChange={e => setCoverageForm(v => ({ ...v, difficulty: e.target.value }))} className="mt-1 w-full rounded border border-border p-2"><option value="EASY">简单</option><option value="MEDIUM">中等</option><option value="HARD">困难</option></select></label>
+              <label className="text-sm">每知识点题数<input type="number" min="1" max="5" value={coverageForm.countPerKp} onChange={e => setCoverageForm(v => ({ ...v, countPerKp: Number(e.target.value) || 1 }))} className="mt-1 w-full rounded border border-border p-2" /></label>
+              <label className="text-sm">本次处理知识点<input type="number" min="1" max="20" value={coverageForm.maxKnowledgePoints} onChange={e => setCoverageForm(v => ({ ...v, maxKnowledgePoints: Number(e.target.value) || 1 }))} className="mt-1 w-full rounded border border-border p-2" /></label>
+            </div>
+            <div className="flex justify-end gap-3"><button onClick={() => setShowCoverageModal(false)} className="rounded border border-border px-4 py-2 text-sm">取消</button><button onClick={handleAutoGenerate} disabled={autoGenerating} className="rounded bg-emerald-600 px-4 py-2 text-sm text-white disabled:opacity-50">{autoGenerating ? "AI 补题中…" : "开始补题"}</button></div>
+          </div>
+        </div>
+      )}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card rounded-lg border border-border w-full max-w-lg p-6 space-y-4">

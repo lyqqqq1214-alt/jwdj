@@ -8,6 +8,9 @@ import com.example.aitaes.common.ResultCode;
 import com.example.aitaes.entity.KnowledgePoint;
 import com.example.aitaes.entity.QuestionBank;
 import com.example.aitaes.entity.Teacher;
+import com.example.aitaes.entity.TeachingAssistant;
+import com.example.aitaes.entity.User;
+import com.example.aitaes.entity.Course;
 import com.example.aitaes.dto.AnalysisGenerateRequest;
 import com.example.aitaes.dto.AiGeneratedQuestionDTO;
 import com.example.aitaes.dto.AiQuestionGenerateRequest;
@@ -15,6 +18,9 @@ import com.example.aitaes.dto.QuestionLabelUpdateRequest;
 import com.example.aitaes.mapper.KnowledgePointMapper;
 import com.example.aitaes.mapper.QuestionBankMapper;
 import com.example.aitaes.mapper.TeacherMapper;
+import com.example.aitaes.mapper.TeachingAssistantMapper;
+import com.example.aitaes.mapper.UserMapper;
+import com.example.aitaes.mapper.CourseMapper;
 import com.example.aitaes.service.OllamaService;
 import com.example.aitaes.service.QuestionBankService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -43,6 +49,9 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     private final QuestionBankMapper questionBankMapper;
     private final KnowledgePointMapper knowledgePointMapper;
     private final TeacherMapper teacherMapper;
+    private final TeachingAssistantMapper teachingAssistantMapper;
+    private final UserMapper userMapper;
+    private final CourseMapper courseMapper;
     private final OllamaService ollamaService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -182,7 +191,9 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     // ─── 批量自动补全解析 ────────────────────────────────────────────────────
 
     @Override
-    public BatchAnalysisResult batchGenerateAnalysis(Long courseId) {
+    public BatchAnalysisResult batchGenerateAnalysis(Long courseId, Long userId, Integer limit) {
+        ensureCourseAccess(courseId, userId);
+        int batchSize = Math.min(Math.max(limit == null ? 10 : limit, 1), 20);
         List<QuestionBank> questions = questionBankMapper.selectList(
                 new LambdaQueryWrapper<QuestionBank>().eq(QuestionBank::getCourseId, courseId));
 
@@ -190,6 +201,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
         List<Long> failedIds = new ArrayList<>();
 
         for (QuestionBank q : questions) {
+            if (total >= batchSize) break;
             try {
                 JsonNode content = objectMapper.readTree(q.getContent());
                 // 已有解析则跳过
@@ -217,8 +229,18 @@ public class QuestionBankServiceImpl implements QuestionBankService {
             }
         }
 
+        int remaining = (int) questions.stream().filter(q -> {
+            try {
+                JsonNode content = objectMapper.readTree(q.getContent());
+                return !hasText(content, "analysis") && !hasText(content, "explanation");
+            } catch (Exception ignored) {
+                return false;
+            }
+        }).count() - total;
+
         return BatchAnalysisResult.builder()
-                .total(total).success(success).failed(failed).failedIds(failedIds).build();
+                .total(total).success(success).failed(failed).failedIds(failedIds)
+                .remaining(Math.max(0, remaining)).build();
     }
 
     private boolean hasText(JsonNode node, String key) {
@@ -232,8 +254,8 @@ public class QuestionBankServiceImpl implements QuestionBankService {
         req.setQuestionType(q.getQuestionType());
         req.setDifficulty(q.getDifficulty());
         req.setKnowledgePoints(q.getKnowledgePoints());
-        req.setStem(content.path("stem").asText(""));
-        req.setAnswer(content.path("answer").asText(""));
+        req.setStem(firstText(content, "stem", "question", "title", "questionStem"));
+        req.setAnswer(firstText(content, "answer", "correctAnswer", "referenceAnswer"));
         JsonNode opts = content.get("options");
         if (opts != null && opts.isObject()) {
             Map<String, String> options = new java.util.HashMap<>();
@@ -243,32 +265,60 @@ public class QuestionBankServiceImpl implements QuestionBankService {
         return req;
     }
 
+    private String firstText(JsonNode content, String... keys) {
+        for (String key : keys) {
+            String value = content.path(key).asText("").trim();
+            if (StringUtils.hasText(value)) return value;
+        }
+        return "";
+    }
+
     // ─── 根据未覆盖知识点自动补全题目 ────────────────────────────────────────
 
     @Override
-    public AutoGenerateResult autoGenerateForUncoveredKps(Long courseId, Integer countPerKp, Long teacherId) {
+    public AutoGenerateResult autoGenerateForUncoveredKps(Long courseId, Integer countPerKp,
+                                                            String questionType, String difficulty,
+                                                            Integer maxKnowledgePoints, Long userId) {
+        Long teacherId = ensureCourseAccess(courseId, userId);
         int perKp = (countPerKp == null || countPerKp <= 0) ? 2 : countPerKp;
+        perKp = Math.min(perKp, 5);
+        int maxKps = Math.min(Math.max(maxKnowledgePoints == null ? 10 : maxKnowledgePoints, 1), 20);
+        String requestedType = normalizeBankQuestionType(questionType);
+        String requestedDifficulty = normalizeDifficulty(difficulty);
 
-        // 1. 课程所有知识点（取叶子节点 level=3，或全部）
+        // 1. 课程所有可考查知识点：优先叶子节点，避免把“第1章”等目录误认为空缺知识点。
         List<KnowledgePoint> allKps = knowledgePointMapper.selectList(
                 new LambdaQueryWrapper<KnowledgePoint>()
                         .eq(KnowledgePoint::getCourseId, courseId)
                         .eq(KnowledgePoint::getDeleted, 0));
 
-        // 2. 题库中已覆盖的知识点集合
+        Set<Long> parentIds = allKps.stream().map(KnowledgePoint::getParentId)
+                .filter(java.util.Objects::nonNull).collect(Collectors.toSet());
+        List<KnowledgePoint> leafKps = allKps.stream()
+                .filter(kp -> !parentIds.contains(kp.getId()))
+                .filter(kp -> StringUtils.hasText(kp.getKpName()))
+                .toList();
+        List<KnowledgePoint> targetKps = leafKps.isEmpty() ? allKps : leafKps;
+
+        // 2. 题库中已覆盖的知识点集合，兼容“一级模块/二级知识点”和逗号分隔标签。
         List<QuestionBank> questions = questionBankMapper.selectList(
                 new LambdaQueryWrapper<QuestionBank>().eq(QuestionBank::getCourseId, courseId));
         Set<String> coveredKps = new HashSet<>();
         for (QuestionBank q : questions) {
             if (StringUtils.hasText(q.getKnowledgePoints())) {
                 for (String kp : q.getKnowledgePoints().split(",")) {
-                    coveredKps.add(kp.trim());
+                    String normalized = kp.trim();
+                    if (StringUtils.hasText(normalized)) {
+                        coveredKps.add(normalized);
+                        int slash = normalized.lastIndexOf('/');
+                        if (slash >= 0 && slash < normalized.length() - 1) coveredKps.add(normalized.substring(slash + 1));
+                    }
                 }
             }
         }
 
         // 3. 未覆盖的知识点
-        List<String> uncovered = allKps.stream()
+        List<String> uncovered = targetKps.stream()
                 .map(KnowledgePoint::getKpName)
                 .filter(name -> name != null && !coveredKps.contains(name))
                 .distinct()
@@ -277,20 +327,22 @@ public class QuestionBankServiceImpl implements QuestionBankService {
         if (uncovered.isEmpty()) {
             return AutoGenerateResult.builder()
                     .uncoveredKpCount(0).generatedCount(0)
-                    .uncoveredKpNames(List.of()).failedKpNames(List.of())
+                    .uncoveredKpNames(List.of()).failedKpNames(List.of()).skippedKpNames(List.of())
                     .build();
         }
 
-        // 4. 为每个未覆盖知识点生成题目
+        // 4. 分批补齐，单次最多处理 maxKps 个，防止本地模型长时间串行阻塞。
         int generated = 0;
         List<String> failed = new ArrayList<>();
-        for (String kpName : uncovered) {
+        List<String> toGenerate = uncovered.stream().limit(maxKps).toList();
+        List<String> skipped = uncovered.stream().skip(maxKps).toList();
+        for (String kpName : toGenerate) {
             try {
                 AiQuestionGenerateRequest req = AiQuestionGenerateRequest.builder()
                         .knowledgePoints(List.of(kpName))
-                        .questionType("SINGLE")
+                        .questionType(toAiQuestionType(requestedType))
                         .count(perKp)
-                        .difficulty("MEDIUM")
+                        .difficulty(requestedDifficulty)
                         .socraticMode(false)
                         .build();
                 List<AiGeneratedQuestionDTO> generatedQs = ollamaService.generateQuestions(req);
@@ -299,7 +351,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
                     continue;
                 }
                 for (AiGeneratedQuestionDTO gq : generatedQs) {
-                    saveGeneratedQuestion(courseId, teacherId, kpName, gq);
+                    saveGeneratedQuestion(courseId, teacherId, kpName, requestedDifficulty, gq);
                     generated++;
                 }
             } catch (Exception e) {
@@ -312,11 +364,12 @@ public class QuestionBankServiceImpl implements QuestionBankService {
                 .uncoveredKpCount(uncovered.size())
                 .generatedCount(generated)
                 .uncoveredKpNames(uncovered)
-                .failedKpNames(failed)
+                .failedKpNames(failed).skippedKpNames(skipped)
                 .build();
     }
 
-    private void saveGeneratedQuestion(Long courseId, Long teacherId, String kpName, AiGeneratedQuestionDTO gq) {
+    private void saveGeneratedQuestion(Long courseId, Long teacherId, String kpName,
+                                       String difficulty, AiGeneratedQuestionDTO gq) {
         try {
             ObjectNode content = objectMapper.createObjectNode();
             content.put("stem", gq.getStem() != null ? gq.getStem() : "");
@@ -331,8 +384,8 @@ public class QuestionBankServiceImpl implements QuestionBankService {
             QuestionBank qb = new QuestionBank();
             qb.setCourseId(courseId);
             qb.setTeacherId(teacherId);
-            qb.setQuestionType(gq.getQuestionType() != null ? gq.getQuestionType() : "SINGLE");
-            qb.setDifficulty("MEDIUM");
+            qb.setQuestionType(normalizeBankQuestionType(gq.getQuestionType()));
+            qb.setDifficulty(difficulty);
             qb.setContent(objectMapper.writeValueAsString(content));
             qb.setKnowledgePoints(kpName);
             qb.setAiGenerated(1);
@@ -342,5 +395,56 @@ public class QuestionBankServiceImpl implements QuestionBankService {
         } catch (Exception e) {
             log.warn("保存AI生成题目失败: {}", e.getMessage());
         }
+    }
+
+    private Long ensureCourseAccess(Long courseId, Long userId) {
+        Course course = courseMapper.selectById(courseId);
+        if (course == null) throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "课程不存在");
+        Long teacherId = resolveTeacherId(userId);
+        if (course.getTeacherId() != null && !course.getTeacherId().equals(teacherId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "无权操作该课程题库");
+        }
+        return teacherId;
+    }
+
+    private Long resolveTeacherId(Long userId) {
+        User user = userMapper.selectById(userId);
+        if (user == null) throw new BusinessException(ResultCode.UNAUTHORIZED.getCode(), "登录用户不存在");
+        if ("TEACHER".equals(user.getRole())) {
+            Teacher teacher = teacherMapper.selectOne(new LambdaQueryWrapper<Teacher>().eq(Teacher::getUserId, userId));
+            if (teacher != null) return teacher.getId();
+        }
+        if ("ASSISTANT".equals(user.getRole())) {
+            TeachingAssistant assistant = teachingAssistantMapper.selectOne(new LambdaQueryWrapper<TeachingAssistant>().eq(TeachingAssistant::getUserId, userId));
+            if (assistant != null) return assistant.getTeacherId();
+        }
+        throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "当前账号没有题库操作权限");
+    }
+
+    private String normalizeBankQuestionType(String source) {
+        if (!StringUtils.hasText(source)) return "SINGLE";
+        String value = source.trim().toUpperCase();
+        if (value.contains("MULTI") || source.contains("多选")) return "MULTI";
+        if (value.contains("FILL") || source.contains("填空")) return "FILL";
+        if (value.contains("SHORT") || source.contains("简答")) return "SHORT";
+        if (value.contains("COMPREHENSIVE") || source.contains("综合")) return "COMPREHENSIVE";
+        if (value.contains("TRUE") || source.contains("判断")) return "TRUE_FALSE";
+        return "SINGLE";
+    }
+
+    private String toAiQuestionType(String type) {
+        return switch (type) {
+            case "MULTI" -> "多选";
+            case "FILL" -> "填空";
+            case "SHORT" -> "简答";
+            case "COMPREHENSIVE" -> "综合";
+            case "TRUE_FALSE" -> "判断";
+            default -> "单选";
+        };
+    }
+
+    private String normalizeDifficulty(String source) {
+        return "EASY".equalsIgnoreCase(source) || "HARD".equalsIgnoreCase(source)
+                ? source.toUpperCase() : "MEDIUM";
     }
 }

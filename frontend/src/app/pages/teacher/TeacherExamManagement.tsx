@@ -75,6 +75,8 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const [toast, setToast] = useState<string | null>(null);
+  const [showAiPaperModal, setShowAiPaperModal] = useState(false);
+  const [aiPaperForm, setAiPaperForm] = useState({ courseId: "", paperName: "", questionCount: 10 });
   const showToastMsg = (message: string) => { setToast(message); setTimeout(() => setToast(null), 2000); };
 
   const loadPapers = () => {
@@ -287,23 +289,18 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
 
   const [aiGenerating, setAiGenerating] = useState(false);
   const handleAiGenerate = async () => {
-    if (courses.length === 0) { showToastMsg("暂无课程，无法组卷"); return; }
+    const courseId = Number(aiPaperForm.courseId);
+    if (!courseId) { showToastMsg("请选择要分析的班级课程"); return; }
     setAiGenerating(true);
-    let lastErr: string = "";
-    // 遍历课程，找到第一道能成功组卷的课程（优先用有题目的课程）
-    for (const c of courses) {
-      try {
-        const paper = await aiGenerateExamPaper(c.id, undefined, 10);
-        showToastMsg(`AI智能组卷成功（${c.courseName || c.className}）`);
-        loadPapers();
-        setAiGenerating(false);
-        return;
-      } catch (e) {
-        lastErr = e instanceof Error ? e.message : String(e);
-      }
-    }
-    setAiGenerating(false);
-    showToastMsg(lastErr || "AI组卷失败，请确认课程题库有题目");
+    try {
+      await aiGenerateExamPaper(courseId, aiPaperForm.paperName || undefined, aiPaperForm.questionCount);
+      const course = courses.find(c => c.id === courseId);
+      showToastMsg(`AI智能组卷成功（${course?.courseName || course?.className || "已选课程"}）`);
+      setShowAiPaperModal(false);
+      loadPapers();
+    } catch (e) {
+      showToastMsg(e instanceof Error ? e.message : "AI组卷失败，请确认题库或本地AI服务");
+    } finally { setAiGenerating(false); }
   };
 
   const resetWizard = () => {
@@ -866,7 +863,7 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">考试管理</h2>
         <div className="flex items-center gap-2">
-          <button onClick={handleAiGenerate} disabled={aiGenerating} className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50">
+          <button onClick={() => { setAiPaperForm(v => ({ ...v, courseId: v.courseId || String(courses[0]?.id || "") })); setShowAiPaperModal(true); }} disabled={aiGenerating} className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50">
             <Sparkles size={16} /> {aiGenerating ? "组卷中…" : "AI智能组卷"}
           </button>
           <button onClick={openWizard} className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm bg-primary text-white hover:opacity-90">
@@ -874,6 +871,8 @@ function TeacherExamManagement({ selectedQuizQuestions, setSelectedQuizQuestions
           </button>
         </div>
       </div>
+
+      {showAiPaperModal && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"><div className="w-full max-w-md space-y-4 rounded-lg bg-card p-6 shadow-xl"><div><h3 className="font-semibold">按班级学习情况智能组卷</h3><p className="mt-1 text-xs text-muted-foreground">系统会优先考查本班掌握率低于 70% 的知识点，并优先选用使用次数较少的题目；题库不足时才由本地 AI 补题。</p></div><label className="block text-sm">班级课程<select value={aiPaperForm.courseId} onChange={e => setAiPaperForm(v => ({ ...v, courseId: e.target.value }))} className="mt-1 w-full rounded border border-border p-2"><option value="">请选择课程</option>{courses.map(c => <option key={c.id} value={c.id}>{c.courseName || c.className}{c.className ? `（${c.className}）` : ""}</option>)}</select></label><label className="block text-sm">试卷名称（可选）<input value={aiPaperForm.paperName} onChange={e => setAiPaperForm(v => ({ ...v, paperName: e.target.value }))} placeholder="例如：第 3 章薄弱点巩固练习" className="mt-1 w-full rounded border border-border p-2" /></label><label className="block text-sm">题目数量（1–50）<input type="number" min="1" max="50" value={aiPaperForm.questionCount} onChange={e => setAiPaperForm(v => ({ ...v, questionCount: Math.min(50, Math.max(1, Number(e.target.value) || 1)) }))} className="mt-1 w-full rounded border border-border p-2" /></label><div className="flex justify-end gap-3"><button onClick={() => setShowAiPaperModal(false)} className="rounded border border-border px-4 py-2 text-sm">取消</button><button onClick={handleAiGenerate} disabled={aiGenerating} className="rounded bg-emerald-600 px-4 py-2 text-sm text-white disabled:opacity-50">{aiGenerating ? "正在分析并组卷…" : "开始智能组卷"}</button></div></div></div>}
 
       {showCreateWizard && (
         <div className="bg-card rounded-lg border border-border p-5 space-y-4">

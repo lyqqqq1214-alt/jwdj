@@ -1387,17 +1387,32 @@ public class ExamServiceImpl implements ExamService {
         if (course == null) {
             throw new BusinessException(ResultCode.NOT_FOUND.getCode(), "课程不存在");
         }
-        int count = (questionCount == null || questionCount <= 0) ? 10 : questionCount;
+        Long teacherId = resolveTeacherId(userId);
+        if (course.getTeacherId() != null && !course.getTeacherId().equals(teacherId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "无权为该课程组卷");
+        }
+        int count = Math.min(Math.max(questionCount == null ? 10 : questionCount, 1), 50);
 
-        // 1. 找出班级薄弱知识点（掌握率 < 70%，按掌握率升序）
+        // 1. 按本课程实际学生的个人掌握率重新汇总班级薄弱知识点，
+        // 不依赖可能已过期的 classAvgRate 缓存。
         List<StudentKpMastery> masteryList = studentKpMasteryMapper.selectList(
                 new LambdaQueryWrapper<StudentKpMastery>()
-                        .eq(StudentKpMastery::getCourseId, courseId)
-                        .lt(StudentKpMastery::getClassAvgRate, new BigDecimal("70"))
-                        .orderByAsc(StudentKpMastery::getClassAvgRate));
-        List<String> weakKps = masteryList.stream()
-                .map(StudentKpMastery::getKpName)
-                .distinct()
+                        .eq(StudentKpMastery::getCourseId, courseId));
+        Map<String, BigDecimal> kpAverage = masteryList.stream()
+                .filter(m -> m.getKpName() != null && m.getMasteryRate() != null)
+                .collect(Collectors.groupingBy(StudentKpMastery::getKpName,
+                        Collectors.collectingAndThen(Collectors.toList(), values ->
+                                values.stream().map(StudentKpMastery::getMasteryRate)
+                                        .reduce(BigDecimal.ZERO, BigDecimal::add)
+                                        .divide(BigDecimal.valueOf(values.size()), 2, RoundingMode.HALF_UP))));
+        if (kpAverage.isEmpty()) {
+            masteryList.stream().filter(m -> m.getKpName() != null && m.getClassAvgRate() != null)
+                    .forEach(m -> kpAverage.putIfAbsent(m.getKpName(), m.getClassAvgRate()));
+        }
+        List<String> weakKps = kpAverage.entrySet().stream()
+                .filter(e -> e.getValue().compareTo(new BigDecimal("70")) < 0)
+                .sorted(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
                 .toList();
 
         // 若无薄弱知识点数据，则取所有知识点
@@ -1409,7 +1424,7 @@ public class ExamServiceImpl implements ExamService {
                     .stream().map(KnowledgePoint::getKpName).distinct().toList();
         }
 
-        // 2. 从题库中挑选关联薄弱知识点的题目
+        // 2. 优先低掌握率知识点，且优先选择使用次数较少的题目，避免反复使用同一题。
         List<QuestionBank> selected = new ArrayList<>();
         Set<Long> usedIds = new HashSet<>();
         for (String kp : weakKps) {
@@ -1428,7 +1443,7 @@ public class ExamServiceImpl implements ExamService {
             }
         }
 
-        // 2.1 若无薄弱知识点匹配或不足，直接从课程题库随机选题补足
+        // 2.1 若薄弱点匹配题不足，按使用次数从整个课程题库补足。
         if (selected.size() < count) {
             List<QuestionBank> allQuestions = questionBankMapper.selectList(
                     new LambdaQueryWrapper<QuestionBank>()
@@ -1462,7 +1477,7 @@ public class ExamServiceImpl implements ExamService {
                 if (generated != null) {
                     for (AiGeneratedQuestionDTO gq : generated) {
                         if (selected.size() >= count) break;
-                        QuestionBank qb = saveAiQuestionToBank(courseId, resolveTeacherId(userId), gq);
+                        QuestionBank qb = saveAiQuestionToBank(courseId, teacherId, gq);
                         selected.add(qb);
                     }
                 }
@@ -1490,7 +1505,7 @@ public class ExamServiceImpl implements ExamService {
         }
 
         ExamPaperCreateDTO dto = new ExamPaperCreateDTO();
-        dto.setPaperName(paperName != null ? paperName : "AI智能组卷-" + course.getCourseName());
+        dto.setPaperName(paperName != null && !paperName.isBlank() ? paperName.trim() : "AI智能组卷-" + course.getCourseName());
         dto.setCourseId(courseId);
         dto.setTotalScore(BigDecimal.valueOf(100));
         dto.setDurationMinutes(60);
@@ -1515,7 +1530,7 @@ public class ExamServiceImpl implements ExamService {
             QuestionBank qb = new QuestionBank();
             qb.setCourseId(courseId);
             qb.setTeacherId(teacherId);
-            qb.setQuestionType(gq.getQuestionType() != null ? gq.getQuestionType() : "SINGLE");
+            qb.setQuestionType(toBankQuestionType(gq.getQuestionType()));
             qb.setDifficulty("MEDIUM");
             qb.setContent(objectMapper.writeValueAsString(content));
             qb.setKnowledgePoints(kpStr);
@@ -1527,5 +1542,15 @@ public class ExamServiceImpl implements ExamService {
         } catch (Exception e) {
             throw new BusinessException(ResultCode.INTERNAL_ERROR.getCode(), "保存AI题目失败: " + e.getMessage());
         }
+    }
+
+    private String toBankQuestionType(String type) {
+        if (type == null) return "SINGLE";
+        if (type.contains("多选") || type.equalsIgnoreCase("MULTI")) return "MULTI";
+        if (type.contains("填空") || type.equalsIgnoreCase("FILL")) return "FILL";
+        if (type.contains("简答") || type.equalsIgnoreCase("SHORT")) return "SHORT";
+        if (type.contains("综合") || type.equalsIgnoreCase("COMPREHENSIVE")) return "COMPREHENSIVE";
+        if (type.contains("判断") || type.equalsIgnoreCase("TRUE_FALSE")) return "TRUE_FALSE";
+        return "SINGLE";
     }
 }

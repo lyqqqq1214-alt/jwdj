@@ -61,7 +61,7 @@ public interface QuestionBankService {
      * @param courseId 课程ID
      * @return 补全结果：总数、成功数、失败数、失败题目ID列表
      */
-    BatchAnalysisResult batchGenerateAnalysis(Long courseId);
+    BatchAnalysisResult batchGenerateAnalysis(Long courseId, Long userId, Integer limit);
 
     /**
      * 根据未覆盖知识点自动补全题目
@@ -70,10 +70,12 @@ public interface QuestionBankService {
      *
      * @param courseId   课程ID
      * @param countPerKp 每个未覆盖知识点生成的题目数
-     * @param teacherId  教师ID（作为题目创建者）
+     * @param userId  当前登录教师/助教用户ID（服务内解析为所属教师ID）
      * @return 补全结果
      */
-    AutoGenerateResult autoGenerateForUncoveredKps(Long courseId, Integer countPerKp, Long teacherId);
+    AutoGenerateResult autoGenerateForUncoveredKps(Long courseId, Integer countPerKp,
+                                                    String questionType, String difficulty,
+                                                    Integer maxKnowledgePoints, Long userId);
 
     /** 自动补全题目结果 */
     @lombok.Data
@@ -85,6 +87,7 @@ public interface QuestionBankService {
         private int generatedCount;
         private java.util.List<String> uncoveredKpNames;
         private java.util.List<String> failedKpNames;
+        private java.util.List<String> skippedKpNames;
     }
 
     /**
@@ -99,5 +102,6 @@ public interface QuestionBankService {
         private int success;
         private int failed;
         private java.util.List<Long> failedIds;
+        private int remaining;
     }
 }

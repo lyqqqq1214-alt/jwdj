@@ -104,8 +104,11 @@ public class QuestionBankController {
      * 批量自动补全解析：为课程下所有缺少解析的题目生成 AI 解析
      */
     @PostMapping("/analysis/batch")
-    public Result<QuestionBankService.BatchAnalysisResult> batchGenerateAnalysis(@RequestParam Long courseId) {
-        return Result.success(questionBankService.batchGenerateAnalysis(courseId));
+    public Result<QuestionBankService.BatchAnalysisResult> batchGenerateAnalysis(
+            @RequestParam Long courseId,
+            @RequestParam(defaultValue = "10") Integer limit,
+            @RequestAttribute("userId") Long userId) {
+        return Result.success(questionBankService.batchGenerateAnalysis(courseId, userId, limit));
     }
 
     /**
@@ -115,7 +118,11 @@ public class QuestionBankController {
     public Result<QuestionBankService.AutoGenerateResult> autoGenerateQuestions(
             @RequestParam Long courseId,
             @RequestParam(defaultValue = "2") Integer countPerKp,
+            @RequestParam(defaultValue = "SINGLE") String questionType,
+            @RequestParam(defaultValue = "MEDIUM") String difficulty,
+            @RequestParam(defaultValue = "10") Integer maxKnowledgePoints,
             @RequestAttribute("userId") Long userId) {
-        return Result.success(questionBankService.autoGenerateForUncoveredKps(courseId, countPerKp, userId));
+        return Result.success(questionBankService.autoGenerateForUncoveredKps(
+                courseId, countPerKp, questionType, difficulty, maxKnowledgePoints, userId));
     }
 }

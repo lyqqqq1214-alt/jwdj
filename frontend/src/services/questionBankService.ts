@@ -100,10 +100,11 @@ export interface BatchAnalysisResult {
   success: number;
   failed: number;
   failedIds: number[];
+  remaining: number;
 }
 
-export async function batchGenerateAnalysis(courseId: number) {
-  const res = await api.post('/question-bank/analysis/batch', null, { params: { courseId } });
+export async function batchGenerateAnalysis(courseId: number, limit = 10) {
+  const res = await api.post('/question-bank/analysis/batch', null, { params: { courseId, limit } });
   return res.data as BatchAnalysisResult;
 }
 
@@ -112,9 +113,10 @@ export interface AutoGenerateResult {
   generatedCount: number;
   uncoveredKpNames: string[];
   failedKpNames: string[];
+  skippedKpNames: string[];
 }
 
-export async function autoGenerateForUncoveredKps(courseId: number, countPerKp = 2) {
-  const res = await api.post('/question-bank/auto-generate', null, { params: { courseId, countPerKp } });
+export async function autoGenerateForUncoveredKps(courseId: number, countPerKp = 2, questionType = "SINGLE", difficulty = "MEDIUM", maxKnowledgePoints = 10) {
+  const res = await api.post('/question-bank/auto-generate', null, { params: { courseId, countPerKp, questionType, difficulty, maxKnowledgePoints } });
   return res.data as AutoGenerateResult;
 }
