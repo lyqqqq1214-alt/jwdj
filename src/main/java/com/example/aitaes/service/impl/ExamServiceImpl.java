@@ -299,7 +299,7 @@ public class ExamServiceImpl implements ExamService {
             assessment = new Assessment();
             assessment.setPaperId(id);
             assessment.setCourseId(paper.getCourseId());
-            assessment.setAssessmentName(paper.getPaperName());
+            assessment.setAssessmentName(resolveAssessmentName(paper, null));
             assessment.setAssessmentType("EXAM");
             assessment.setTotalScore(paper.getTotalScore());
             assessment.setQuestionCount(questions.size());
@@ -310,7 +310,7 @@ public class ExamServiceImpl implements ExamService {
             assessmentMapper.insert(assessment);
         } else {
             assessment.setCourseId(paper.getCourseId());
-            assessment.setAssessmentName(paper.getPaperName());
+            assessment.setAssessmentName(resolveAssessmentName(paper, assessment.getId()));
             assessment.setTotalScore(paper.getTotalScore());
             assessment.setQuestionCount(questions.size());
             assessment.setStartTime(paper.getStartTime());
@@ -329,6 +329,25 @@ public class ExamServiceImpl implements ExamService {
             log.warn("发布考试通知失败: paperId={}", id, e);
         }
         log.info("发布考试: paperId={}, assessmentId={}", id, assessment.getId());
+    }
+
+    /**
+     * t_assessment 对“课程 + 考核名称”设有唯一约束；试卷允许同名草稿，
+     * 因此发布时需要为重复名称补充在线考试编号，避免把数据库重复键错误暴露给教师。
+     */
+    private String resolveAssessmentName(ExamPaper paper, Long currentAssessmentId) {
+        String base = (paper.getPaperName() == null || paper.getPaperName().isBlank())
+                ? "在线考试" : paper.getPaperName().trim();
+        String candidate = base;
+        int suffix = 0;
+        while (true) {
+            Assessment existing = assessmentMapper.selectOne(new LambdaQueryWrapper<Assessment>()
+                    .eq(Assessment::getCourseId, paper.getCourseId())
+                    .eq(Assessment::getAssessmentName, candidate));
+            if (existing == null || existing.getId().equals(currentAssessmentId)) return candidate;
+            suffix++;
+            candidate = base + "（在线考试" + paper.getId() + (suffix == 1 ? "" : "-" + suffix) + "）";
+        }
     }
 
     @Override
