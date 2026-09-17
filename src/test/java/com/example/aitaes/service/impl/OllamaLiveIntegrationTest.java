@@ -3,6 +3,7 @@ package com.example.aitaes.service.impl;
 import com.example.aitaes.config.OllamaProperties;
 import com.example.aitaes.dto.AiGeneratedQuestionDTO;
 import com.example.aitaes.dto.AiQuestionGenerateRequest;
+import com.example.aitaes.mapper.SystemConfigMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -14,6 +15,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class OllamaLiveIntegrationTest {
 
@@ -31,7 +35,9 @@ class OllamaLiveIntegrationTest {
                 .connectTimeout(properties.getConnectTimeout())
                 .readTimeout(properties.getReadTimeout())
                 .build();
-        OllamaServiceImpl service = new OllamaServiceImpl(restTemplate, properties, new ObjectMapper());
+        SystemConfigMapper systemConfigMapper = mock(SystemConfigMapper.class);
+        when(systemConfigMapper.selectList(any())).thenReturn(List.of());
+        OllamaServiceImpl service = new OllamaServiceImpl(restTemplate, properties, systemConfigMapper, new ObjectMapper());
 
         List<AiGeneratedQuestionDTO> questions = service.generateQuestions(AiQuestionGenerateRequest.builder()
                 .knowledgePoints(List.of("TCP三次握手"))

@@ -1,10 +1,32 @@
+PS C:\WINDOWS\system32> powershell -ExecutionPolicy Bypass -File d:\lyq\deploy\setup-server.ps1 -DbPassword '1234'
+== checks passed ==
+  jar    : d:\lyq\backend\AITAES-0.0.1-SNAPSHOT.jar
+  java   : D:\lyq\jre21\bin\java.exe
+  nginx  : d:\lyq\nginx\nginx.exe
+
+== init database ==
+== 1/5 create database ==
+mysql: [Warning] Using a password on the command line interface can be insecure.
+ERROR 1045 (28000): Access denied for user '$RootUser'@'localhost' (using password: YES)
+mysql failed: CREATE DATABASE IF NOT EXISTS aitaes_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+所在位置 D:\lyq\deploy\setup-db.ps1:26 字符: 32
+
++ if ($LASTEXITCODE -ne 0) { throw "mysql failed: $Sql" }
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+  + CategoryInfo          : OperationStopped: (mysql failed: C...mb4_unicode_ci;:String) [], RuntimeException
+  + FullyQualifiedErrorId : mysql failed: CREATE DATABASE IF NOT EXISTS aitaes_db DEFAULT CHARACTER SET utf8mb4 COLL
+    ATE utf8mb4_unicode_ci;
+
+PS C:\WINDOWS\system32>
+
 # AITAES 部署教程（简易版，一步一步照着做）
 
 > 不需要懂 CI/CD。核心思路一句话：**自己电脑打包 → 复制到服务器 → 服务器跑一个脚本 → 完成。**
 >
-> 全部做完后，任何一台电脑打开浏览器访问 `http://125.221.160.8:3000` 就能用整套系统。
+> 全部做完后，任何一台电脑打开浏览器访问 `http://125.221.160.8:5150` 就能用整套系统。
 >
 > **两条约定**（你的要求）：
+>
 > 1. 所有程序和文件都放在服务器 **`d:\lyq`** 目录下；
 > 2. 装软件时能选「**仅为当前用户安装**」就选它（避免污染 C 盘、少要管理员权限）。
 
@@ -41,7 +63,7 @@
                                                → 建库/导数据/配Nginx/注册服务
                                             4. ollama pull qwen2.5:7b
 
-                                            5. 浏览器打开 125.221.160.8:3000 ✅
+                                            5. 浏览器打开 125.221.160.8:5150 ✅
 ```
 
 服务器上装的东西（都在 `d:\lyq` 下）：**JDK 21、MySQL 8、Nginx、Ollama、WinSW**。就这 5 样。
@@ -58,6 +80,7 @@
    - 前端：`d:\AITAES\AITAES\frontend\dist`（**一个文件夹**）
 
 > 如果双击报错，手动在命令行试：
+>
 > - 后端：`mvnw.cmd clean package -DskipTests`
 > - 前端：`cd frontend` → `npm install` → `npm run build`
 
@@ -77,6 +100,7 @@
 ## 四、第 2 步：服务器上装 5 个软件
 
 > 全部装到 `d:\lyq` 下。**先建目录**（在管理员 PowerShell 里执行）：
+>
 > ```powershell
 > New-Item -ItemType Directory -Force -Path d:\lyq\jdk, d:\lyq\nginx, d:\lyq\winsw, d:\lyq\backend, d:\lyq\frontend, d:\lyq\deploy | Out-Null
 > ```
@@ -98,9 +122,11 @@
 2. 安装时 **root 密码设为 `1234`**。
 3. 安装向导里如果有「数据目录 / 安装路径」的选择，**尽量选到 D 盘 `d:\lyq` 下**；安装时会注册一个叫 `MySQL` 的 Windows 服务并开机自启（这正常，是我们需要的）。
 4. 装完验证：
+
    ```powershell
    mysql --version
    ```
+
    如果提示「不是内部或外部命令」，说明 MySQL 的 bin 没进 PATH，手动把 `d:\lyq\...\MySQL Server 8.0\bin`（或 `C:\Program Files\MySQL\MySQL Server 8.0\bin`）加到系统环境变量 PATH。
 
 ### 4.4 Nginx（zip，绿色免安装）
@@ -128,11 +154,11 @@
 
 远程桌面（mstsc）支持**直接拖拽/复制粘贴文件**。从**你自己电脑**往远程桌面里拖下面 3 个东西，放到指定位置：
 
-| 你本机的文件/文件夹 | 复制到服务器的位置 |
-|---|---|
-| `target\AITAES-0.0.1-SNAPSHOT.jar`（文件） | `d:\lyq\backend\` |
-| `frontend\dist`（文件夹） | `d:\lyq\frontend\`（放进去后是 `d:\lyq\frontend\dist\`） |
-| `deploy`（整个文件夹） | `d:\lyq\`（放进去后是 `d:\lyq\deploy\`） |
+| 你本机的文件/文件夹                          | 复制到服务器的位置                                           |
+| -------------------------------------------- | ------------------------------------------------------------ |
+| `target\AITAES-0.0.1-SNAPSHOT.jar`（文件） | `d:\lyq\backend\`                                          |
+| `frontend\dist`（文件夹）                  | `d:\lyq\frontend\`（放进去后是 `d:\lyq\frontend\dist\`） |
+| `deploy`（整个文件夹）                     | `d:\lyq\`（放进去后是 `d:\lyq\deploy\`）                 |
 
 > 操作：本机找到文件 `Ctrl+C` 复制 → 远程桌面里打开对应文件夹 `Ctrl+V` 粘贴；或直接鼠标拖进远程桌面窗口。总共也就一百多 MB，很快。
 
@@ -157,7 +183,7 @@ powershell -ExecutionPolicy Bypass -File d:\lyq\deploy\setup-server.ps1 -DbPassw
 脚本会自动完成：
 
 1. 建库 `aitaes_db` + 建专用账号 `aitaes` + 建 28 张表 + 导入演示数据
-2. 把 Nginx 配置好（监听 3000），原配置备份到 `nginx.conf.bak`
+2. 把 Nginx 配置好（监听 5150），原配置备份到 `nginx.conf.bak`
 3. 把后端注册成 **`AITAES` 服务**（开机自启、崩溃自动重启）
 4. 把 Nginx 注册成 **`nginx` 服务**（开机自启）
 
@@ -207,12 +233,12 @@ Get-Content d:\lyq\winsw\AITAES.err.log -Tail 50
 
 ### 8.3 浏览器打开系统
 
-先在**服务器自己的浏览器**试 `http://127.0.0.1:3000`，能出登录页即可。
+先在**服务器自己的浏览器**试 `http://127.0.0.1:5150`，能出登录页即可。
 
 然后**换答辩用的那台电脑**（或手机）打开：
 
 ```
-http://125.221.160.8:3000
+http://125.221.160.8:5150
 ```
 
 1. 登录：**`admin` / `123456`**（教师账号 `T00001` / `123456`）
@@ -228,9 +254,11 @@ http://125.221.160.8:3000
 1. 本机双击 `build.bat` 重新打包。
 2. 把新的 `jar` 和 `dist` 文件夹再次拖拽复制到服务器，覆盖原来的（`d:\lyq\backend\` 和 `d:\lyq\frontend\dist\`）。
 3. 服务器 PowerShell 重启后端：
+
    ```powershell
    Restart-Service AITAES
    ```
+
    （前端不用重启，Nginx 直接读新的 dist。）
 
 > 改数据库结构的话，还要在服务器上重跑一次第 6 节的部署脚本；只改代码/页面，上面三步就够。
@@ -239,19 +267,19 @@ http://125.221.160.8:3000
 
 ## 十、常见问题
 
-| 现象 | 解决办法 |
-|---|---|
-| 浏览器打不开 3000 端口 | 1) 确认 `Get-Service nginx` 在 Running；2) 确认 Windows 防火墙放行了 3000（云安全组已开 3000–3100，但 Windows 防火墙也要放行） |
-| 页面能开但一直转圈 / 接口 500 | 后端没起来。看 `d:\lyq\winsw\AITAES.err.log`，最常见是数据库连不上 |
-| 数据库连不上 | 确认 MySQL 服务在跑、root 密码是不是 `1234`（不是的话脚本加 `-RootPassword` 参数） |
-| AI 功能一直超时或报错 | 确认 `ollama pull qwen2.5:7b` 跑完、`Get-Service ollama` 在 Running |
-| 前端打包报错 | 换成 `npm install --registry=https://registry.npmmirror.com` 再试 |
-| 改了代码但线上没变 | 确认重新复制了 jar/dist，并执行了 `Restart-Service AITAES` |
+| 现象                          | 解决办法                                                                                                                         |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 浏览器打不开 5150 端口        | 1) 确认`Get-Service nginx` 在 Running；2) 确认 Windows 防火墙放行了 5150；3) 确认路由器已做端口映射 `5150 → 内网IP:5150` |
+| 页面能开但一直转圈 / 接口 500 | 后端没起来。看`d:\lyq\winsw\AITAES.err.log`，最常见是数据库连不上                                                              |
+| 数据库连不上                  | 确认 MySQL 服务在跑、root 密码是不是`1234`（不是的话脚本加 `-RootPassword` 参数）                                            |
+| AI 功能一直超时或报错         | 确认`ollama pull qwen2.5:7b` 跑完、`Get-Service ollama` 在 Running                                                           |
+| 前端打包报错                  | 换成`npm install --registry=https://registry.npmmirror.com` 再试                                                               |
+| 改了代码但线上没变            | 确认重新复制了 jar/dist，并执行了`Restart-Service AITAES`                                                                      |
 
 ---
 
 ## 安全提醒
 
 - 数据库用专用账号 `aitaes`（不是 root），密码写在后端服务环境变量里，不直接出现在代码里。
-- Ollama / MySQL / 后端 8080 都只监听本机（127.0.0.1），公网只暴露 Nginx 的 3000 端口。
+- Ollama / MySQL / 后端 8080 都只监听本机（127.0.0.1），公网只暴露 Nginx 的 5150 端口。
 - 之前代码里提交过一个 DeepSeek 的 API key（现已改用本地 Ollama，不再使用），建议有空到 DeepSeek 控制台把它作废。

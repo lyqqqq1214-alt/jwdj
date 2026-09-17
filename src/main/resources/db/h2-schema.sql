@@ -574,7 +574,7 @@ MERGE INTO t_warning_rule (rule_name, rule_type, threshold, is_active, descripti
 
 -- 系统参数配置预置
 MERGE INTO t_system_config (config_key, config_value, config_type, description, create_time, update_time) KEY(config_key) VALUES
-('ai.api.base_url',              'http://localhost:11434', 'STRING', '大模型API地址',        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('ai.api.base_url',              'http://localhost:32767', 'STRING', '大模型API地址',        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('ai.api.model_name',            'qwen2.5:7b',             'STRING', '大模型名称',           CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('ai.api.timeout_seconds',       '60',                     'INT',    '模型超时时间(秒)',     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('default.password',             '123456',                 'STRING', '默认初始密码',         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),

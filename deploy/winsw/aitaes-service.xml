@@ -21,7 +21,7 @@
   <arguments>-jar d:\lyq\backend\AITAES-0.0.1-SNAPSHOT.jar</arguments>
 
   <!-- 生产环境变量注入，覆盖 application.yml 里的默认值 -->
-  <env name="AI_BASE_URL" value="http://127.0.0.1:11434/v1"/>
+  <env name="AI_BASE_URL" value="http://127.0.0.1:32767/v1"/>
   <env name="AI_MODEL" value="qwen2.5:7b"/>
   <env name="AI_API_KEY" value="ollama"/>
   <env name="SPRING_DATASOURCE_USERNAME" value="aitaes"/>

@@ -737,7 +737,7 @@ INSERT INTO `t_warning_rule` (`rule_name`, `rule_type`, `threshold`, `severity`,
 
 -- 系统参数配置预置
 INSERT INTO `t_system_config` (`config_key`, `config_value`, `config_type`, `description`) VALUES
-('ai.api.base_url',              'http://localhost:11434', 'STRING', '大模型API地址'),
+('ai.api.base_url',              'http://localhost:32767', 'STRING', '大模型API地址'),
 ('ai.api.model_name',            'qwen2.5:7b',            'STRING', '大模型名称'),
 ('ai.api.timeout_seconds',       '60',                     'INT',    '模型超时时间(秒)'),
 ('ai.remote.enabled',            'false',                  'BOOLEAN','是否启用远程 OpenAI 兼容 API'),

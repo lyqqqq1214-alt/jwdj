@@ -3,9 +3,9 @@
 # 账号密码通过环境变量注入：SPRING_DATASOURCE_URL / SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/aitaes_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
-    username: ${SPRING_DATASOURCE_USERNAME:aitaes}
-    password: ${SPRING_DATASOURCE_PASSWORD:ChangeMe_Production}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/aitaes_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
   sql:
     init:

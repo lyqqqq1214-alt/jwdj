@@ -4,10 +4,14 @@ import com.example.aitaes.common.BusinessException;
 import com.example.aitaes.config.OllamaProperties;
 import com.example.aitaes.dto.AiGeneratedQuestionDTO;
 import com.example.aitaes.dto.AiQuestionGenerateRequest;
+import com.example.aitaes.mapper.SystemConfigMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
@@ -16,26 +20,34 @@ import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.ExpectedCount.times;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+@ExtendWith(MockitoExtension.class)
 class OllamaServiceImplTest {
 
     private MockRestServiceServer server;
     private OllamaServiceImpl service;
+    @Mock
+    private SystemConfigMapper systemConfigMapper;
 
     @BeforeEach
     void setUp() {
         RestTemplate restTemplate = new RestTemplate();
         server = MockRestServiceServer.bindTo(restTemplate).build();
         OllamaProperties properties = new OllamaProperties();
+        properties.setBaseUrl("");
         properties.setModel("qwen2.5:7b");
         properties.setMaxAttempts(3);
         properties.setRetryDelay(Duration.ZERO);
-        service = new OllamaServiceImpl(restTemplate, properties, new ObjectMapper());
+        lenient().when(systemConfigMapper.selectList(any())).thenReturn(List.of());
+        service = new OllamaServiceImpl(restTemplate, properties, systemConfigMapper, new ObjectMapper());
     }
 
     @Test
